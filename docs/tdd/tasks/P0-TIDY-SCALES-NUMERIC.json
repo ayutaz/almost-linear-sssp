@@ -1,0 +1,42 @@
+{
+  "id": "P0-TIDY-SCALES-NUMERIC",
+  "spec": "clang-tidy bugprone-macro-parentheses rejects the explicit-instantiation macro of src/paper/outer/scales_numeric.cpp (its type argument W cannot be parenthesised); CI lint is red on main since 004c15c",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      "src/paper/outer/scales_numeric.cpp"
+    ],
+    "tests": [
+      "clang-tidy on src/paper/outer/scales_numeric.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "sh -c '/opt/homebrew/opt/llvm/bin/clang-tidy -p build/debug --quiet --extra-arg=-isysroot$(xcrun --show-sdk-path) src/paper/outer/scales_numeric.cpp'",
+      "exit_code": 1,
+      "reason": "bugprone-macro-parentheses error at scales_numeric.cpp:282:86 on the type argument W of SSSP_OUTER_SCALES_NUMERIC_INSTANTIATE",
+      "timestamp": "2026-11-27T16:49:32+09:00",
+      "output_tail": "./src/paper/outer/scales_numeric.cpp:282:86: error: macro argument should be enclosed in parentheses [bugprone-macro-parentheses,-warnings-as-errors]\n  282 |       const OuterScaleFactor&, std::span<const W>, std::span<const OuterAlignedScale<W>>); \\\n      |                                                                                      ^\n      |                                                                                      ()"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "sh -c '/opt/homebrew/opt/llvm/bin/clang-tidy -p build/debug --quiet --extra-arg=-isysroot$(xcrun --show-sdk-path) src/paper/outer/scales_numeric.cpp'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T16:53:51+09:00",
+      "output_tail": ""
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "sh -c 'git ls-files -- \"src/*.cpp\" \"tools/*.cpp\" | xargs -P 8 -n 4 /opt/homebrew/opt/llvm/bin/clang-tidy -p build/debug --quiet --extra-arg=-isysroot$(xcrun --show-sdk-path)'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T16:54:48+09:00",
+      "output_tail": "[1/4] Processing file ./src/paper/primitives/mst.cpp.\n[4/4] Processing file ./src/paper/primitives/merge_events.cpp.\n[4/4] Processing file ./src/paper/owner/aux_metric.cpp.\n[1/4] Processing file ./src/verify/verify.cpp.\n[3/4] Processing file ./src/core/version.cpp.\n[4/4] Processing file ./src/experimental/paper_experimental/local_assembly.cpp.\n[2/4] Processing file ./src/paper/hierarchy/normalize.cpp.\n[2/4] Processing file ./src/paper/owner/owner_distances.cpp.\n[3/4] Processing file ./src/paper/local/base_case.cpp.\n[2/4] Processing file ./src/paper/primitives/search.cpp.\n[3/4] Processing file ./src/paper/primitives/split_findmin.cpp.\n[2/4] Processing file ./tools/sssp_bench_runner.cpp.\n[4/4] Processing file ./src/paper/local/local_hierarchy.cpp.\n[3/4] Processing file ./src/paper/hierarchy/ordered_hierarchy.cpp.\n[4/4] Processing file ./src/paper/sssp.cpp.\n[3/4] Processing file ./tools/sssp_gen.cpp.\n[3/4] Processing file ./src/paper/pivots/estimate.cpp.\n[4/4] Processing file ./src/paper/hierarchy/reference_hierarchy.cpp.\n[4/4] Processing file ./tools/sssp_run.cpp.\n[4/4] Processing file ./src/paper/pivots/name_routes.cpp."
+    }
+  ],
+  "commit": null
+}
