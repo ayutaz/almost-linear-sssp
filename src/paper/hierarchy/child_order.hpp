@@ -70,18 +70,15 @@
 #include <vector>
 
 #include "paper/hierarchy/normalize.hpp"
+#include "paper/model/wide_length.hpp"
 #include "sssp/result.hpp"
 
 namespace sssp::paper {
 
-namespace detail {
-__extension__ typedef unsigned __int128 UInt128;  // not ISO C++; exact sums of 64-bit lengths
-}  // namespace detail
-
 /// Type of a sum of link lengths along a path of F: unsigned __int128 for integer W (exact for
 /// every forest), W itself for floating point (see "Range of the arithmetic" above).
 template <class W>
-using ForestLength = std::conditional_t<std::is_integral_v<W>, detail::UInt128, W>;
+using ForestLength = WideLength<W>;
 
 /// The link forest F of a normalised hierarchy, rooted and in preorder.
 template <class W>

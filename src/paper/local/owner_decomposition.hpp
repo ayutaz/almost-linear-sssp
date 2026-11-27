@@ -66,6 +66,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "paper/model/wide_length.hpp"
 #include "paper/primitives/forest_queries.hpp"
 #include "sssp/graph.hpp"
 #include "sssp/result.hpp"
@@ -75,14 +76,10 @@ namespace sssp::paper {
 inline constexpr std::uint32_t kNoPivot = std::numeric_limits<std::uint32_t>::max();
 inline constexpr std::uint32_t kNoCorridor = std::numeric_limits<std::uint32_t>::max();
 
-namespace detail {
-__extension__ typedef unsigned __int128 TreeUInt128;  // not ISO C++; exact sums of 64-bit lengths
-}  // namespace detail
-
 /// Type of a sum of edge weights along a path of T from the root: unsigned __int128 for integer
 /// W (exact for every tree), W itself for floating point (see "Range of the arithmetic" above).
 template <class W>
-using TreeLength = std::conditional_t<std::is_integral_v<W>, detail::TreeUInt128, W>;
+using TreeLength = WideLength<W>;
 
 /// b = L_N^4 for the local construction (Sec 5.1 l.967), saturating at 2^64 - 1.
 std::size_t local_separator_size(std::size_t n);
