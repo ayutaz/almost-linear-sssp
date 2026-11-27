@@ -1,0 +1,37 @@
+{
+  "id": "20261127-normalize-invalid-lengths",
+  "summary": "Sec 4.1 normalize (the first step of Evaluate, Alg 3 l.2) did not validate the lengths that Def 4.1 restricts. Root arcs and self-arcs went to the root quotient (l.720) or were discarded (l.719) unchecked: a root arc of length -1.0 returned value 4 at the head, NaN was ignored, +inf and the uint64 sentinel raised std::overflow_error instead of the documented std::invalid_argument (review F-2, A-4). Link lengths entered the saturating mass sum S(C) unchecked: NaN, +inf, 2^64 - 1 or a finite link > c0 h(C) (H5) made the root loop of Alg 3 l.10 step through width-1 slots for about 2^53 / 2^64 iterations (review F-3, no return within 10 s); -3.0 raised std::logic_error. The input is an ordered hierarchy built by hand, not an SSSP graph, so `graph` holds the physical points only and expected_dist is not applicable: the expected behaviour is std::invalid_argument from normalize() and evaluate(), promptly.",
+  "algorithm": {
+    "name": "sssp::paper::normalize + sssp::paper::evaluate",
+    "version": "git d2ab2f6 (library version 0.1.0)",
+    "params": {
+      "variant": "Mode A",
+      "thresholds": null
+    }
+  },
+  "weight_type": "double and uint64",
+  "graph": {
+    "n": 2,
+    "edges": []
+  },
+  "hierarchy": {
+    "F-2": "states 0, 1 (pi = identity), two singleton roots, arc 0 -> 1 of length L in {-1.0, NaN, +inf (double), 2^64 - 1 (uint64)}, offer 5 at state 0",
+    "F-3": "states 0, 1 (pi = identity), one root of height 1 and c0 = 1 over the two leaves, link (0, 1) of length L in {NaN, +inf, -3.0 (double), 2^64 - 1, 2^40 (uint64)}, no arcs, offer 0 at state 0"
+  },
+  "source": 0,
+  "found_by": {
+    "test": "P4-REVIEW hierarchy review, targeted probes (docs/reviews/P4-REVIEW-hierarchy.md F-2, F-3, A-4)",
+    "generator": "hand-written probe (.cache/review/probe.cpp, modes rootarc, linknan, linkneg, linkinf, linksent, linklong)",
+    "seed": null,
+    "params": {}
+  },
+  "minimised": true,
+  "failure": {
+    "kind": "timeout",
+    "message": "F-3: evaluate did not return within 10 s; F-2: wrong value 4 / silent NaN / std::overflow_error instead of std::invalid_argument"
+  },
+  "expected_dist": null,
+  "tolerance": null,
+  "fixed_by": "fix(paper): reject invalid arc and link lengths in normalize [P3-NORMALIZE-INVALID]",
+  "expected": "std::invalid_argument from normalize() and evaluate() for every arc length that is negative, NaN, +inf or the uint64 sentinel and every link length that is one of these or exceeds c0 h(C) (Def 4.1, normalize.hpp); valid lengths (-0.0, link = c0 h(C), saturating masses) are accepted"
+}

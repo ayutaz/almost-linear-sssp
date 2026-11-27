@@ -1,0 +1,69 @@
+{
+  "id": "P3-NORMALIZE-INVALID",
+  "spec": "normalize() (and hence evaluate()) rejects every arc length (root arcs, self-arcs, arcs below an LCA) and every link length that is negative, NaN, +inf or the uint64 infinity sentinel, and every link longer than c0*h(C), with std::invalid_argument and without hanging; valid input is unchanged",
+  "paper_ref": "Sec 4 Def 4.1 (l.646-658: nonnegative arc lengths, links of length <= c0 h(C)), Def 4.2 (l.659-672), Sec 2 l.292-293 (infinity is a separate flag), Sec 4.1 l.674-723",
+  "files": {
+    "impl": [
+      "src/paper/hierarchy/normalize.hpp",
+      "src/paper/hierarchy/normalize.cpp"
+    ],
+    "tests": [
+      "tests/regression/test_normalize_invalid_lengths.cpp",
+      "tests/regression/cases/20261127-normalize-invalid-lengths.json"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"normalize-invalid-lengths\" -j4'",
+      "exit_code": 8,
+      "reason": "normalize() does not validate root arcs, self-arcs or link lengths: F-2 root arc -1.0/NaN accepted, +inf/sentinel give overflow_error instead of invalid_argument; F-3 invalid or over-long links (> c0 h) are accepted by normalize and evaluate hangs until the 5 s watchdog ends the test (or throws logic_error for a negative link); boundary-valid cases and LCA arcs already pass",
+      "timestamp": "2026-11-27T19:00:24+09:00",
+      "output_tail": "because no exception was thrown where one was expected:\n  double nested link +inf\n\nTIMEOUT: evaluate: double nested link +inf did not return within 5 s\n\n\n29% tests passed, 5 tests failed out of 7\n\nLabel Time Summary:\nregression    =  15.40 sec*proc (7 tests)\n\nTotal Test time (real) =  14.88 sec\n\nThe following tests FAILED:\n\t1390 - regression:20261127-normalize-invalid-lengths: F-2 root arcs with invalid lengths are rejected (Failed) regression\n\t1391 - regression:20261127-normalize-invalid-lengths: self-arcs with invalid lengths are rejected (Failed) regression\n\t1393 - regression:20261127-normalize-invalid-lengths: F-3 root links with invalid lengths are rejected (Failed) regression\n\t1394 - regression:20261127-normalize-invalid-lengths: F-3 links longer than c0 h(C) are rejected (H5) (Failed) regression\n\t1395 - regression:20261127-normalize-invalid-lengths: invalid links below the root are rejected (Failed) regression\nErrors while running CTest"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"normaliz|hierarch|evaluate|regression\" -j4'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T19:11:20+09:00",
+      "output_tail": "102/108 Test #1400: regression:20261127-owner-decomposition-overflow: path of four edges of 2^62 with b = 2 ............................................   Passed    0.03 sec\n        Start 1401: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix)\n103/108 Test #1401: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix) ...............................   Passed    0.02 sec\n        Start 1402: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n104/108 Test #1402: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ...................................   Passed    0.02 sec\n        Start 1403: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n105/108 Test #1403: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 .....................................   Passed    0.07 sec\n106/108 Test #1309: property:D-8 and D-11: ordered hierarchies, threshold SCCs and scale relations - std::uint64_t .....................................   Passed    5.94 sec\n107/108 Test #1310: property:D-8 and D-11: ordered hierarchies, threshold SCCs and scale relations - double ............................................   Passed    7.55 sec\n108/108 Test #1082: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ..............................................   Passed   15.27 sec\n\n100% tests passed, 0 tests failed out of 108\n\nLabel Time Summary:\ndifferential    =  28.85 sec*proc (20 tests)\nproperty        =  15.38 sec*proc (5 tests)\nregression      =   1.38 sec*proc (30 tests)\nunit            =   2.79 sec*proc (53 tests)\n\nTotal Test time (real) =  18.94 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"normaliz|hierarch|evaluate|regression\" -j4'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T19:13:14+09:00",
+      "output_tail": "102/108 Test #1375: regression:20261127-child-order-overflow: the same path with shorter edges (passes before the fix) .................................   Passed    0.01 sec\n        Start 1377: regression:Counted<double> graphs reject negative and NaN weights\n103/108 Test #1379: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex .............................   Passed    0.01 sec\n        Start 1378: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance\n104/108 Test #1399: regression:20261127-owner-decomposition-overflow: the same path with b = 5 (R_3 does not fit) ......................................   Passed    0.02 sec\n        Start 1376: regression:20261127-child-order-overflow: order_children on the path of four edges of 2^62\n105/108 Test #1377: regression:Counted<double> graphs reject negative and NaN weights ..................................................................   Passed    0.02 sec\n106/108 Test #1378: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance .........................................   Passed    0.02 sec\n107/108 Test #1376: regression:20261127-child-order-overflow: order_children on the path of four edges of 2^62 .........................................   Passed    0.02 sec\n108/108 Test #1082: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ..............................................   Passed    9.89 sec\n\n100% tests passed, 0 tests failed out of 108\n\nLabel Time Summary:\ndifferential    =  23.72 sec*proc (20 tests)\nproperty        =  10.18 sec*proc (5 tests)\nregression      =   0.58 sec*proc (30 tests)\nunit            =   2.94 sec*proc (53 tests)\n\nTotal Test time (real) =  12.82 sec"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"normalize-invalid-lengths\" -j4'",
+      "exit_code": 8,
+      "reason": "cycle 2: the H5 bound c0 * h is formed by c0 - 1 additions, O(c0) per node against the O(M + N) of normalize.hpp; with c0 = 2^31 - 1 normalize does not return before the 5 s watchdog",
+      "timestamp": "2026-11-27T19:15:48+09:00",
+      "output_tail": "    Start 1394: regression:20261127-normalize-invalid-lengths: F-3 links longer than c0 h(C) are rejected (H5)\n4/8 Test #1396: regression:20261127-normalize-invalid-lengths: valid boundary lengths are still accepted .............   Passed    0.02 sec\n    Start 1391: regression:20261127-normalize-invalid-lengths: self-arcs with invalid lengths are rejected\n5/8 Test #1392: regression:20261127-normalize-invalid-lengths: arcs below an LCA with invalid lengths are rejected ...   Passed    0.02 sec\n6/8 Test #1394: regression:20261127-normalize-invalid-lengths: F-3 links longer than c0 h(C) are rejected (H5) .......   Passed    0.02 sec\n7/8 Test #1391: regression:20261127-normalize-invalid-lengths: self-arcs with invalid lengths are rejected ...........   Passed    0.02 sec\n8/8 Test #1397: regression:20261127-normalize-invalid-lengths: the H5 check costs O(log c0), exact at the bound ......***Failed    5.06 sec\nTIMEOUT: normalize: uint64 h = 1, c0 = 2^31 - 1, link 1 did not return within 5 s\n\n\n88% tests passed, 1 tests failed out of 8\n\nLabel Time Summary:\nregression    =   5.19 sec*proc (8 tests)\n\nTotal Test time (real) =   5.09 sec\n\nThe following tests FAILED:\n\t1397 - regression:20261127-normalize-invalid-lengths: the H5 check costs O(log c0), exact at the bound (Failed) regression\nErrors while running CTest"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"normaliz|hierarch|evaluate|regression\" -j4'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T19:21:17+09:00",
+      "output_tail": "103/109 Test #1378: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance .........................................   Passed    0.02 sec\n        Start 1375: regression:20261127-child-order-overflow: the same path with shorter edges (passes before the fix)\n104/109 Test #1377: regression:Counted<double> graphs reject negative and NaN weights ..................................................................   Passed    0.02 sec\n        Start 1096: differential:P4-OVERFLOW-E2E: regression evaluate-relax-overflow, every source\n105/109 Test #1375: regression:20261127-child-order-overflow: the same path with shorter edges (passes before the fix) .................................   Passed    0.02 sec\n        Start 1397: regression:20261127-normalize-invalid-lengths: the H5 check costs O(log c0), exact at the bound\n106/109 Test #1095: differential:P4-OVERFLOW-E2E: regression evaluate-mass-overflow and its boundary ...................................................   Passed    0.02 sec\n107/109 Test #1096: differential:P4-OVERFLOW-E2E: regression evaluate-relax-overflow, every source .....................................................   Passed    0.02 sec\n108/109 Test #1397: regression:20261127-normalize-invalid-lengths: the H5 check costs O(log c0), exact at the bound ....................................   Passed    0.02 sec\n109/109 Test #1082: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ..............................................   Passed   12.56 sec\n\n100% tests passed, 0 tests failed out of 109\n\nLabel Time Summary:\ndifferential    =  28.24 sec*proc (20 tests)\nproperty        =  11.89 sec*proc (5 tests)\nregression      =   0.88 sec*proc (31 tests)\nunit            =   3.45 sec*proc (53 tests)\n\nTotal Test time (real) =  15.88 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"normaliz|hierarch|evaluate|regression\" -j4'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T19:23:37+09:00",
+      "output_tail": "103/109 Test #1378: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance .........................................   Passed    0.02 sec\n        Start 1375: regression:20261127-child-order-overflow: the same path with shorter edges (passes before the fix)\n104/109 Test #1377: regression:Counted<double> graphs reject negative and NaN weights ..................................................................   Passed    0.02 sec\n        Start 1397: regression:20261127-normalize-invalid-lengths: the H5 check costs O(log c0), exact at the bound\n105/109 Test #1095: differential:P4-OVERFLOW-E2E: regression evaluate-mass-overflow and its boundary ...................................................   Passed    0.03 sec\n        Start 1096: differential:P4-OVERFLOW-E2E: regression evaluate-relax-overflow, every source\n106/109 Test #1375: regression:20261127-child-order-overflow: the same path with shorter edges (passes before the fix) .................................   Passed    0.02 sec\n107/109 Test #1397: regression:20261127-normalize-invalid-lengths: the H5 check costs O(log c0), exact at the bound ....................................   Passed    0.02 sec\n108/109 Test #1096: differential:P4-OVERFLOW-E2E: regression evaluate-relax-overflow, every source .....................................................   Passed    0.03 sec\n109/109 Test #1082: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ..............................................   Passed   15.32 sec\n\n100% tests passed, 0 tests failed out of 109\n\nLabel Time Summary:\ndifferential    =  34.41 sec*proc (20 tests)\nproperty        =  14.01 sec*proc (5 tests)\nregression      =   0.72 sec*proc (31 tests)\nunit            =   3.36 sec*proc (53 tests)\n\nTotal Test time (real) =  18.20 sec"
+    }
+  ],
+  "commit": null
+}

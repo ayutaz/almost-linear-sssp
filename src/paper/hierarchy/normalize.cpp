@@ -2,6 +2,7 @@
 
 #include "paper/hierarchy/normalize.hpp"
 
+#include <bit>
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
@@ -32,6 +33,23 @@ class Arith {
   [[nodiscard]] bool less(W a, W b) const { return ops_.less(L::finite(a), L::finite(b)); }
   [[nodiscard]] bool equal(W a, W b) const { return ops_.equal(L::finite(a), L::finite(b)); }
 
+  /// c0 * h (c0 >= 1) by the binary expansion of the integer c0, most significant bit first:
+  /// doublings and additions only (Sec 2 l.297; as sat::mul_int, Sec 5.2 l.1027-1028), at most
+  /// 2 (bit_width(c0) - 1) counted additions. +infinity if it does not fit W. Exact for
+  /// integers; for double every doubling is exact and each addition of h rounds once.
+  [[nodiscard]] W times_c0(W h, std::uint32_t c0) const {
+    W r = h;  // the leading bit of c0
+    for (int bit = static_cast<int>(std::bit_width(c0)) - 2; bit >= 0 && r != kInf; --bit) {
+      r = sadd(r, r);
+      if (((c0 >> bit) & 1U) != 0) r = sadd(r, h);
+    }
+    return r;
+  }
+
+  /// len <= c0 h (Def 4.1 H5, l.656), given bound = times_c0(h, c0). A bound beyond the range
+  /// of W exceeds every finite length. One counted comparison otherwise.
+  [[nodiscard]] bool within(W len, W bound) const { return bound == kInf || !less(bound, len); }
+
   /// 2a by one doubling (Sec 2, l.297), or nullopt if 2a is not representable (saturation, see
   /// the [Supplement] note in normalize.hpp).
   [[nodiscard]] std::optional<W> twice(W a) const {
@@ -57,6 +75,20 @@ class Arith {
   static constexpr W kInf = WeightTraits<W>::infinity();
   model::LenOps<W> ops_;
 };
+
+/// Def 4.1 admits only finite nonnegative lengths (Sec 4 l.646 arcs, l.656 links; infinity is a
+/// separate flag, Sec 2 l.293). model::Len::finite rejects NaN, negative and non-finite doubles
+/// and the integer infinity sentinel with std::invalid_argument. `what()` names the item; it is
+/// only called on failure, so valid input builds no strings.
+template <class W, class What>
+void require_length(W v, const What& what) {
+  try {
+    static_cast<void>(model::Len<W>::finite(v));
+  } catch (const std::invalid_argument& e) {
+    throw std::invalid_argument("normalize: " + what() +
+                                " has an invalid length (Def 4.1): " + e.what());
+  }
+}
 
 void bump([[maybe_unused]] Diagnostics* diag, [[maybe_unused]] const char* name,
           [[maybe_unused]] std::uint64_t k) {
@@ -93,6 +125,13 @@ NormalizedHierarchy<W> normalize(const OrderedHierarchy<W>& h, Diagnostics* diag
   }
   const auto internal = [&](NodeId v) { return !h.nodes[v].children.empty(); };
 
+  // Input lengths (Def 4.1 l.646): every arc of D has a finite nonnegative length, including
+  // self-arcs (discarded in step 5, l.719) and arcs between roots (l.720), which no later step
+  // compares. Links are checked with their node in step 1.
+  for (std::size_t a = 0; a < h.graph.arcs.size(); ++a) {
+    require_length(h.graph.arcs[a].length, [a] { return "arc " + std::to_string(a); });
+  }
+
   // Step 1 (l.686-688): masses bottom-up. S(C) = h(C) + its links + S of internal children.
   // [Deviation D-23] A mass that does not fit W saturates at +infinity: S(C) is only an upper
   // bound (on the physical diameter of C, Lemma 4.3), and +infinity is still one.
@@ -106,8 +145,22 @@ NormalizedHierarchy<W> normalize(const OrderedHierarchy<W>& h, Diagnostics* diag
       throw std::invalid_argument("normalize: node " + std::to_string(v) +
                                   " has a non-positive height (Def 4.1 H2)");
     }
+    // Def 4.1 H5 (l.656): a link certifies a walk of length at most c0 h(C). A NaN, +infinity,
+    // sentinel or over-long link would make S(C) unbounded, and Evaluate's root loop (Alg 3
+    // l.10) would then walk about S(C) / nu(C) slots (review F-3).
+    const W bound = ar.times_c0(nd.height, h.c0);
     W s = nd.height;
-    for (const auto& lk : nd.links) s = ar.sadd(s, lk.length);
+    for (std::size_t j = 0; j < nd.links.size(); ++j) {
+      const W len = nd.links[j].length;
+      const auto what = [j, v] {
+        return "link " + std::to_string(j) + " of node " + std::to_string(v);
+      };
+      require_length(len, what);
+      if (!ar.within(len, bound)) {
+        throw std::invalid_argument("normalize: " + what() + " is longer than c0 * h (Def 4.1 H5)");
+      }
+      s = ar.sadd(s, len);
+    }
     for (const NodeId c : nd.children) {
       if (internal(c)) s = ar.sadd(s, mass[c]);
     }

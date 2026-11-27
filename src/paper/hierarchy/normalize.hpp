@@ -147,7 +147,28 @@ struct NormalizedHierarchy {
 ///
 /// Throws std::invalid_argument if c0 == 0, if a height is not positive (H2), if the forest
 /// is malformed (some node unreachable from `roots`), or if the root quotient is cyclic (H4).
-/// Lengths that are negative or NaN raise std::invalid_argument from model::Len.
+///
+/// Invalid lengths (policy for every length of Def 4.1, review A-4): normalize() is the entry
+/// check of Evaluate (Alg 3 l.2), and it raises std::invalid_argument, never
+/// std::overflow_error or std::logic_error, for
+///   * an arc of D whose length is negative, NaN, +inf (double) or the integer infinity
+///     sentinel WeightTraits<W>::infinity(): every arc, also self-arcs (which step 5 then
+///     discards) and arcs between roots (Def 4.1 l.646, "nonnegative arc lengths"; infinity is
+///     a separate flag, not a length, Sec 2 l.293);
+///   * a link whose length is one of these, or exceeds c0 h(C) (H5, l.656). c0 h(C) is formed
+///     by the binary expansion of c0 (doublings and additions, O(log c0) per node, so the
+///     O(M + N) bound holds for every accepted c0); if it does not fit W it bounds every finite
+///     link. It is exact for integers and for double when c0 = 2^k (every producer has
+///     c0 <= 2). For double, c0 = 3 * 2^k rounds once to nearest, which never rejects a link
+///     <= c0 h(C); for other c0 the roundings add up, so a double link within a few ulp of
+///     c0 h(C) may be judged differently from the exact rule and from
+///     validate_ordered_hierarchy (kLinkTooLong, c0 - 1 additions). Without this check S(C)
+///     would be unbounded and Evaluate's root loop would not terminate in reasonable time
+///     (review F-3);
+///   * a height that is NaN, +inf or the sentinel (via model::Len, as for H2).
+/// -0.0 is the real 0 and is accepted. std::overflow_error stays reserved for distances that do
+/// not fit W (include/sssp/paper.hpp). The other conditions of Def 4.1 / 4.2 (H1, H3, H6, link
+/// endpoints, offers) are not checked here; validate_ordered_hierarchy checks them all.
 ///
 /// Counters (if `diag` is non-null): normalize_calls, normalize_input_nodes, normalize_nodes,
 /// normalize_normalization_links, normalize_link_sets, normalize_table_steps,
