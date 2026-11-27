@@ -1,0 +1,54 @@
+{
+ "id": "P2-HEAP-DARY",
+ "spec": "Indexed d-ary min-heap (template arity D, Dijkstra uses D=4) over ids [0,n) with push/decrease-key/pop, storage allocated once at construction, membership/key queries, invariant validator, comparison counter, std::invalid_argument/std::out_of_range on misuse",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/baseline/heaps/dary_heap.hpp"
+  ],
+  "tests": [
+   "tests/unit/baseline/heaps/test_dary_heap.cpp",
+   "tests/property/baseline/test_indexed_heap_properties.cpp",
+   "tests/property/baseline/indexed_heap_model.hpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "indexed d-ary heap pops in key order after decrease-key",
+    "indexed d-ary heap tracks membership and allows re-insertion",
+    "indexed d-ary heap rejects invalid operations",
+    "indexed 4-ary heap works with floating-point keys",
+    "indexed 4-ary heap counts key comparisons",
+    "indexed 4-ary heap matches the reference model",
+    "indexed binary and 8-ary heaps match the reference model"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E 'fatal error' | sort -u | head -8; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'baseline/heaps/dary_heap.hpp' file not found (heap not implemented yet)",
+   "timestamp": "2026-11-27T10:24:49+09:00",
+   "output_tail": "tests/property/baseline/test_indexed_heap_properties.cpp:6:10: fatal error: 'baseline/heaps/dary_heap.hpp' file not found\ntests/unit/baseline/heaps/test_dary_heap.cpp:7:10: fatal error: 'baseline/heaps/dary_heap.hpp' file not found\ntests/unit/baseline/heaps/test_fibonacci_heap.cpp:7:10: fatal error: 'baseline/heaps/fibonacci_heap.hpp' file not found\ntests/unit/baseline/heaps/test_radix_heap.cpp:7:10: fatal error: 'baseline/heaps/radix_heap.hpp' file not found"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug -R 'd-ary heap|4-ary heap|8-ary heap' 2>&1 | grep -E 'tests passed|Failed' && ctest --preset debug 2>&1 | grep -E 'tests passed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:26:00+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n100% tests passed, 0 tests failed out of 12\n100% tests passed, 0 tests failed out of 42"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug 2>&1 | grep -E 'tests passed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:26:15+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n100% tests passed, 0 tests failed out of 42"
+  }
+ ],
+ "commit": null
+}
