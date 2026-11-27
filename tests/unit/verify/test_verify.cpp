@@ -310,7 +310,9 @@ TEST_CASE("verify accepts Bellman-Ford on the required catalogue", "[verify][bel
     const auto r = sssp::baseline::bellman_ford(g, c.source);
     INFO(verify_sssp(g, c.source, r).summary());
     REQUIRE(verify_sssp(g, c.source, r).ok);  // exact in fl arithmetic
-    REQUIRE(verify_sssp(g, c.source, r, &fw[c.source], Tolerance::for_graph(g)).ok);
+    // Both sides are rounded (different associations): gamma_{2k}, docs/design/numerics.md 3.2.
+    const auto both_rounded = Tolerance::for_path_hops(2 * (c.n - 1));
+    REQUIRE(verify_sssp(g, c.source, r, &fw[c.source], both_rounded).ok);
   }
 }
 
