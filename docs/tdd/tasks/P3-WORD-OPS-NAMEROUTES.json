@@ -16,7 +16,7 @@
       "tests/unit/paper/model/test_word_ops.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -44,5 +44,5 @@
       "output_tail": "          Start 1010: regression:Counted<double> graphs reject negative and NaN weights\n1008/1015 Test  #908: differential:paper_sssp: hand example with zero classes, loops and an unreachable part - double .........................................................   Passed    0.10 sec\n1009/1015 Test #1013: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.04 sec\n1010/1015 Test  #906: differential:the missing outer construction throws instead of being replaced by a search ................................................................   Passed    0.08 sec\n1011/1015 Test #1012: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.07 sec\n1012/1015 Test #1010: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.05 sec\n1013/1015 Test  #950: differential:double overflow: large but finite sums are not reported ....................................................................................   Passed    0.11 sec\n1014/1015 Test #1014: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.07 sec\n1015/1015 Test  #965: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  149.75 sec\n\n100% tests passed, 0 tests failed out of 1015\n\nLabel Time Summary:\ndifferential    =  71.28 sec*proc (69 tests)\nintegration     =   1.18 sec*proc (6 tests)\nproperty        = 260.50 sec*proc (54 tests)\nregression      =   0.37 sec*proc (6 tests)\nunit            = 448.05 sec*proc (880 tests)\n\nTotal Test time (real) = 155.35 sec"
     }
   ],
-  "commit": null
+  "commit": "e1853aa"
 }
