@@ -9,10 +9,12 @@
 //     P5-LOCAL-UNIFY both call paper/local/assembly_core.hpp; the outputs themselves are pinned
 //     in property/paper_experimental/test_local_mode_b_property.cpp);
 //   * D-8: the Lambda formulas of research note 02 §4.3, computed by hand;
-//   * D-11: exact heights, links not longer than the height (c0 = 1).
+//   * D-11: exact heights, links not longer than the height (c0 = 1); the alignment is not
+//     used, so the paper's alignment with D-11 runs for every k >= 2 (Q-60).
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
@@ -39,6 +41,7 @@ using sssp::WeightTraits;
 namespace pe = sssp::paper_experimental;
 namespace lt = sssp::test::local;
 namespace mb = sssp::test::mode_b;
+using Catch::Matchers::ContainsSubstring;
 
 namespace {
 
@@ -78,12 +81,49 @@ TEST_CASE("Mode B local: an unsupported instance is a failure, not a substitutio
   const auto lambda = mb::make_params(pe::LocalAlignment::kLambda, pe::LocalAssembly::kGrid, 1);
   REQUIRE(lambda.local_branch(1) == pe::LocalBranch::kUnsupported);
   CHECK_THROWS_AS(pe::local_hierarchy(one, lambda), std::invalid_argument);
-  // The paper's formulas need N >= 32 and b + 1 <= N (Sec 5.4 l.1206, Q-03 conservative).
+  // The paper's formulas with the grid need N >= 32 and b + 1 <= N (Sec 5.4 l.1206, Q-03
+  // conservative). Q-60 (lead, 2026-11-27): the exact-height assembly (D-11) does not use the
+  // alignment, so this precondition applies to the grid only; see the next test case.
   const auto g31 = graph_of<W>(lt::Family::kPath, lt::Weights::kUniform, 31, 3);
-  for (const auto assembly : {pe::LocalAssembly::kGrid, pe::LocalAssembly::kExactHeight}) {
-    const auto p = mb::make_params(pe::LocalAlignment::kPaper, assembly, 3, {1, 1});
-    REQUIRE(p.local_branch(31) == pe::LocalBranch::kUnsupported);
-    CHECK_THROWS_AS(pe::local_hierarchy(g31, p), std::invalid_argument);
+  const auto p = mb::make_params(pe::LocalAlignment::kPaper, pe::LocalAssembly::kGrid, 3, {1, 1});
+  REQUIRE(p.local_branch(31) == pe::LocalBranch::kUnsupported);
+  CHECK_THROWS_AS(pe::local_hierarchy(g31, p), std::invalid_argument);
+  // D-11 needs N >= 2 under either alignment; k = 1 passes the size test 0 * L^0.
+  for (const auto alignment : {pe::LocalAlignment::kPaper, pe::LocalAlignment::kLambda}) {
+    const auto exact = mb::make_params(alignment, pe::LocalAssembly::kExactHeight, 1);
+    REQUIRE(exact.local_branch(1) == pe::LocalBranch::kUnsupported);
+    CHECK_THROWS_AS(pe::local_hierarchy(one, exact), std::invalid_argument);
+    CHECK_THROWS_WITH(pe::local_hierarchy(one, exact), ContainsSubstring("D-11"));
+  }
+}
+
+TEST_CASE("Mode B local: D-11 with the paper's alignment runs below 32 vertices (Q-60)",
+          "[paper_experimental][local]") {
+  using W = std::uint64_t;
+  // Q-60: D-11 ignores the alignment, so (paper alignment, exact height) takes the radial branch
+  // for k < max(32, b + 1) and builds the same hierarchy as (Lambda, exact height).
+  for (const std::uint64_t b : {std::uint64_t{3}, std::uint64_t{40}}) {
+    const auto g31 = graph_of<W>(lt::Family::kSparse, lt::Weights::kExponential, 31, 3 + b);
+    INFO("b = " << b);
+    const auto paper =
+        mb::make_params(pe::LocalAlignment::kPaper, pe::LocalAssembly::kExactHeight, b, {1, 1});
+    const auto lambda =
+        mb::make_params(pe::LocalAlignment::kLambda, pe::LocalAssembly::kExactHeight, b, {1, 1});
+    REQUIRE(paper.local_branch(31) == pe::LocalBranch::kRadial);
+    const auto run = pe::local_hierarchy(g31, paper);
+    CHECK(run.branch == pe::LocalBranch::kRadial);
+    CHECK(run.diag.fallbacks.empty());
+    CHECK(run.local.hierarchy.c0 == 1);
+    const auto report = sssp::paper::validate_ordered_hierarchy(run.local.hierarchy, g31);
+    INFO(report.summary());
+    CHECK(report.ok());
+    const auto want = pe::local_hierarchy(g31, lambda);
+    mb::require_same_result(run.local, want.local);
+    CHECK(mb::counters_without(run.diag, "") == mb::counters_without(want.diag, ""));
+#if SSSP_DIAGNOSTICS
+    CHECK(run.diag.counters.at("paper_experimental_local_exact_height") == 1);
+    CHECK(run.diag.counters.at("params.local.alignment=paper (ignored under D-11)") == 1);
+#endif
   }
 }
 

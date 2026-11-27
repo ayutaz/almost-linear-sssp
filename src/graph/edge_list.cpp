@@ -7,43 +7,15 @@
 #include <span>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
+
+#include "graph/union_find.hpp"
 
 namespace sssp {
 
 namespace {
 
 constexpr std::uint32_t kNoLabel = std::numeric_limits<std::uint32_t>::max();
-
-/// Union-find with union by size and path halving over the vertices of one edge list.
-class VertexSets {
- public:
-  explicit VertexSets(std::size_t n) : parent_(n), size_(n, 1) {
-    for (std::size_t v = 0; v < n; ++v) parent_[v] = static_cast<Vertex>(v);
-  }
-
-  Vertex find(Vertex x) {
-    while (parent_[x] != x) {
-      parent_[x] = parent_[parent_[x]];
-      x = parent_[x];
-    }
-    return x;
-  }
-
-  void unite(Vertex a, Vertex b) {
-    a = find(a);
-    b = find(b);
-    if (a == b) return;
-    if (size_[a] < size_[b]) std::swap(a, b);
-    parent_[b] = a;
-    size_[a] += size_[b];
-  }
-
- private:
-  std::vector<Vertex> parent_;
-  std::vector<std::size_t> size_;
-};
 
 /// Stable counting sort of the edge indices `order` by key(edge), keys in [0, n).
 template <class Key>
@@ -169,7 +141,7 @@ template <class W>
 ComponentLabels connected_components(const EdgeList<W>& g) {
   validate_edges<W>(g.num_vertices, g.edges);
   const std::size_t n = g.num_vertices;
-  VertexSets sets(n);
+  detail::UnionFind<Vertex> sets(n);
   for (const Edge<W>& e : g.edges) sets.unite(e.u, e.v);
 
   ComponentLabels c;

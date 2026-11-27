@@ -12,15 +12,14 @@
 //                   (paper alignment, grid)  paper::local_hierarchy itself, so the output is
 //                                            Mode A's (hierarchy, maps, fallbacks, counters);
 //                   (Lambda, grid)           D-8, paper_experimental::assemble_local_hierarchy;
-//                   (any, exact height)      D-11, the same engine (alignment unused;
-//                                            with the paper's alignment local_branch still
-//                                            demands k >= max(32, b + 1), which D-11 itself
-//                                            does not need).
+//                   (any, exact height)      D-11, the same engine (alignment unused, so
+//                                            local_branch accepts every k >= 2 under either
+//                                            alignment, Q-60).
 //                 No FallbackRecord: every vertex is handled by the construction.
 //   kUnsupported  the size test selects the radial branch but the variant's preconditions do
-//                 not hold (Sec 5.4 l.1206 for the paper's formulas, N >= 2 for D-8). This is a
-//                 failure: std::invalid_argument is thrown; no other construction is
-//                 substituted (CLAUDE.md, Mode B).
+//                 not hold (Sec 5.4 l.1206 for the paper's formulas with the grid, N >= 2 for
+//                 D-8 and for D-11). This is a failure: std::invalid_argument is thrown; no
+//                 other construction is substituted (CLAUDE.md, Mode B).
 //
 // The parameter log (params.record) is written into the result's Diagnostics before anything
 // else, so every hierarchy carries the parameter set it was built with.

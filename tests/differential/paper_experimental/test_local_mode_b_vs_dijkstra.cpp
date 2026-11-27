@@ -9,7 +9,9 @@
 //     Sec 5.4 formulas where they apply (N >= 32, b + 1 <= N);
 //   * separators b in {1, 2, 3, 4, ceil(log2 N)} (acceptance criterion) plus N and N + 1;
 //   * the D-8 premise "N >= 2, any b >= 1" is exercised from N = 2 upwards: no instance may
-//     throw (a violated scale relation of Sec 5.4 throws std::logic_error).
+//     throw (a violated scale relation of Sec 5.4 throws std::logic_error);
+//   * Q-60: D-11 with the paper's alignment (the alignment is unused) for every N = 2..31,
+//     below the Sec 5.4 l.1206 precondition of the paper's grid.
 // Weights: std::uint64_t and quarter-integer double (all sums exact, comparisons are equality).
 
 #include <catch2/catch_template_test_macros.hpp>
@@ -137,4 +139,32 @@ TEST_CASE("Mode B local (D-8, D-11) on clustered graphs with unaligned blocks",
   CHECK(unaligned_small > 0);
   CHECK(aligned > 0);
 #endif
+}
+
+TEMPLATE_TEST_CASE("Mode B local (paper alignment, D-11) below 32 vertices equals Dijkstra (Q-60)",
+                   "[paper_experimental][local]", std::uint64_t, double) {
+  // Q-60 (lead, 2026-11-27): the exact-height assembly (D-11) does not use the alignment, so the
+  // Sec 5.4 l.1206 precondition k >= max(32, b + 1) of the paper's alignment does not apply to it.
+  // For every k = 2..31 and every separator b (including b + 1 > k) the combination takes the
+  // radial branch, and Evaluate equals Dijkstra (with Def 4.1 / 4.2 checked on the seeded
+  // hierarchy by evaluate_and_check). That the hierarchy equals the (Lambda, D-11) one field for
+  // field is checked by the property test of the same name.
+  using W = TestType;
+  std::size_t runs = 0;
+  for (const auto f : {lt::Family::kPath, lt::Family::kSpider, lt::Family::kRandomTree,
+                       lt::Family::kSparse, lt::Family::kGrid, lt::Family::kComplete}) {
+    for (const auto wd : {lt::Weights::kTies, lt::Weights::kUniform, lt::Weights::kExponential}) {
+      for (std::size_t n = 2; n <= 31; ++n) {
+        const auto edges = lt::make_graph<W>(f, wd, n, 613 * n + 29);
+        const auto g = CsrGraph<W>::from_edges(n, edges);
+        for (const std::uint64_t b : mb::separators(n)) {
+          INFO(lt::name(f) << " " << lt::name(wd) << " n=" << n << " b=" << b);
+          check_variants(g, edges, b,
+                         {{pe::LocalAlignment::kPaper, pe::LocalAssembly::kExactHeight, {0, 0}}},
+                         runs);
+        }
+      }
+    }
+  }
+  CHECK(runs > 0);
 }

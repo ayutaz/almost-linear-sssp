@@ -14,7 +14,8 @@
 //   * grid against exact: every internal node of a grid hierarchy has the state set of an
 //     internal node of the exact-height hierarchy, whose height H lies in [g, upper) (at most
 //     upper for an inclusive bound): the grid only coarsens the exact heights by less than a
-//     factor of two.
+//     factor of two;
+//   * Q-60: D-11 with the paper's alignment through the Mode B entry point for N = 2..31.
 
 #include <algorithm>
 #include <catch2/catch_template_test_macros.hpp>
@@ -27,6 +28,7 @@
 #include <vector>
 
 #include "experimental/paper_experimental/local_assembly.hpp"
+#include "experimental/paper_experimental/local_hierarchy.hpp"
 #include "experimental/paper_experimental/params.hpp"
 #include "paper/hierarchy/ordered_hierarchy.hpp"
 #include "paper/local/assemble.hpp"
@@ -388,4 +390,45 @@ TEMPLATE_TEST_CASE("D-8 and D-11: ordered hierarchies, threshold SCCs and scale 
   CHECK(cov.aligned > 0);
   CHECK(cov.unattached > 0);
   CHECK(cov.global_nodes > 0);
+}
+
+TEMPLATE_TEST_CASE("D-11 with the paper's alignment below 32 vertices: Def 4.1 and threshold SCCs",
+                   "[paper_experimental][local]", std::uint64_t, double) {
+  // Q-60 (lead, 2026-11-27): D-11 does not use the alignment, so the Mode B entry point accepts
+  // (paper alignment, exact height) for every k >= 2, below the Sec 5.4 l.1206 precondition
+  // k >= max(32, b + 1) of the paper's grid. Its hierarchy is the engine's D-11 output, which
+  // satisfies Def 4.1 with c0 = 1 and the threshold-SCC characterisation (check_exact), and is the
+  // same under either alignment.
+  using W = TestType;
+  std::size_t checked = 0;
+  std::size_t below_hop_bound = 0;  // instances with b + 1 > k
+  for (const auto f : {lt::Family::kPath, lt::Family::kRandomTree, lt::Family::kSparse,
+                       lt::Family::kGrid, lt::Family::kComplete}) {
+    for (const auto wd : {lt::Weights::kTies, lt::Weights::kUniform, lt::Weights::kExponential}) {
+      for (std::size_t n = 2; n <= 31; ++n) {
+        const auto g = CsrGraph<W>::from_edges(n, lt::make_graph<W>(f, wd, n, 211 * n + 17));
+        for (const std::uint64_t b : mb::separators(n)) {
+          INFO(lt::name(f) << " " << lt::name(wd) << " n=" << n << " b=" << b);
+          const auto params =
+              mb::make_params(pe::LocalAlignment::kPaper, pe::LocalAssembly::kExactHeight, b);
+          REQUIRE(params.local_branch(n) == pe::LocalBranch::kRadial);
+          const auto run = pe::local_hierarchy(g, params);
+          REQUIRE(run.branch == pe::LocalBranch::kRadial);
+          REQUIRE(run.diag.fallbacks.empty());
+          const auto in = build(g, b);
+          const auto exact = pe::assemble_local_hierarchy(
+              in.od, in.rs, in.joins, pe::LocalAlignment::kPaper, pe::LocalAssembly::kExactHeight);
+          check_exact(g, in, exact);
+          mb::require_same_result(run.local, exact.result);
+          mb::require_same_assembly(exact, pe::assemble_local_hierarchy(
+                                               in.od, in.rs, in.joins, pe::LocalAlignment::kLambda,
+                                               pe::LocalAssembly::kExactHeight));
+          ++checked;
+          if (b + 1 > n) ++below_hop_bound;
+        }
+      }
+    }
+  }
+  CHECK(checked > 0);
+  CHECK(below_hop_bound > 0);
 }
