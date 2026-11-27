@@ -1,0 +1,108 @@
+# Source-based line coverage (clang) for P4-COVERAGE. Dispatch only: it builds the `coverage`
+# preset (Debug, instrumented) and runs the whole ctest suite, which is slow.
+# Output: per-file line coverage of src/paper/ in the job summary, full report as an artifact.
+name: coverage
+
+run-name: ${{ inputs.ref != '' && format('{0} {1}', github.workflow, inputs.ref) || github.workflow }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "commit to measure instead of the dispatched ref (empty = the dispatched ref)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.ref }}
+  cancel-in-progress: true
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: "1"
+  # Same apt clang major as ci.yml; llvm-profdata/llvm-cov must match the compiler's version.
+  LLVM_MAJOR: "22"
+
+jobs:
+  coverage:
+    name: coverage (clang source-based)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+
+      - name: Install LLVM ${{ env.LLVM_MAJOR }} (apt)
+        run: |
+          set -euo pipefail
+          pkgs=()
+          command -v "clang++-${LLVM_MAJOR}" >/dev/null || pkgs+=("clang-${LLVM_MAJOR}")
+          command -v "llvm-profdata-${LLVM_MAJOR}" >/dev/null || pkgs+=("llvm-${LLVM_MAJOR}")
+          command -v ninja >/dev/null || pkgs+=(ninja-build)
+          if [ "${#pkgs[@]}" -gt 0 ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends "${pkgs[@]}"
+          fi
+          {
+            echo "CXX=clang++-${LLVM_MAJOR}"
+            echo "LLVM_PROFDATA=$(command -v "llvm-profdata-${LLVM_MAJOR}")"
+            echo "LLVM_COV=$(command -v "llvm-cov-${LLVM_MAJOR}")"
+          } >> "$GITHUB_ENV"
+          "clang++-${LLVM_MAJOR}" --version
+          "llvm-cov-${LLVM_MAJOR}" --version
+
+      # Same steps as `make coverage` (configure + build + ctest + merge + report), plus the
+      # HTML and lcov outputs. A failing test fails the job: no coverage number from a red suite.
+      - name: Build, test and measure
+        run: scripts/coverage.sh --html --lcov
+
+      - name: Per-file line coverage of src/paper/ (job summary)
+        run: |
+          set -euo pipefail
+          python3 -I - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import os, sys
+          lcov = os.path.join("build", "coverage", "coverage", "coverage.lcov")
+          rows, cur = [], None
+          for line in open(lcov, encoding="utf-8"):
+              line = line.rstrip("\n")
+              if line.startswith("SF:"):
+                  cur = {"f": line[3:], "lf": 0, "lh": 0}
+              elif line.startswith("LF:") and cur:
+                  cur["lf"] = int(line[3:])
+              elif line.startswith("LH:") and cur:
+                  cur["lh"] = int(line[3:])
+              elif line == "end_of_record" and cur:
+                  if "/src/paper/" in cur["f"]:
+                      rows.append(cur)
+                  cur = None
+          rows.sort(key=lambda r: r["f"])
+          print("## Line coverage of `src/paper/` (Mode A; tests include Mode B callers)\n")
+          if not rows:
+              print("No `src/paper/` files in the report.")
+              sys.exit(1)
+          print("| File | Lines | Hit | Missed | Cover |")
+          print("|---|---:|---:|---:|---:|")
+          tl = th = 0
+          for r in rows:
+              name = r["f"][r["f"].index("/src/paper/") + 1:]
+              tl += r["lf"]
+              th += r["lh"]
+              pct = 100.0 * r["lh"] / r["lf"] if r["lf"] else 100.0
+              print(f"| `{name}` | {r['lf']} | {r['lh']} | {r['lf'] - r['lh']} | {pct:.1f} % |")
+          pct = 100.0 * th / tl if tl else 100.0
+          print(f"| **total** | **{tl}** | **{th}** | **{tl - th}** | **{pct:.1f} %** |")
+          print("\nTarget (docs/TASKS.md P4-COVERAGE): at least 90 % of lines in `src/paper/`.")
+          PY
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-report
+          path: build/coverage/coverage/
+          if-no-files-found: error
+          retention-days: 30
