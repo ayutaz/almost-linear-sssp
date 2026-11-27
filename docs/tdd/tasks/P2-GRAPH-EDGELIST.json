@@ -1,0 +1,44 @@
+{
+  "id": "P2-GRAPH-EDGELIST",
+  "spec": "Edge-list utilities on EdgeList<W> (W = uint64_t, double): keep_lightest_per_pair keeps exactly the (weight, index)-least edge of every unordered vertex pair (loops optionally dropped) and maps outputs to input edge ids; relabel_vertices applies an injective vertex map (kNoVertex drops the vertex and its edges); connected_components labels vertices canonically by smallest member; extract_component / largest_component return the induced component subgraph with vertex and edge maps; all validate their input",
+  "paper_ref": "none",
+  "files": {
+    "impl": [
+      "include/sssp/edge_list.hpp",
+      "src/graph/edge_list.cpp"
+    ],
+    "tests": [
+      "tests/unit/graph/test_edge_list.cpp",
+      "tests/property/graph/test_edge_list_property.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -R \"edge_list|keep_lightest|relabel_vertices|connected_components|component\"'",
+      "exit_code": 1,
+      "reason": "fatal error: 'sssp/edge_list.hpp' file not found: the edge-list utilities (keep_lightest_per_pair, relabel_vertices, connected_components, extract_component, component_of, largest_component) do not exist yet",
+      "timestamp": "2026-11-27T13:37:18+09:00",
+      "output_tail": "[184/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_json.cpp.o\n[185/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_cli.cpp.o\n[186/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/test_dijkstra_radix_heap.cpp.o\n[187/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/test_dijkstra_fibonacci_heap.cpp.o\n[188/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_record.cpp.o\n[189/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_edge_list.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_edge_list.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_edge_list.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_edge_list.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_edge_list.cpp.o -c ./tests/unit/graph/test_edge_list.cpp\n./tests/unit/graph/test_edge_list.cpp:11:10: fatal error: 'sssp/edge_list.hpp' file not found\n   11 | #include \"sssp/edge_list.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[190/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/counted/test_counted.cpp.o\n[191/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_csr_graph.cpp.o\n[192/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_run.cpp.o\n[193/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_geometric.cpp.o\n[194/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_graph_formats.cpp.o\n[195/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_generators.cpp.o\n[196/285] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_graph_io.cpp.o\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T13:45:12+09:00",
+      "output_tail": "          Start 1031: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n1024/1031 Test #1031: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.08 sec\n1025/1031 Test #1020: property:Lemma 7.7: on arbitrary cells a slot is scanned once per cell it meets - std::uint64_t .........................................................   Passed    1.60 sec\n1026/1031 Test #1021: property:Lemma 7.7: on arbitrary cells a slot is scanned once per cell it meets - double ................................................................   Passed    2.15 sec\n1027/1031 Test #1015: property:name_routes: Mode A certificates against Bellman-Ford, measured acceptance .....................................................................   Passed    4.25 sec\n1028/1031 Test #1023: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    2.97 sec\n1029/1031 Test #1024: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed   19.18 sec\n1030/1031 Test  #982: property:Lemmas 7.1 and 7.2 on seeded graph families - double ...........................................................................................   Passed   32.04 sec\n1031/1031 Test  #981: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  116.84 sec\n\n100% tests passed, 0 tests failed out of 1031\n\nLabel Time Summary:\ndifferential    =  43.33 sec*proc (69 tests)\nintegration     =   0.86 sec*proc (6 tests)\nproperty        = 217.37 sec*proc (64 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 172.07 sec*proc (886 tests)\n\nTotal Test time (real) = 143.25 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T13:54:26+09:00",
+      "output_tail": "          Start 1030: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n1024/1031 Test   #47: unit:4-ary-heap Dijkstra: zero weights, multi-edges, self-loops, components .............................................................................   Passed    0.06 sec\n1025/1031 Test #1029: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.02 sec\n1026/1031 Test  #975: property:relabel_vertices equals the brute-force mapped edge list - std::uint64_t .......................................................................   Passed    0.03 sec\n1027/1031 Test #1027: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.01 sec\n1028/1031 Test #1026: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.02 sec\n1029/1031 Test  #974: property:connected_components equals the brute-force closure labelling - double .........................................................................   Passed    0.04 sec\n1030/1031 Test #1030: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.02 sec\n1031/1031 Test  #981: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  273.81 sec\n\n100% tests passed, 0 tests failed out of 1031\n\nLabel Time Summary:\ndifferential    = 180.46 sec*proc (69 tests)\nintegration     =   2.96 sec*proc (6 tests)\nproperty        = 552.10 sec*proc (64 tests)\nregression      =   0.24 sec*proc (6 tests)\nunit            = 667.52 sec*proc (886 tests)\n\nTotal Test time (real) = 275.98 sec"
+    }
+  ],
+  "commit": "3f6cd75"
+}
