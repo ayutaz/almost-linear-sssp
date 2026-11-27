@@ -1,0 +1,49 @@
+{
+ "id": "P3-NORMALIZE",
+ "spec": "normalize(H) builds the link forest masses S(C) (heights + link lengths of the subtree), joins C to its parent P when 4S(C) >= h(P), rounds every height down on the power-of-two table of its link set to nu(C) in (h/2, h], contracts normalization links with equal units keeping the topmost mass, discards self-arcs, sends inter-root arcs to a topologically sorted root quotient and assigns every other arc to its LCA, keeping it as a light arc iff its length is below nu(LCA); the result is again a Def 4.1 hierarchy with heights nu and constant 2c0",
+ "paper_ref": "Sec 4.1 l.674-723, Lemma 4.3",
+ "files": {
+  "impl": [
+   "src/paper/hierarchy/normalize.hpp",
+   "src/paper/hierarchy/normalize.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/hierarchy/test_normalize.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "unit:normalize*"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E \"error|FAILED\" | head -5; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/hierarchy/normalize.hpp' file not found (Sec 4.1 normalization absent)",
+   "timestamp": "2026-11-27T11:00:29+09:00",
+   "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_normalize.cpp.o \ntests/unit/paper/hierarchy/test_normalize.cpp:25:10: fatal error: 'paper/hierarchy/normalize.hpp' file not found\n1 error generated."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "unit:normalize* (11 cases incl. uint64_t/double, 150 reference seeds and 3x40 base-case inputs each)"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug 2>&1 | tail -8",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T11:03:28+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\nLabel Time Summary:\ndifferential    =   1.38 sec*proc (4 tests)\nintegration     =   0.58 sec*proc (6 tests)\nproperty        =   2.70 sec*proc (11 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  17.76 sec*proc (356 tests)\n\nTotal Test time (real) =   4.91 sec"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "full suite without a pipe (the previous GREEN event piped ctest into tail, which hides its exit code)"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T11:03:42+09:00",
+   "output_tail": "        Start 378: regression:Counted<double> graphs reject negative and NaN weights\n371/378 Test #202: unit:H5: a link longer than c0 times the height is reported - double ....................................   Passed    0.05 sec\n372/378 Test  #24: unit:radix heap pops monotone 64-bit keys in order ......................................................   Passed    0.02 sec\n373/378 Test #192: unit:H3: a cycle of light arcs between children is reported at the parent - double ......................   Passed    0.04 sec\n374/378 Test #378: regression:Counted<double> graphs reject negative and NaN weights .......................................   Passed    0.02 sec\n375/378 Test #214: unit:reference hierarchy of a hand-built cycle has one node at the cycle's max - std::uint64_t ..........   Passed    0.05 sec\n376/378 Test #328: unit:counting sort rejects a key outside [0, k) .........................................................   Passed    0.07 sec\n377/378 Test  #68: unit:radix-heap Dijkstra: zero weights, multi-edges, self-loops, components .............................   Passed    0.06 sec\n378/378 Test #291: unit:forest lca returns nullopt for vertices in different trees .........................................   Passed    0.11 sec\n\n100% tests passed, 0 tests failed out of 378\n\nLabel Time Summary:\ndifferential    =   2.54 sec*proc (4 tests)\nintegration     =   0.79 sec*proc (6 tests)\nproperty        =   4.71 sec*proc (11 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            =  27.49 sec*proc (356 tests)\n\nTotal Test time (real) =   4.49 sec"
+  }
+ ],
+ "commit": "f19ed44"
+}
