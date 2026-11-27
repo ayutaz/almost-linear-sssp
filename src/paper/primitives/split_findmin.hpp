@@ -47,6 +47,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "paper/model/word_ops.hpp"
 #include "sssp/graph.hpp"
 #include "sssp/result.hpp"
 
@@ -91,7 +92,8 @@ template <class Key>
   }
 }
 
-/// ceil(log2(x)) for x >= 1, by doubling (integer word operations only, Sec 2).
+/// ceil(log2(x)) for x >= 1, by doubling (integer word operations only, Sec 2). Used only for
+/// sizes fixed at construction (block sizes, dyadic depth), never per operation (Q-51).
 [[nodiscard]] constexpr std::uint32_t sfm_ceil_log2(std::uint64_t x) noexcept {
   std::uint32_t c = 0;
   while (c < 64 && (std::uint64_t{1} << c) < x) ++c;
@@ -458,9 +460,10 @@ class DyadicSplitFindmin {
     node_hi_.assign(2 * padded, k_);
     for (std::uint32_t d = 0; d <= depth; ++d) {
       const std::size_t len = padded >> d;
-      for (std::size_t j = 0; j < (std::size_t{1} << d); ++j) {
+      // Node ranges by a scan that adds len per node (Sec 2 word operations: no products).
+      std::size_t lo = 0;
+      for (std::size_t j = 0; j < (std::size_t{1} << d); ++j, lo += len) {
         const std::size_t v = (std::size_t{1} << d) + j;
-        const std::size_t lo = j * len;
         if (lo >= k_) continue;  // wholly in the padding: ignored
         node_lo_[v] = static_cast<std::uint32_t>(lo);
         node_hi_[v] = static_cast<std::uint32_t>(std::min<std::size_t>(lo + len, k_));
@@ -538,6 +541,11 @@ extern template class DyadicSplitFindmin<double>;
 //
 // Upper is DyadicSplitFindmin in both blocking steps of the paper; Lower is either
 // DyadicSplitFindmin (first step) or the first-step structure itself (second step).
+//
+// Block lookups (Sec 2 l.305-306; Q-51 decision (b), resolves D-18): a record's block index and
+// offset, and each block's first record, are stored by one scan at construction
+// (model::BlockLayout); split, decrease, query and key read them by array access, without
+// integer division or multiplication.
 // ------------------------------------------------------------------------------------------
 template <SplitFindminLike Upper, SplitFindminLike Lower>
   requires std::same_as<typename Upper::key_type, typename Lower::key_type>
@@ -580,8 +588,8 @@ class BlockedSplitFindmin {
       SSSP_COUNT(++counters_.rejected_splits);
       return false;
     }
-    const std::uint32_t b = pos / block_;
-    const std::uint32_t off = pos - b * block_;
+    const std::uint32_t b = layout_.block_of(pos);
+    const std::uint32_t off = layout_.offset_of(pos);
     if (off == 0) {
       // "At a cut between blocks, split the upper whole run if necessary": only when block b
       // and block b-1 lie in the same upper run (otherwise b already starts an upper interval).
@@ -614,8 +622,8 @@ class BlockedSplitFindmin {
   void decrease(std::uint32_t i, key_type key) {
     sfm_detail::check_index(i, k_);
     sfm_detail::check_key(key);
-    const std::uint32_t b = i / block_;
-    const std::uint32_t off = i - b * block_;
+    const std::uint32_t b = layout_.block_of(i);
+    const std::uint32_t off = layout_.offset_of(i);
     sfm_detail::check_not_raised(lower_[b].key(off), key);
     lower_[b].decrease(off, key);
     if (whole_[b] != 0 && key < upper_.key(b)) upper_.decrease(b, key);
@@ -642,8 +650,7 @@ class BlockedSplitFindmin {
 
   [[nodiscard]] key_type key(std::uint32_t i) const {
     sfm_detail::check_index(i, k_);
-    const std::uint32_t b = i / block_;
-    return lower_[b].key(i - b * block_);
+    return lower_[layout_.block_of(i)].key(layout_.offset_of(i));
   }
 
   /// Own split counts plus the dyadic work (scans, rescans, exposures, list visits) of all
@@ -678,29 +685,30 @@ class BlockedSplitFindmin {
                       std::uint32_t block_size)
       : k_(sfm_detail::checked_size(keys.size())),
         block_(block_size != 0 ? block_size : sfm_block_size(k_)),
-        nblocks_((k_ + block_ - 1) / block_),
-        lower_(make_lowers(keys, block_)),
+        layout_(k_, block_),
+        nblocks_(layout_.num_blocks()),
+        lower_(make_lowers(keys, layout_)),
         upper_(std::span<const key_type>(proxy_keys(lower_))),
         whole_(nblocks_, 1),
         owner_up_(2 * static_cast<std::size_t>(nblocks_) - 1, 0),
-        owner_low_(2 * static_cast<std::size_t>(block_) * nblocks_, 0) {
+        owner_low_(2 * static_cast<std::size_t>(k_), 0) {
     owners_.reserve(2 * static_cast<std::size_t>(k_) - 1);
     make_owner(0, k_);
   }
 
-  static std::vector<Lower> make_lowers(const std::vector<key_type>& keys, std::uint32_t block) {
+  static std::vector<Lower> make_lowers(const std::vector<key_type>& keys,
+                                        const model::BlockLayout& layout) {
     sfm_detail::check_keys<key_type>(keys);
-    const auto k = static_cast<std::uint32_t>(keys.size());
     // Second blocking step (Lemma 3.11 proof): a blocked lower structure on a block of size B
     // uses block size B' = max(2, ceil(log2(B+1))). The paper does not say whether B' is
     // derived from B or from the block's own length; we derive it from B for every block,
     // including a short final block (research notes A7, an interpretation).
-    const std::uint32_t inner = sfm_block_size(block);
+    const std::uint32_t inner = sfm_block_size(layout.block_size());
     std::vector<Lower> lowers;
-    lowers.reserve((k + block - 1) / block);
-    for (std::uint32_t lo = 0; lo < k; lo += block) {
-      const std::uint32_t len = std::min(block, k - lo);
-      const std::span<const key_type> part(keys.data() + lo, len);
+    lowers.reserve(layout.num_blocks());
+    for (std::uint32_t b = 0; b < layout.num_blocks(); ++b) {
+      const std::uint32_t lo = layout.block_start(b);
+      const std::span<const key_type> part(keys.data() + lo, layout.block_end(b) - lo);
       if constexpr (std::constructible_from<Lower, std::span<const key_type>, std::uint32_t>) {
         lowers.emplace_back(part, inner);
       } else {
@@ -725,27 +733,29 @@ class BlockedSplitFindmin {
   }
 
   [[nodiscard]] std::size_t low_slot(std::uint32_t b, IntervalId lower_id) const noexcept {
-    // A lower structure on at most B records has at most 2B-1 interval IDs.
-    return 2 * static_cast<std::size_t>(block_) * b + lower_id;
+    // The lower structure of block b holds len_b = block_end(b) - block_start(b) records and so
+    // issues at most 2 len_b - 1 interval IDs; block b owns the slots [2 start_b, 2 end_b) of
+    // owner_low_ (2k slots in all). The doubling is a shift (Sec 2 word operations).
+    return (static_cast<std::size_t>(layout_.block_start(b)) << 1) + lower_id;
   }
 
   [[nodiscard]] IntervalId owner_of(std::uint32_t i) const {
     assert(i < k_);
-    const std::uint32_t b = i / block_;
+    const std::uint32_t b = layout_.block_of(i);
     if (whole_[b] != 0) return owner_up_[upper_.interval_of(b)];
-    return owner_low_[low_slot(b, lower_[b].interval_of(i - b * block_))];
+    return owner_low_[low_slot(b, lower_[b].interval_of(layout_.offset_of(i)))];
   }
 
   [[nodiscard]] SfmMin<key_type> fragment_min(std::uint32_t b, std::uint32_t i) const {
-    const SfmMin<key_type> m = lower_[b].query(i - b * block_);
-    return {m.key, b * block_ + m.index};
+    const SfmMin<key_type> m = lower_[b].query(layout_.offset_of(i));
+    return {m.key, layout_.block_start(b) + m.index};
   }
 
   [[nodiscard]] SfmMin<key_type> run_min(std::uint32_t first) const {
     const SfmMin<key_type> u = upper_.query(first);  // least proxy (ties: smaller block)
     const SfmMin<key_type> m = lower_[u.index].query(0);
     assert(!(m.key < u.key) && !(u.key < m.key));
-    return {u.key, u.index * block_ + m.index};
+    return {u.key, layout_.block_start(u.index) + m.index};
   }
 
   [[nodiscard]] SfmMin<key_type> pieces_min(const Owner& w) const {
@@ -764,19 +774,19 @@ class BlockedSplitFindmin {
   void make_owner(std::uint32_t lo, std::uint32_t hi) {
     const auto id = static_cast<IntervalId>(owners_.size());
     Owner w{lo, hi, kNone, kNone, kNone, {}};
-    const std::uint32_t bl = lo / block_;
-    const std::uint32_t br = (hi - 1) / block_;
+    const std::uint32_t bl = layout_.block_of(lo);
+    const std::uint32_t br = layout_.block_of(hi - 1);
     if (whole_[bl] == 0) {
       w.left_block = bl;
-      owner_low_[low_slot(bl, lower_[bl].interval_of(lo - bl * block_))] = id;
+      owner_low_[low_slot(bl, lower_[bl].interval_of(layout_.offset_of(lo)))] = id;
     } else {
-      assert(lo == bl * block_);
+      assert(lo == layout_.block_start(bl));
     }
     if (br != bl && whole_[br] == 0) {
       w.right_block = br;
-      owner_low_[low_slot(br, lower_[br].interval_of(hi - 1 - br * block_))] = id;
+      owner_low_[low_slot(br, lower_[br].interval_of(layout_.offset_of(hi - 1)))] = id;
     }
-    assert(whole_[br] == 0 || hi == std::min(k_, (br + 1) * block_));
+    assert(whole_[br] == 0 || hi == layout_.block_end(br));
     const std::uint32_t first = whole_[bl] != 0 ? bl : bl + 1;
     const bool has_run = bl == br ? whole_[bl] != 0 : (first < br || whole_[br] != 0);
     if (has_run) {
@@ -789,6 +799,7 @@ class BlockedSplitFindmin {
 
   std::uint32_t k_;
   std::uint32_t block_;
+  model::BlockLayout layout_;  ///< block index / offset per record, first record per block
   std::uint32_t nblocks_;
   std::vector<Lower> lower_;
   Upper upper_;

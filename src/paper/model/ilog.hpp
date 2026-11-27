@@ -5,6 +5,11 @@
 // Only integers (sizes, indices, counters) are passed here; real lengths never are (Sec 2,
 // l.300: no real register supplies a logarithm). The word versions use shifts and comparisons
 // only (constant words, at most 64 steps); the table realises the paper's O(K) tabulation.
+//
+// Use (decision (b) of Q-51): a path that runs once per operation (a draw, a lookup, a query)
+// reads logarithms from an IlogTable built once for its index range, or from a value computed
+// once for the range. The shift-loop word versions are for constants computed once per
+// instance (L_N, u, P, T, block sizes), whose cost is dominated by building the instance.
 
 #include <cstddef>
 #include <cstdint>
@@ -54,12 +59,16 @@ class IlogTable {
     return i == 1 ? 0u : static_cast<unsigned>(lg_[i - 1]) + 1u;
   }
 
+  /// Entries tabulated by the construction (diagnostic; 0 when SSSP_DIAGNOSTICS=0). Equals K.
+  [[nodiscard]] std::uint64_t build_steps() const noexcept { return build_steps_; }
+
  private:
   void check(std::uint64_t i) const {
     if (i == 0 || i > range()) throw std::out_of_range("IlogTable index outside 1..K");
   }
 
   std::vector<std::uint8_t> lg_;  ///< lg_[0] is unused
+  std::uint64_t build_steps_ = 0;
 };
 
 }  // namespace sssp::paper::model
