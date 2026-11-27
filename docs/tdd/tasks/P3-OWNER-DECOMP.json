@@ -1,0 +1,56 @@
+{
+  "id": "P3-OWNER-DECOMP",
+  "spec": "Owner decomposition with separator size b as a parameter: MST T, reduced graph (drop nontree w > D_T), postorder marks A0, A = A0 + Steiner branch vertices, one maximum corridor edge cut per two-pivot component (ties: smallest edge id), cells with one pivot each, p(v), r_v = b_T, R_v = D_T, T_A and sigma(p,q) = b_T(p,q) by its sorted merge hierarchy; satisfies Def 5.1 and Lemmas 5.2-5.3",
+  "paper_ref": "Sec 5.1 l.960-1018, Def 5.1, Lemma 5.2, Lemma 5.3",
+  "files": {
+    "impl": [
+      "src/paper/local/owner_decomposition.hpp",
+      "src/paper/local/owner_decomposition.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/local/test_owner_decomposition.cpp",
+      "tests/unit/paper/local/local_test_support.hpp",
+      "tests/property/paper/test_local_owner_property.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "unit:owner decomposition*",
+        "unit:reduced graph*",
+        "unit:local separator size*"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 2>&1 | grep -E \"error|FAILED\" | head -5; exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/local/owner_decomposition.hpp' file not found (Sec 5.1 owner decomposition absent)",
+      "timestamp": "2026-11-27T11:11:09+09:00",
+      "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_owner_decomposition.cpp.o \n./tests/unit/paper/local/test_owner_decomposition.cpp:15:10: fatal error: 'paper/local/owner_decomposition.hpp' file not found\n1 error generated."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "unit:owner decomposition* (7 cases)",
+        "unit:reduced graph*",
+        "unit:local separator size*",
+        "property:owner decomposition satisfies Def 5.1 and Lemmas 5.2-5.3 (uint64_t, double; 6 families x 3 weight laws x 6 seeds x 7 b)"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:18:53+09:00",
+      "output_tail": "        Start 513: property:radix heap matches the reference model under monotone keys\n523/530 Test #223: unit:Alg 4 records path counters and accepts a null Diagnostics .........................................................................................   Passed    0.03 sec\n524/530 Test #218: unit:local threshold uses the paper constants c = 2, e = 4 by default ...................................................................................   Passed    0.02 sec\n525/530 Test #221: unit:Alg 4 below the threshold runs the base case and records the fallback - std::uint64_t ..............................................................   Passed    0.05 sec\n526/530 Test #219: unit:local threshold never wraps around for large exponents or sizes ....................................................................................   Passed    0.05 sec\n527/530 Test #224: unit:Alg 4 on a single vertex is a base case with one leaf ..............................................................................................   Passed    0.09 sec\n528/530 Test #257: unit:signed pair addition is componentwise and negation swaps - std::uint64_t ...........................................................................   Passed    0.39 sec\n529/530 Test #222: unit:Alg 4 below the threshold runs the base case and records the fallback - double .....................................................................   Passed    0.11 sec\n530/530 Test #513: property:radix heap matches the reference model under monotone keys .....................................................................................   Passed    0.12 sec\n\n100% tests passed, 0 tests failed out of 530\n\nLabel Time Summary:\ndifferential    =   2.91 sec*proc (4 tests)\nintegration     =   1.42 sec*proc (6 tests)\nproperty        =  34.05 sec*proc (23 tests)\nregression      =   0.08 sec*proc (1 test)\nunit            = 239.79 sec*proc (496 tests)\n\nTotal Test time (real) =  34.89 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "all"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:20:02+09:00",
+      "output_tail": "        Start 218: unit:local threshold uses the paper constants c = 2, e = 4 by default\n523/530 Test #223: unit:Alg 4 records path counters and accepts a null Diagnostics .........................................................................................   Passed    0.11 sec\n524/530 Test #228: unit:Alg 4 radial branch requires a connected input .....................................................................................................   Passed    0.10 sec\n525/530 Test #346: unit:mst_three_pass equals the Kruskal MST on a hand example - double ...................................................................................   Passed    0.22 sec\n526/530 Test #218: unit:local threshold uses the paper constants c = 2, e = 4 by default ...................................................................................   Passed    0.09 sec\n527/530 Test #166: unit:valid hand-built ordered hierarchy passes the Def 4.1 checker - std::uint64_t ......................................................................   Passed    0.22 sec\n528/530 Test #185: unit:H4: a cycle among roots is reported regardless of arc length - double ..............................................................................   Passed    0.31 sec\n529/530 Test #250: unit:double lengths reject invalid values and detect overflow ...........................................................................................   Passed    0.31 sec\n530/530 Test #408: unit:split-findmin: zero records are rejected - sssp::paper::OneLevelBlockedSplitFindmin<double> ........................................................   Passed    0.31 sec\n\n100% tests passed, 0 tests failed out of 530\n\nLabel Time Summary:\ndifferential    =   1.94 sec*proc (4 tests)\nintegration     =   1.00 sec*proc (6 tests)\nproperty        =  20.80 sec*proc (23 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            = 144.19 sec*proc (496 tests)\n\nTotal Test time (real) =  23.99 sec"
+    }
+  ],
+  "commit": null
+}
