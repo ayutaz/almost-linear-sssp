@@ -177,9 +177,13 @@ jobs:
       - name: ctest regression
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: ctest --preset "${{ matrix.preset }}" -L '^regression$' --no-tests=ignore
+      # Tests tagged [slow] in Catch2 (paper-size inputs) carry the label <category>-slow.
+      - name: ctest slow (paper-size inputs)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ctest --preset "${{ matrix.preset }}" -L '^(unit|integration|differential|property|regression)-slow$' --no-tests=ignore
       - name: ctest unlabelled (safety net)
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: ctest --preset "${{ matrix.preset }}" -LE '^(unit|integration|differential|property|regression)$' --no-tests=ignore
+        run: ctest --preset "${{ matrix.preset }}" -LE '^(unit|integration|differential|property|regression)(-slow)?$' --no-tests=ignore
 
       - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         if: matrix.preset == 'ci'
