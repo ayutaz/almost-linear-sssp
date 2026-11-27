@@ -11,7 +11,7 @@
    "tests/unit/paper/hierarchy/test_reference_hierarchy.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -35,5 +35,5 @@
    "output_tail": "      Start 19: unit:H2: a child higher than its parent is reported at the child - double\n40/49 Test  #6: unit:valid hand-built ordered hierarchy passes the Def 4.1 checker - std::uint64_t ................   Passed    0.03 sec\n      Start  4: unit:weight traits define infinity per weight type\n41/49 Test #15: unit:H2: a zero height is reported - std::uint64_t ................................................   Passed    0.02 sec\n      Start 20: unit:H3: a cycle of light arcs between children is reported at the parent - std::uint64_t\n42/49 Test #16: unit:H2: a zero height is reported - double .......................................................   Passed    0.04 sec\n43/49 Test #19: unit:H2: a child higher than its parent is reported at the child - double .........................   Passed    0.02 sec\n44/49 Test #17: unit:H2: a NaN height is reported .................................................................   Passed    0.02 sec\n45/49 Test #36: unit:H6: a link that claims a backing state arc must match that arc - std::uint64_t ...............   Passed    0.02 sec\n46/49 Test #32: unit:H5: a link shorter than every physical walk is reported - std::uint64_t ......................   Passed    0.04 sec\n47/49 Test #20: unit:H3: a cycle of light arcs between children is reported at the parent - std::uint64_t .........   Passed    0.02 sec\n48/49 Test #13: unit:H2: an internal node with a single child is reported - std::uint64_t .........................   Passed    0.05 sec\n49/49 Test  #4: unit:weight traits define infinity per weight type ................................................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 49\n\nLabel Time Summary:\nunit    =   1.24 sec*proc (49 tests)\n\nTotal Test time (real) =   0.20 sec"
   }
  ],
- "commit": null
+ "commit": "6f37820"
 }

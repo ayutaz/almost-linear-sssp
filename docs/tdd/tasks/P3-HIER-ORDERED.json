@@ -11,7 +11,7 @@
    "tests/unit/paper/hierarchy/test_ordered_hierarchy_validate.cpp"
   ]
  },
- "phase": "REFACTOR",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -50,5 +50,5 @@
    "output_tail": "      Start 36: unit:H6: a link that claims a backing state arc must match that arc - std::uint64_t\n      Start  4: unit:weight traits define infinity per weight type\n      Start  1: unit:CSR stores both orientations of every undirected edge\n35/43 Test  #5: unit:integer distance addition detects overflow .............................................   Passed    0.02 sec\n36/43 Test #30: unit:H5: a link longer than c0 times the height is reported - std::uint64_t .................   Passed    0.03 sec\n      Start  9: unit:H1: an arc shorter than every physical walk is reported at that arc - double\n37/43 Test #22: unit:H3: arcs of length equal to the height are not light - std::uint64_t ...................   Passed    0.01 sec\n38/43 Test #17: unit:H2: a NaN height is reported ...........................................................   Passed    0.02 sec\n39/43 Test #43: unit:library exposes version and target paper ...............................................   Passed    0.02 sec\n40/43 Test #36: unit:H6: a link that claims a backing state arc must match that arc - std::uint64_t .........   Passed    0.01 sec\n41/43 Test  #4: unit:weight traits define infinity per weight type ..........................................   Passed    0.01 sec\n42/43 Test  #9: unit:H1: an arc shorter than every physical walk is reported at that arc - double ...........   Passed    0.01 sec\n43/43 Test  #1: unit:CSR stores both orientations of every undirected edge ..................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 43\n\nLabel Time Summary:\nunit    =   0.78 sec*proc (43 tests)\n\nTotal Test time (real) =   0.63 sec"
   }
  ],
- "commit": null
+ "commit": "36a860e"
 }
