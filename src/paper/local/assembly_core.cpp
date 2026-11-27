@@ -19,30 +19,24 @@ constexpr W kInf = WeightTraits<W>::infinity();
   throw std::logic_error(std::string(context) + ": " + what);
 }
 
-/// Exact merges (step 6, l.1189-1200; also the whole of D-11): the records `ids` sorted by
-/// (weight, index), the records of one weight merged simultaneously at height = upper = that
-/// weight (inclusive). Returns the number of classes. With `finite_only`, an infinite weight is
-/// an error (Sec 5.3 produces finite joins only).
+/// Exact merges (step 6, l.1189-1200): the records `ids` sorted by (weight, index), the records
+/// of one weight merged simultaneously at height = upper = that weight (inclusive).
 template <class W, class Merger>
-std::size_t exact_merges(std::vector<std::uint32_t>& ids, const std::vector<JoinRecord<W>>& jr,
-                         Merger& merger, bool finite_only, std::string_view context) {
+void exact_merges(std::vector<std::uint32_t>& ids, const std::vector<JoinRecord<W>>& jr,
+                  Merger& merger) {
   std::sort(ids.begin(), ids.end(), [&](std::uint32_t a, std::uint32_t b) {
     if (jr[a].weight < jr[b].weight) return true;
     if (jr[b].weight < jr[a].weight) return false;
     return a < b;
   });
-  std::size_t classes = 0;
   for (std::size_t i = 0; i < ids.size();) {
     std::size_t e = i + 1;
     while (e < ids.size() && !(jr[ids[i]].weight < jr[ids[e]].weight)) ++e;
     const W w = jr[ids[i]].weight;
-    if (finite_only && w == kInf<W>) broken(context, "an infinite join record");
     merger.merge_class(std::span<const std::uint32_t>(ids.data() + i, e - i), w, w, true,
                        NodeOrigin::kExactLocal);
-    ++classes;
     i = e;
   }
-  return classes;
 }
 
 struct GridStats {
@@ -226,7 +220,7 @@ GridStats grid_merges(LocalAssembly<W>& out, const OwnerDecomposition<W>& od,
     for (std::uint32_t y = 0; y < ny; ++y) {
       edges.clear();
       for (std::size_t i = ybegin[y]; i < ybegin[y + 1]; ++i) edges.push_back(light[yorder[i]]);
-      exact_merges(edges, jr, mb, false, context);
+      exact_merges(edges, jr, mb);
     }
   }
 
@@ -562,18 +556,8 @@ LocalAssembly<W> assemble(const OwnerDecomposition<W>& od, const RadialStateGrap
         return r;
       });
 
-  GridStats stats;
-  std::size_t exact_classes = 0;
-  if (!rule.exact_height) {
-    h.c0 = 2;  // Lemma 5.10
-    stats = grid_merges(out, od, rs, joins, rule, mb);
-  } else {
-    // Deviation D-11 (not in the paper): no grid, every distinct join weight is a class.
-    h.c0 = 1;  // links are arcs of length <= the exact height
-    std::vector<std::uint32_t> order(jr.size());
-    for (std::size_t i = 0; i < jr.size(); ++i) order[i] = static_cast<std::uint32_t>(i);
-    exact_classes = exact_merges(order, jr, mb, true, rule.context);
-  }
+  h.c0 = 2;  // Lemma 5.10
+  const GridStats stats = grid_merges(out, od, rs, joins, rule, mb);
 
   // Steps 9-10: links and orders (l.1281-1293).
   auto lo = link_and_order<W>(h.nodes, h.graph.arcs, h.leaf_of_state, out.node_upper,
@@ -584,26 +568,21 @@ LocalAssembly<W> assemble(const OwnerDecomposition<W>& od, const RadialStateGrap
     const std::size_t nn = h.nodes.size();
     SSSP_COUNT(++diag->counters["local_assemble_calls"]);
     SSSP_COUNT(diag->counters["local_assemble_blocks"] += rs.num_blocks);
-    if (!rule.exact_height) {
-      std::size_t kinds[4] = {0, 0, 0, 0};
-      for (const auto& bs : out.blocks) ++kinds[static_cast<std::size_t>(bs.kind)];
-      SSSP_COUNT(diag->counters["local_assemble_aligned_blocks"] += kinds[1]);
-      SSSP_COUNT(diag->counters["local_assemble_unaligned_blocks"] += kinds[2]);
-      SSSP_COUNT(diag->counters["local_assemble_unattached_blocks"] += kinds[3]);
-      SSSP_COUNT(diag->counters["local_assemble_y_components"] += stats.y_nontrivial);
-      SSSP_COUNT(diag->counters["local_assemble_grid_points"] += out.grid.size());
-      SSSP_COUNT(diag->counters["local_assemble_global_classes"] += stats.global_classes);
-      static_cast<void>(kinds);
-    } else {
-      SSSP_COUNT(diag->counters["local_assemble_exact_classes"] += exact_classes);
-    }
+    std::size_t kinds[4] = {0, 0, 0, 0};
+    for (const auto& bs : out.blocks) ++kinds[static_cast<std::size_t>(bs.kind)];
+    SSSP_COUNT(diag->counters["local_assemble_aligned_blocks"] += kinds[1]);
+    SSSP_COUNT(diag->counters["local_assemble_unaligned_blocks"] += kinds[2]);
+    SSSP_COUNT(diag->counters["local_assemble_unattached_blocks"] += kinds[3]);
+    SSSP_COUNT(diag->counters["local_assemble_y_components"] += stats.y_nontrivial);
+    SSSP_COUNT(diag->counters["local_assemble_grid_points"] += out.grid.size());
+    SSSP_COUNT(diag->counters["local_assemble_global_classes"] += stats.global_classes);
+    static_cast<void>(kinds);
     SSSP_COUNT(diag->counters["local_assemble_nodes"] += nn - s);
     SSSP_COUNT(diag->counters["local_assemble_links"] += lo.links);
     SSSP_COUNT(mb.dsu().add_counters(*diag));
     static_cast<void>(nn);
   }
   static_cast<void>(stats);
-  static_cast<void>(exact_classes);
   return out;
 }
 

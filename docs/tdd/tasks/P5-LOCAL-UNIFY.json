@@ -53,7 +53,21 @@
       "exit_code": 0,
       "timestamp": "2026-11-27T15:57:48+09:00",
       "output_tail": "[191/192] Linking CXX executable benchmarks/sssp_bench_driver_tests\n\n100% tests passed, 0 tests failed out of 105\n\nLabel Time Summary:\ndifferential    =  18.00 sec*proc (13 tests)\nproperty        =  19.91 sec*proc (22 tests)\nunit            =   5.60 sec*proc (70 tests)\n\nTotal Test time (real) =  15.66 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j4 2>&1 | grep -E \"error|warning:|Linking CXX executable tests\" | tail -6; ctest --preset debug -j4 -R \"local|Local|assembl|Mode B|D-8|D-11|Sec 5.4|Support grid|Separate grid|LengthScale|Rule::paper|ClassMerger|Alignment by|atom|Atom\" 2>&1 | tail -9'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T16:01:48+09:00",
+      "output_tail": "ninja: warning: premature end of file; recovering\n[183/192] Linking CXX executable tests/sssp_integration_tests\n[184/192] Linking CXX executable tests/sssp_unit_tests\n[186/192] Linking CXX executable tests/sssp_differential_tests\n[187/192] Linking CXX executable tests/sssp_property_tests\n[188/192] Linking CXX executable tests/sssp_regression_tests\n\n100% tests passed, 0 tests failed out of 104\n\nLabel Time Summary:\ndifferential    =  18.03 sec*proc (13 tests)\nproperty        =  20.13 sec*proc (22 tests)\nunit            =   5.68 sec*proc (69 tests)\n\nTotal Test time (real) =  15.51 sec"
     }
   ],
-  "commit": "d99ccf5"
+  "commit": "4cf78b0",
+  "test_reduction_allowed": [
+    {
+      "reason": "The D-11 exact-height switch moves out of src/paper/ (Mode A may hold only what the paper specifies), so the core's unit test of Rule::exact_height is removed; the same behaviour stays covered by 'D-11: exact heights with links no longer than the height' in tests/unit/paper_experimental/test_local_mode_b.cpp and by the pinned D-11 hashes",
+      "timestamp": "2026-11-27T16:00:59+09:00"
+    }
+  ]
 }

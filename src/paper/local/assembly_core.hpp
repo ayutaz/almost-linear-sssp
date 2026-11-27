@@ -8,7 +8,8 @@
 //     alignment test (l.1206) and the support end N^16 sigma (l.1216). These are the defaults;
 //     nothing else in src/paper/ passes another rule.
 //   * Mode B (experimental/paper_experimental/local_assembly.hpp) passes the Lambda formulas of
-//     deviation D-8, or sets Rule::exact_height for deviation D-11.
+//     deviation D-8. Its exact-height assembly (deviation D-11) is not a step of the paper and
+//     lives in Mode B; it reuses ClassMerger and link_and_order only.
 //   * Sec 8.2 (outer scales) uses the same grid with another unit (the name weight a) and
 //     another number of octaves (F^3 = 2^(3f)), research note 04 §2.5 and §4 M-6 / M-8. The
 //     pieces it needs are callable on their own: key_supports + build_support_grid,
@@ -105,15 +106,11 @@ struct Rule {
   LengthScale align;
   /// Step 4 (l.1216): the support of a named key sigma ends at support_end(sigma). Paper: N^16.
   LengthScale support_end;
-  /// NOT in the paper (deviation D-11, Q-39; Mode B only): skip steps 1-8 and merge all join
-  /// records of one weight simultaneously at height = that weight (c0 = 1). `align` and
-  /// `support_end` are then unused. Mode A never sets it.
-  bool exact_height = false;
   /// Prefix of the exception messages.
   std::string context = "assemble_local_hierarchy";
 
   /// The paper's constants for N vertices: c = 10 (kLocalAlignExponent) and N^16
-  /// (kLocalSupportExponent), with the grid.
+  /// (kLocalSupportExponent).
   [[nodiscard]] static Rule paper(std::size_t n) {
     Rule r;
     r.align = LengthScale::int_power(n, kLocalAlignExponent);
@@ -335,9 +332,7 @@ void check_inputs(const OwnerDecomposition<W>& od, const RadialStateGraph<W>& rs
 /// the preconditions of its constants (Mode A: local_assembly_applies). Throws
 /// std::invalid_argument via check_inputs and std::logic_error if a scale relation the
 /// construction relies on fails. Counters (if `diag` is non-null): those listed at
-/// paper::assemble_local_hierarchy; with rule.exact_height only local_assemble_calls,
-/// local_assemble_blocks, local_assemble_exact_classes, local_assemble_nodes,
-/// local_assemble_links and the dsu.* counters.
+/// paper::assemble_local_hierarchy.
 template <class W>
 LocalAssembly<W> assemble(const OwnerDecomposition<W>& od, const RadialStateGraph<W>& rs,
                           const ThresholdJoins<W>& joins, const Rule& rule,
