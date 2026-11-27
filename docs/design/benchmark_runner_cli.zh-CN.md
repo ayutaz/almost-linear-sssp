@@ -106,4 +106,4 @@ build/release/sssp_bench_runner \
   `shape_args` 为 `--avg-degree 4` / `--degree 4` / `--attach 2` / `-`(无)。
 - 作业顺序已由 order seed 打乱。1 个作业 = 1 个进程(`--isolate`)。
 - 运行器不存在时:`run_benchmarks.sh` 输出"sssp_bench_runner が見つかりません"(找不到 sssp_bench_runner)并以退出码 2 结束。
-  仅在 `smoke --allow-missing-runner`(用于 CI)时输出"未実装"(尚未实现)并以退出码 0 结束。
+  仅在 `smoke --allow-missing-runner`(用于 CI)时输出包含 `計測をスキップしました`(“已跳过测量”;CI 按此字符串匹配)的一行,并以退出码 0 结束。

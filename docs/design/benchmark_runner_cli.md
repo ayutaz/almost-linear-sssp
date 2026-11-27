@@ -106,4 +106,4 @@ For families whose degree is fixed by the family (`grid`, `road`, `tree`, `adver
   `shape_args` is `--avg-degree 4` / `--degree 4` / `--attach 2` / `-` (none).
 - The job order is already shuffled by the order seed. One job = one process (`--isolate`).
 - When the runner is missing: `run_benchmarks.sh` prints "sssp_bench_runner が見つかりません" (sssp_bench_runner not found) and exits with code 2.
-  Only with `smoke --allow-missing-runner` (for CI) does it print "未実装" (not implemented) and exit with code 0.
+  Only with `smoke --allow-missing-runner` (for CI) does it print a line containing `計測をスキップしました` ("measurement skipped"; CI matches this string) and exit with code 0.

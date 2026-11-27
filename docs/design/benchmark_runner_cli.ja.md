@@ -106,4 +106,4 @@ build/release/sssp_bench_runner \
   `shape_args` は `--avg-degree 4` / `--degree 4` / `--attach 2` / `-`(なし)。
 - ジョブの順序は order seed でシャッフル済み。1 ジョブ = 1 プロセス(`--isolate`)。
 - ランナーが無いとき: `run_benchmarks.sh` は「sssp_bench_runner が見つかりません」と出して終了コード 2。
-  `smoke --allow-missing-runner`(CI 用)のときだけ「未実装」と出して終了コード 0。
+  `smoke --allow-missing-runner`(CI 用)のときだけ、`計測をスキップしました` を含む行(CI はこの文言で照合する)を出して終了コード 0。
