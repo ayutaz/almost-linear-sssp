@@ -22,7 +22,7 @@
       "src/paper/local/owner_decomposition.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -50,5 +50,5 @@
       "output_tail": "          Start 1032: property:Lemmas 8.1-8.3: long owner paths (h > 16) and the three-pivot corridor - double\n1043/1050 Test   #29: unit:radix heap counts comparisons only when searching a bucket minimum .................................................................................   Passed    0.08 sec\n1044/1050 Test   #35: unit:Bellman-Ford computes distances and a tree on a small graph - double ...............................................................................   Passed    0.37 sec\n1045/1050 Test   #30: unit:Bellman-Ford rejects an invalid source - U64 .......................................................................................................   Passed    0.38 sec\n1046/1050 Test    #2: unit:binary heap keeps duplicate keys as separate entries ...............................................................................................   Passed    0.40 sec\n1047/1050 Test   #28: unit:radix heap handles the full 64-bit key range .......................................................................................................   Passed    0.39 sec\n1048/1050 Test #1031: property:Lemmas 8.1-8.3: long owner paths (h > 16) and the three-pivot corridor - std::uint64_t .........................................................   Passed    2.87 sec\n1049/1050 Test #1032: property:Lemmas 8.1-8.3: long owner paths (h > 16) and the three-pivot corridor - double ................................................................   Passed    5.00 sec\n1050/1050 Test  #992: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  118.25 sec\n\n100% tests passed, 0 tests failed out of 1050\n\nLabel Time Summary:\ndifferential    = 117.73 sec*proc (77 tests)\nintegration     =   0.99 sec*proc (6 tests)\nproperty        = 281.82 sec*proc (62 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 275.91 sec*proc (899 tests)\n\nTotal Test time (real) = 123.44 sec"
     }
   ],
-  "commit": null
+  "commit": "8874fc0"
 }
