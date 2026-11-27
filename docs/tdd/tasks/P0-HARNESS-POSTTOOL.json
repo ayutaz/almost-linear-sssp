@@ -1,0 +1,38 @@
+{
+  "id": "P0-HARNESS-POSTTOOL",
+  "spec": "PostToolUse hook (Edit|Write|MultiEdit): formats only the edited file (clang-format for C++, ruff format + ruff check for Python), runs a light check for C++ changes (cmake --build build/<preset> --target sssp_<cat>_tests, then ctest -L ^<cat>$ -LE bench; never benchmarks) under a total timeout and a flock on .tdd/runtime/postcheck.lock, records the result per category in .tdd/runtime/last_check.json, reports failures via additionalContext, and always exits 0",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      ".claude/hooks/post_tool_use.py"
+    ],
+    "tests": [
+      "tests/harness/test_post_tool_use.py"
+    ]
+  },
+  "phase": "GREEN",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "tests/harness/test_post_tool_use.py (23 tests)"
+      ],
+      "command": "uv run pytest tests/harness/test_post_tool_use.py",
+      "exit_code": 1,
+      "reason": "feature absent: .claude/hooks/post_tool_use.py does not exist, so the hook process exits 2 (assert 2 == 0) in every test",
+      "timestamp": "2026-11-27T10:32:20+0900",
+      "output_tail": "FAILED tests/harness/test_post_tool_use.py::test_build_failure_records_fail_and_reports\nFAILED tests/harness/test_post_tool_use.py::test_test_failure_records_fail_and_reports\nFAILED tests/harness/test_post_tool_use.py::test_output_tail_is_last_20_lines\nFAILED tests/harness/test_post_tool_use.py::test_no_build_ninja_means_no_cmake\nFAILED tests/harness/test_post_tool_use.py::test_postcheck_env_zero_disables_check\nFAILED tests/harness/test_post_tool_use.py::test_config_disabled_and_preset\nFAILED tests/harness/test_post_tool_use.py::test_timeout_records_timeout_and_hook_returns_in_time\nFAILED tests/harness/test_post_tool_use.py::test_other_categories_are_preserved\nFAILED tests/harness/test_post_tool_use.py::test_busy_lock_records_skipped - ...\nFAILED tests/harness/test_post_tool_use.py::test_file_outside_root_is_ignored\nFAILED tests/harness/test_post_tool_use.py::test_invalid_stdin_exits_zero - a...\nFAILED tests/harness/test_post_tool_use.py::test_missing_file_path_exits_zero\n23 failed in 3.33s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "tests/harness/test_post_tool_use.py (23 tests)"
+      ],
+      "command": "uv run pytest tests/harness/test_post_tool_use.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:33:45+0900",
+      "output_tail": "23 passed in 10.66s"
+    }
+  ],
+  "commit": null
+}

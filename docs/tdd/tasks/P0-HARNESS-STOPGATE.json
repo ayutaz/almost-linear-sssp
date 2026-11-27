@@ -1,0 +1,120 @@
+{
+  "id": "P0-HARNESS-STOPGATE",
+  "spec": "Stop hook blocks stopping (decision=block with reason and remedies) while checks fail, an active task is left RED, changes are uncommitted, or docs/PROGRESS.md is missing/stale; allows when the user's last prompt explicitly asks to stop, when disabled (config or TDD_STOP_GATE=off), and on stop_hook_active or max_consecutive_blocks identical blocks (then appends a deduplicated report to docs/reports/stop_gate_unresolved.md); the hook's own report and .tdd/runtime/ files never count as changes; always exits 0",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      ".claude/hooks/stop_gate.py"
+    ],
+    "tests": [
+      "tests/harness/test_stop_gate.py"
+    ]
+  },
+  "phase": "GREEN",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "tests/harness/test_stop_gate.py (25 tests)"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py",
+      "exit_code": 1,
+      "reason": "feature absent: .claude/hooks/stop_gate.py does not exist (exit 2, can't open file); 22 failed, 3 passed (the 3 only assert 'not blocked')",
+      "timestamp": "2026-11-27T10:29:23+0900",
+      "output_tail": "FAILED tests/harness/test_stop_gate.py::test_uncommitted_changes_block - asse...\nFAILED tests/harness/test_stop_gate.py::test_progress_missing_blocks - assert...\nFAILED tests/harness/test_stop_gate.py::test_progress_older_than_changes_blocks\nFAILED tests/harness/test_stop_gate.py::test_stop_hook_active_allows_and_reports\nFAILED tests/harness/test_stop_gate.py::test_same_reason_third_time_allows_and_reports\nFAILED tests/harness/test_stop_gate.py::test_report_is_not_duplicated - FileN...\nFAILED tests/harness/test_stop_gate.py::test_changed_reason_restarts_counter\nFAILED tests/harness/test_stop_gate.py::test_user_says_stop_in_japanese - Ass...\nFAILED tests/harness/test_stop_gate.py::test_user_says_stop_in_english_list_content\nFAILED tests/harness/test_stop_gate.py::test_stop_inside_long_prompt_is_ignored\nFAILED tests/harness/test_stop_gate.py::test_tool_result_and_system_rows_are_ignored\nFAILED tests/harness/test_stop_gate.py::test_older_stop_request_superseded_by_newer_prompt\nFAILED tests/harness/test_stop_gate.py::test_broken_transcript_does_not_crash\nFAILED tests/harness/test_stop_gate.py::test_disabled_in_config - assert 2 == 0\nFAILED tests/harness/test_stop_gate.py::test_disabled_by_env - assert 2 == 0\nFAILED tests/harness/test_stop_gate.py::test_non_git_directory - AssertionErr...\nFAILED tests/harness/test_stop_gate.py::test_invalid_stdin - AssertionError: ...\nFAILED tests/harness/test_stop_gate.py::test_broken_runtime_files - Assertion...\nFAILED tests/harness/test_stop_gate.py::test_own_report_does_not_cause_a_new_block\n22 failed, 3 passed in 4.96s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_runtime_state_is_ignored_even_without_gitignore"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py -k runtime_state",
+      "exit_code": 1,
+      "reason": "bug: .tdd/runtime/ files (the hook's own stop_gate.json) counted as uncommitted changes when not gitignored, so the reason hash changed every run",
+      "timestamp": "2026-11-27T10:31:38+0900",
+      "output_tail": "        _fail_check(repo)\n        r1 = run_hook(\"stop_gate\", _payload(), repo)\n        r2 = run_hook(\"stop_gate\", _payload(), repo)\n        assert _blocked(r1) and _blocked(r2)\n>       assert \".tdd/runtime\" not in r2.json[\"reason\"]\nE       AssertionError: assert '.tdd/runtime' not in '作業がまだ終わっていな...用者に報告してください。'\nE         \nE         '.tdd/runtime' is contained here:\nE           の変更が 2 件: .tdd/runtime/last_check.json, .tdd/runtime/stop_gate.json\nE         ?           ++++++++++++\nE           - docs/PROGRESS.md が変更より古い(例: .tdd/runtime/last_check.json, .tdd/runtime/stop_gate.json)\nE           解消方法:\nE           - 失敗している検査を再実行し、テストを通るよう実装を修正する...\nE         \nE         ...Full output truncated, use '-vv' to show\n\ntests/harness/test_stop_gate.py:378: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_stop_gate.py::test_runtime_state_is_ignored_even_without_gitignore\n1 failed, 25 deselected in 0.34s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "tests/harness/test_stop_gate.py (26 tests)"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:31:52+0900",
+      "output_tail": "..........................                                               [100%]\n26 passed in 6.32s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_uncommitted_reason_is_stable_while_files_change",
+        "test_allowed_continuation_stops_are_not_counted_as_blocks",
+        "test_report_does_not_leak_absolute_paths"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py",
+      "exit_code": 1,
+      "reason": "uncommitted-change reason hashes the whole file list so the 3-block cap never triggers while work continues; allowed continuation stops are counted as blocks; the report embeds the absolute repository path",
+      "timestamp": "2026-11-27T10:52:20+09:00",
+      "output_tail": "        _clean(repo)\n        (repo / \"wip.txt\").write_text(\"x\")\n        run_hook(\"stop_gate\", _payload(stop_hook_active=True), repo)\n        report = (repo / REPORT).read_text()\n>       assert str(repo) not in report\nE       assert '$TMPDIR' not in '# Stop gate...tus\\n```\\n\\n'\nE         \nE         '$TMPDIR' is contained here:\nE           , \"cwd\": \"$TMPDIR/pytest-of-$USER/pytest-593/test_report_does_not_leak_abso0/proj\", \"stop_hook_active\": false, \"transcript_path\": \"\"}' | python3 .claude/hooks/stop_gate.py\nE           git status --porcelain\nE           cat .tdd/runtime/last_check.json\nE           uv run python scripts/tdd.py status\nE           ```\n\ntests/harness/test_stop_gate.py:411: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_stop_gate.py::test_uncommitted_reason_is_stable_while_files_change\nFAILED tests/harness/test_stop_gate.py::test_allowed_continuation_stops_are_not_counted_as_blocks\nFAILED tests/harness/test_stop_gate.py::test_report_does_not_leak_absolute_paths\n3 failed, 26 passed in 6.85s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_uncommitted_reason_is_stable_while_files_change",
+        "test_allowed_continuation_stops_are_not_counted_as_blocks",
+        "test_report_does_not_leak_absolute_paths"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:53:05+09:00",
+      "output_tail": ".............................                                            [100%]\n29 passed in 26.24s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_report_lives_outside_tracked_paths"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py",
+      "exit_code": 1,
+      "reason": "report is written to the tracked path docs/reports/stop_gate_unresolved.md (contains session ids) instead of the git-ignored .tdd/runtime/",
+      "timestamp": "2026-11-27T11:05:15+09:00",
+      "output_tail": "    def test_report_lives_outside_tracked_paths(repo, run_hook):\n        \"\"\"The report holds session ids: it must stay in the git-ignored runtime dir.\"\"\"\n        _clean(repo)\n        _fail_check(repo)\n        run_hook(\"stop_gate\", _payload(stop_hook_active=True, session_id=\"sess-xyz\"), repo)\n>       assert (repo / REPORT).exists()\nE       AssertionError: assert False\nE        +  where False = exists()\nE        +    where exists = (PosixPath('$TMPDIR/pytest-of-$USER/pytest-614/test_report_lives_outside_trac0/proj') / PosixPath('.tdd/runtime/stop_gate_unresolved.md')).exists\n\ntests/harness/test_stop_gate.py:420: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_stop_gate.py::test_stop_hook_active_allows_and_reports\nFAILED tests/harness/test_stop_gate.py::test_same_reason_third_time_allows_and_reports\nFAILED tests/harness/test_stop_gate.py::test_report_is_not_duplicated - FileN...\nFAILED tests/harness/test_stop_gate.py::test_own_report_does_not_cause_a_new_block\nFAILED tests/harness/test_stop_gate.py::test_uncommitted_reason_is_stable_while_files_change\nFAILED tests/harness/test_stop_gate.py::test_report_does_not_leak_absolute_paths\nFAILED tests/harness/test_stop_gate.py::test_report_lives_outside_tracked_paths\n7 failed, 23 passed in 30.83s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_report_lives_outside_tracked_paths"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:05:59+09:00",
+      "output_tail": "..............................                                           [100%]\n30 passed in 28.07s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_running_helper_downgrades_uncommitted_to_a_warning",
+        "test_failed_tests_still_block_while_helper_runs",
+        "test_warning_only_stop_does_not_count_as_block"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py",
+      "exit_code": 1,
+      "reason": "uncommitted/PROGRESS issues block the lead even while subagents/teammates/workflows listed in background_tasks are still running",
+      "timestamp": "2026-11-27T11:09:35+09:00",
+      "output_tail": "\n    def test_warning_only_stop_does_not_count_as_block(repo, run_hook):\n        _clean(repo)\n        (repo / \"wip.txt\").write_text(\"x\")\n        for _ in range(4):\n>           assert not _blocked(run_hook(\"stop_gate\", _payload(background_tasks=_bg(\"subagent\")), repo))\nE           assert not True\nE            +  where True = _blocked(HookResult(code=0, stdout='{\"decision\": \"block\", \"reason\": \"作業がまだ終わっていないため停止できません。次を解消してください:\\\\n- 未コミットの変更が 1 件: wip.t...するか、サブエージェントならメインに変更一覧を報告する)\\\\n- docs/PROGRESS.md に今回の進捗と次の作業を書く\\\\nどうしても解消できない場合は、理由を明記して利用者に報告してください。\"}\\n', stderr=''))\nE            +    where HookResult(code=0, stdout='{\"decision\": \"block\", \"reason\": \"作業がまだ終わっていないため停止できません。次を解消してください:\\\\n- 未コミットの変更が 1 件: wip.t...するか、サブエージェントならメインに変更一覧を報告する)\\\\n- docs/PROGRESS.md に今回の進捗と次の作業を書く\\\\nどうしても解消できない場合は、理由を明記して利用者に報告してください。\"}\\n', stderr='') = <function run_hook.<locals>._run at 0x109a94300>('stop_gate', {'hook_event_name': 'Stop', 'stop_hook_active': False, 'transcript_path': '/nonexistent/transcript.jsonl', 'permission_mode': 'default', ...}, PosixPath('$TMPDIR/pytest-of-$USER/pytest-626/test_warning_only_stop_does_no0/proj'))\nE            +      where {'hook_event_name': 'Stop', 'stop_hook_active': False, 'transcript_path': '/nonexistent/transcript.jsonl', 'permission_mode': 'default', ...} = _payload(background_tasks=[{'id': 't1', 'type': 'subagent', 'status': 'running', 'description': 'helper'}])\nE            +        where [{'id': 't1', 'type': 'subagent', 'status': 'running', 'description': 'helper'}] = _bg('subagent')\n\ntests/harness/test_stop_gate.py:502: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_stop_gate.py::test_running_helper_downgrades_uncommitted_to_a_warning[subagent]\nFAILED tests/harness/test_stop_gate.py::test_running_helper_downgrades_uncommitted_to_a_warning[teammate]\nFAILED tests/harness/test_stop_gate.py::test_running_helper_downgrades_uncommitted_to_a_warning[workflow]\nFAILED tests/harness/test_stop_gate.py::test_failed_tests_still_block_while_helper_runs\nFAILED tests/harness/test_stop_gate.py::test_warning_only_stop_does_not_count_as_block\n5 failed, 35 passed in 9.60s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_running_helper_downgrades_uncommitted_to_a_warning",
+        "test_failed_tests_still_block_while_helper_runs",
+        "test_warning_only_stop_does_not_count_as_block"
+      ],
+      "command": "uv run pytest tests/harness/test_stop_gate.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:12:35+09:00",
+      "output_tail": "........................................                                 [100%]\n40 passed in 43.64s"
+    }
+  ],
+  "commit": null
+}

@@ -1,0 +1,18 @@
+{
+  "enforce": false,
+  "impl_dirs": ["src/", "include/", "tools/"],
+  "test_dirs": ["tests/"],
+  "stop_gate": {
+    "enabled": true,
+    "check_failed_tests": true,
+    "check_red_tasks": true,
+    "check_uncommitted": true,
+    "check_progress_updated": true,
+    "max_consecutive_blocks": 3
+  },
+  "post_check": {
+    "enabled": true,
+    "timeout_sec": 120,
+    "preset": "debug"
+  }
+}

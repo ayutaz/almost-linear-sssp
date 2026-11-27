@@ -1,0 +1,49 @@
+{
+  "id": "P0-HARNESS-SETTINGS",
+  "spec": ".claude/settings.json registers SessionStart/PreToolUse/PostToolUse/PreCompact/Stop in exec form (python3 + ${CLAUDE_PROJECT_DIR} path), exact-list matchers, timeouts above the post-check budget, permission deny rules for force push/reset --hard/clean -f/branch -D/gh repo delete; .tdd/config.json starts with enforce=false; every hook exits 0 on minimal input",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      ".claude/settings.json",
+      ".tdd/config.json"
+    ],
+    "tests": [
+      "tests/harness/test_settings.py"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "tests/harness/test_settings.py"
+      ],
+      "command": "uv run pytest tests/harness/test_settings.py",
+      "exit_code": 1,
+      "reason": ".claude/settings.json and .tdd/config.json do not exist yet (feature absent)",
+      "timestamp": "2026-11-27T10:56:07+09:00",
+      "output_tail": "=========================== short test summary info ============================\nFAILED tests/harness/test_settings.py::test_each_event_runs_its_script_in_exec_form[PostToolUse-post_tool_use]\nFAILED tests/harness/test_settings.py::test_each_event_runs_its_script_in_exec_form[PreCompact-pre_compact]\nFAILED tests/harness/test_settings.py::test_each_event_runs_its_script_in_exec_form[PreToolUse-pre_tool_use]\nFAILED tests/harness/test_settings.py::test_each_event_runs_its_script_in_exec_form[SessionStart-session_start]\nFAILED tests/harness/test_settings.py::test_each_event_runs_its_script_in_exec_form[Stop-stop_gate]\nFAILED tests/harness/test_settings.py::test_pre_tool_use_matcher - FileNotFou...\nFAILED tests/harness/test_settings.py::test_post_tool_use_matcher_and_timeout\nFAILED tests/harness/test_settings.py::test_matcherless_or_lifecycle_events[SessionStart]\nFAILED tests/harness/test_settings.py::test_matcherless_or_lifecycle_events[PreCompact]\nFAILED tests/harness/test_settings.py::test_matcherless_or_lifecycle_events[Stop]\nFAILED tests/harness/test_settings.py::test_dangerous_git_is_denied_by_permissions_too[Bash(git push --force*)]\nFAILED tests/harness/test_settings.py::test_dangerous_git_is_denied_by_permissions_too[Bash(git push -f*)]\nFAILED tests/harness/test_settings.py::test_dangerous_git_is_denied_by_permissions_too[Bash(git reset --hard*)]\nFAILED tests/harness/test_settings.py::test_dangerous_git_is_denied_by_permissions_too[Bash(git clean -f*)]\nFAILED tests/harness/test_settings.py::test_dangerous_git_is_denied_by_permissions_too[Bash(git branch -D *)]\nFAILED tests/harness/test_settings.py::test_dangerous_git_is_denied_by_permissions_too[Bash(gh repo delete*)]\nFAILED tests/harness/test_settings.py::test_permissions_do_not_remove_whole_tools\nFAILED tests/harness/test_settings.py::test_tdd_enforcement_starts_disabled\n18 failed, 5 passed in 1.17s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "tests/harness/test_settings.py"
+      ],
+      "command": "uv run pytest tests/harness/test_settings.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:56:28+09:00",
+      "output_tail": ".......................                                                  [100%]\n23 passed in 1.05s"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "full suite (harness + python) collects without conftest name clash"
+      ],
+      "command": "uv run pytest",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:01:46+09:00",
+      "output_tail": "........................................................................ [  9%]\n........................................................................ [ 19%]\n........................................................................ [ 29%]\n........................................................................ [ 39%]\n........................................................................ [ 48%]\n........................................................................ [ 58%]\n........................................................................ [ 68%]\n........................................................................ [ 78%]\n........................................................................ [ 87%]\n........................................................................ [ 97%]\n.................                                                        [100%]\n737 passed in 98.51s (0:01:38)"
+    }
+  ],
+  "commit": null
+}

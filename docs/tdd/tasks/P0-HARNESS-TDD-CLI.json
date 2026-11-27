@@ -1,0 +1,160 @@
+{
+  "id": "P0-HARNESS-TDD-CLI",
+  "spec": "scripts/tdd.py: start/red/green/refactor/allow-test-change/done/status/check/log. RED only records a failing command, GREEN/REFACTOR only exit 0 and only after RED/GREEN; output tail (20 lines) and full runs saved under .tdd/runtime; active.json supports several parallel tasks; check validates every evidence file (keys, id/file name, phases, exit codes, RED before GREEN, timestamps); log regenerates docs/TDD_LOG.md deterministically",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      "scripts/tdd.py"
+    ],
+    "tests": [
+      "tests/harness/test_tdd_cli.py",
+      "tests/harness/conftest.py"
+    ]
+  },
+  "phase": "GREEN",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "tests/harness/test_tdd_cli.py (40 cases)"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 1,
+      "reason": "scripts/tdd.py does not exist yet: can't open file '.../scripts/tdd.py' (feature absent); 31 failed, 9 passed (the 9 are rejection cases that pass trivially because the missing script exits 2)",
+      "timestamp": "2026-11-27T10:46:19+0900",
+      "output_tail": "FAILED tests/harness/test_tdd_cli.py::test_runs_are_saved_under_runtime - ass...\nFAILED tests/harness/test_tdd_cli.py::test_allow_test_change_requires_green\nFAILED tests/harness/test_tdd_cli.py::test_done_marks_task_and_deactivates - ...\nFAILED tests/harness/test_tdd_cli.py::test_status_lists_active_tasks - assert...\nFAILED tests/harness/test_tdd_cli.py::test_status_without_tasks - assert 2 == 0\nFAILED tests/harness/test_tdd_cli.py::test_check_accepts_valid_tasks - Assert...\nFAILED tests/harness/test_tdd_cli.py::test_check_accepts_existing_project_files\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task0-RED]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task1-RED]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task2-exit]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task3-exit]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task4-phase]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task5-DONE]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task6-reason]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task7-time]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_invalid[task8-id] - ...\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_missing_keys_and_bad_json\nFAILED tests/harness/test_tdd_cli.py::test_check_accepts_both_timestamp_offsets\nFAILED tests/harness/test_tdd_cli.py::test_log_regenerates_tdd_log - Assertio...\n31 failed, 9 passed in 7.53s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "tests/harness/test_tdd_cli.py (41 cases)"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:48:34+0900",
+      "output_tail": ".........................................                                [100%]\n41 passed in 9.28s"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "tests/harness/test_tdd_cli.py"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:49:22+09:00",
+      "output_tail": ".........................................                                [100%]\n41 passed in 22.90s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_recorded_output_does_not_leak_absolute_paths"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 1,
+      "reason": "output_tail and command are stored verbatim, leaking the absolute repository/home path into committed evidence",
+      "timestamp": "2026-11-27T10:53:44+09:00",
+      "output_tail": "\n    def test_recorded_output_does_not_leak_absolute_paths(repo: Path) -> None:\n        start(repo)\n        cmd = [\n            sys.executable,\n            \"-c\",\n            f\"import sys; print({str(repo)!r} + '/src/a.cpp:1: error'); sys.exit(1)\",\n        ]\n        assert tdd(repo, \"red\", \"T-1\", \"--reason\", \"r\", \"--\", *cmd).returncode == 0\n        ev = task_json(repo, \"T-1\")[\"events\"][-1]\n>       assert str(repo) not in ev[\"output_tail\"]\nE       AssertionError: assert '$TMPDIR' not in '$TMPDIR error'\nE         \nE         '$TMPDIR' is contained here:\nE           $TMPDIR/pytest-of-$USER/pytest-597/test_recorded_output_does_not_0/proj/src/a.cpp:1: error\n\ntests/harness/test_tdd_cli.py:356: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_tdd_cli.py::test_recorded_output_does_not_leak_absolute_paths\n1 failed, 41 passed in 29.36s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_recorded_output_does_not_leak_absolute_paths"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:54:03+09:00",
+      "output_tail": "..........................................                               [100%]\n42 passed in 8.63s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_recorded_output_hides_temp_dirs"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 1,
+      "reason": "temp-dir paths (pytest-of-<user>) are not redacted from output_tail",
+      "timestamp": "2026-11-27T10:54:33+09:00",
+      "output_tail": "\nrepo = PosixPath('$TMPDIR/pytest-of-$USER/pytest-599/test_recorded_output_hides_tem0/proj')\ntmp_path = PosixPath('$TMPDIR/pytest-of-$USER/pytest-599/test_recorded_output_hides_tem0')\n\n    def test_recorded_output_hides_temp_dirs(repo: Path, tmp_path: Path) -> None:\n        other = tmp_path / \"elsewhere\" / \"x.log\"  # outside the root, inside $TMPDIR\n        start(repo)\n        cmd = [sys.executable, \"-c\", f\"import sys; print({str(other)!r}); sys.exit(1)\"]\n        assert tdd(repo, \"red\", \"T-1\", \"--reason\", \"r\", \"--\", *cmd).returncode == 0\n        tail = task_json(repo, \"T-1\")[\"events\"][-1][\"output_tail\"]\n>       assert str(tmp_path) not in tail\nE       AssertionError: assert '$TMPDIR' not in '$TMPDIR'\nE         \nE         '$TMPDIR' is contained here:\nE           $TMPDIR/pytest-of-$USER/pytest-599/test_recorded_output_hides_tem0/elsewhere/x.log\n\ntests/harness/test_tdd_cli.py:367: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_tdd_cli.py::test_recorded_output_hides_temp_dirs - ...\n1 failed, 42 passed in 9.34s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_recorded_output_hides_temp_dirs"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:54:43+09:00",
+      "output_tail": "...........................................                              [100%]\n43 passed in 9.16s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_recorded_output_hides_the_user_name"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 1,
+      "reason": "pytest temp dir names (pytest-of-<user>) still expose the local user name",
+      "timestamp": "2026-11-27T10:55:12+09:00",
+      "output_tail": "repo = PosixPath('$TMPDIR/pytest-of-$USER/pytest-602/test_recorded_output_hides_the0/proj')\n\n    def test_recorded_output_hides_the_user_name(repo: Path) -> None:\n        import getpass\n    \n        user = getpass.getuser()\n        start(repo)\n        cmd = [sys.executable, \"-c\", f\"import sys; print('/x/pytest-of-{user}/p-1'); sys.exit(1)\"]\n        assert tdd(repo, \"red\", \"T-1\", \"--reason\", \"r\", \"--\", *cmd).returncode == 0\n        tail = task_json(repo, \"T-1\")[\"events\"][-1][\"output_tail\"]\n>       assert f\"pytest-of-{user}\" not in tail\nE       AssertionError: assert 'pytest-of-$USER' not in '/x/pytest-of-$USER/p-1'\nE         \nE         'pytest-of-$USER' is contained here:\nE           /x/pytest-of-$USER/p-1\n\ntests/harness/test_tdd_cli.py:380: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_tdd_cli.py::test_recorded_output_hides_the_user_name\n1 failed, 43 passed in 9.20s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_recorded_output_hides_the_user_name"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:55:22+09:00",
+      "output_tail": "............................................                             [100%]\n44 passed in 10.04s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_check_accepts_test_only_task_starting_with_green",
+        "test_check_rejects_bad_test_only_tasks",
+        "test_test_only_commit_touching_impl_is_invalid",
+        "test_start_and_green_for_test_only_task"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 1,
+      "reason": "test-only tasks (kind=test-only + test_only_reason) are not supported: GREEN-first evidence is always rejected, start has no --test-only, green requires RED",
+      "timestamp": "2026-11-27T11:09:12+09:00",
+      "output_tail": "E                       {start,red,green,refactor,allow-test-change,done,status,check,log} ...\nE         tdd.py: error: unrecognized arguments: --test-only composes components that were each developed test-first\nE         \nE       assert 2 == 0\nE        +  where 2 = CompletedProcess(args=['./.venv/bin/python', '~/Desktop/almost-line...og} ...\\ntdd.py: error: unrecognized arguments: --test-only composes components that were each developed test-first\\n').returncode\n\ntests/harness/test_tdd_cli.py:486: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_tdd_cli.py::test_check_accepts_test_only_task_starting_with_green\nFAILED tests/harness/test_tdd_cli.py::test_check_accepts_test_only_with_covers_list\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_bad_test_only_tasks[extra0-test_only_reason]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_bad_test_only_tasks[extra1-test_only_reason]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_bad_test_only_tasks[extra2-impl]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_bad_test_only_tasks[extra3-kind]\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_bad_test_only_tasks[extra4-covers]\nFAILED tests/harness/test_tdd_cli.py::test_test_only_commit_touching_only_tests_is_valid\nFAILED tests/harness/test_tdd_cli.py::test_test_only_commit_touching_impl_is_invalid\nFAILED tests/harness/test_tdd_cli.py::test_test_only_unknown_commit_is_invalid\nFAILED tests/harness/test_tdd_cli.py::test_start_and_green_for_test_only_task\n11 failed, 46 passed in 10.93s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_check_accepts_test_only_task_starting_with_green",
+        "test_check_rejects_bad_test_only_tasks",
+        "test_test_only_commit_touching_impl_is_invalid",
+        "test_start_and_green_for_test_only_task"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:11:31+09:00",
+      "output_tail": ".........................................................                [100%]\n57 passed in 17.65s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_recorded_output_passes_public_safety_path_rules"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 1,
+      "reason": "redact() only replaces exact known prefixes: pytest-truncated temp paths ('$TMPDIR'), other /var/folders, /private/tmp and /Users/<name>/ paths still reach the evidence and trip check_public_safety LINE_RULES",
+      "timestamp": "2026-11-27T11:26:51+09:00",
+      "output_tail": "\n    def test_recorded_output_passes_public_safety_path_rules(repo: Path) -> None:\n        start(repo)\n        script = f\"import sys; print({LEAKY_OUTPUT!r}); sys.exit(1)\"\n        assert (\n            tdd(repo, \"red\", \"T-1\", \"--reason\", \"r\", \"--\", sys.executable, \"-c\", script).returncode == 0\n        )\n        raw = (repo / \"docs/tdd/tasks/T-1.json\").read_text()\n        for line in raw.splitlines():\n            for name, pat in _public_safety_rules():\n>               assert not pat.search(line), f\"{name}: {line}\"\nE               AssertionError: local home path:       \"command\": \"~/Desktop/almost-linear-sssp/.venv/bin/python -c 'import sys; print(\\\"E   assert '\\\"'\\\"'$TMPDIR error'\\\"'\\\"' not in x\\\\nE   '\\\"'\\\"'$TMPDIR'\\\"'\\\"' is contained here:\\\\nE   $TMPDIR\\\\nE   $TMPDIR\\\\nE   ~/work/x.cpp and ~/y.py\\\"); sys.exit(1)'\",\nE               assert not <re.Match object; span=(343, 358), match='~/'>\nE                +  where <re.Match object; span=(343, 358), match='~/'> = <built-in method search of re.Pattern object at 0x10938f570>('      \"command\": \"~/Desktop/almost-linear-sssp/.venv/bin/python -c \\'import sys; print(\\\\\"E   assert \\'\\\\\"\\'\\\\\"\\'/pri...\\\\nE   $TMPDIR\\\\\\\\nE   ~/work/x.cpp and ~/y.py\\\\\"); sys.exit(1)\\'\",')\nE                +    where <built-in method search of re.Pattern object at 0x10938f570> = re.compile('/(Users|home)/[A-Za-z0-9._-]+/').search\n\ntests/harness/test_tdd_cli.py:532: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_tdd_cli.py::test_recorded_output_passes_public_safety_path_rules\n1 failed, 57 passed in 16.90s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_recorded_output_passes_public_safety_path_rules"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:27:26+09:00",
+      "output_tail": "..........................................................               [100%]\n58 passed in 14.90s"
+    }
+  ],
+  "commit": null
+}

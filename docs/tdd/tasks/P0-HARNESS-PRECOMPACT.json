@@ -1,0 +1,103 @@
+{
+  "id": "P0-HARNESS-PRECOMPACT",
+  "spec": "PreCompact hook writes a state snapshot (active tasks, TDD phase and next command, open failures, BLOCKED tasks, last commit, PAPER_MAPPING excerpt) into the AUTO:precompact block of docs/PROGRESS.md (replacing only that block) and .tdd/runtime/precompact_snapshot.md, prints <=2000 chars of plain-text summary guidance, and always exits 0",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      ".claude/hooks/pre_compact.py"
+    ],
+    "tests": [
+      "tests/harness/test_pre_compact.py"
+    ]
+  },
+  "phase": "GREEN",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "tests/harness/test_pre_compact.py (12 tests)"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 1,
+      "reason": "feature absent: .claude/hooks/pre_compact.py does not exist (python: can't open file ... [Errno 2]); 12 failed",
+      "timestamp": "2026-11-27T10:29:19+0900",
+      "output_tail": "E           AssertionError: ('', \"./.venv/bin/python: can't open file './.claude/hooks/pre_compact.py': [Errno 2] No such file or directory\nE             \")\nE           assert 2 == 0\nE            +  where 2 = HookResult(code=2, stdout='', stderr=\"./.venv/bin/python: can't open file './.claude/hooks/pre_compact.py': [Errno 2] No such file or directory\\n\").code\n\ntests/harness/test_pre_compact.py:191: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_pre_compact.py::test_creates_progress_file_when_missing\nFAILED tests/harness/test_pre_compact.py::test_appends_block_and_keeps_human_text\nFAILED tests/harness/test_pre_compact.py::test_replaces_only_the_block_and_is_idempotent\nFAILED tests/harness/test_pre_compact.py::test_writes_snapshot_with_same_content\nFAILED tests/harness/test_pre_compact.py::test_active_tasks_and_next_commands\nFAILED tests/harness/test_pre_compact.py::test_failures_and_unresolved_are_transcribed\nFAILED tests/harness/test_pre_compact.py::test_paper_mapping_excerpt - Assert...\nFAILED tests/harness/test_pre_compact.py::test_paper_mapping_absent - Asserti...\nFAILED tests/harness/test_pre_compact.py::test_last_commit_is_shown - Asserti...\nFAILED tests/harness/test_pre_compact.py::test_stdout_is_short_plain_text - A...\nFAILED tests/harness/test_pre_compact.py::test_exit_zero_with_broken_files - ...\nFAILED tests/harness/test_pre_compact.py::test_exit_zero_on_invalid_stdin - A...\n12 failed in 1.76s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "tests/harness/test_pre_compact.py (12 tests)"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:31:48+0900",
+      "output_tail": "............                                                             [100%]\n12 passed in 1.95s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_tasks_legend_line_is_not_a_blocked_task",
+        "test_paper_mapping_falls_back_to_translation"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 1,
+      "reason": "legend line '- **Status**: TODO / IN_PROGRESS / BLOCKED / DONE.' is reported as a blocked task, and docs/PAPER_MAPPING.ja.md is ignored when PAPER_MAPPING.md is absent",
+      "timestamp": "2026-11-27T10:51:09+09:00",
+      "output_tail": "\ntests/harness/test_pre_compact.py:204: AssertionError\n_________________ test_paper_mapping_falls_back_to_translation _________________\n\nrepo = PosixPath('$TMPDIR/pytest-of-$USER/pytest-588/test_paper_mapping_falls_back_0/proj')\nrun_hook = <function run_hook.<locals>._run at 0x10b89f530>\n\n    def test_paper_mapping_falls_back_to_translation(repo, run_hook):\n        (repo / \"docs\" / \"PAPER_MAPPING.ja.md\").write_text(\"# 論文対応表\\n\\nja row 1\\n\")\n        res = run_hook(\"pre_compact\", _payload(), repo)\n        assert res.code == 0, res.stderr\n        block = _block(_progress(repo))\n>       assert \"ja row 1\" in block\nE       AssertionError: assert 'ja row 1' in '<!-- AUTO:precompact -->\\n## 自動スナップショット (PreCompact)\\n\\n- 生成時刻: 2026-11-27T10:51:09+09:00\\n- trigger: auto\\n\\n### 完了タ...に `make verify`\\n\\n### 最後の commit\\n\\n- be1c9f0 init (0 seconds ago)\\n\\n### PAPER_MAPPING.md 抜粋\\n\\n- なし\\n<!-- /AUTO -->'\n\ntests/harness/test_pre_compact.py:213: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_pre_compact.py::test_tasks_legend_line_is_not_a_blocked_task\nFAILED tests/harness/test_pre_compact.py::test_paper_mapping_falls_back_to_translation\n2 failed, 12 passed in 6.28s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_tasks_legend_line_is_not_a_blocked_task",
+        "test_paper_mapping_falls_back_to_translation"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:51:30+09:00",
+      "output_tail": "..............                                                           [100%]\n14 passed in 8.12s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_failures_and_unresolved_are_transcribed"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 1,
+      "reason": "pre_compact looks for the stop-gate report under docs/reports/ instead of .tdd/runtime/",
+      "timestamp": "2026-11-27T11:05:21+09:00",
+      "output_tail": "                },\n                \"lint\": {\"status\": \"pass\", \"command\": \"ruff check\", \"exit_code\": 0},\n            },\n        )\n        (repo / \".tdd\" / \"runtime\").mkdir(parents=True, exist_ok=True)\n        (repo / \".tdd\" / \"runtime\" / \"stop_gate_unresolved.md\").write_text(\"# x\\n\")\n        (repo / \"docs\" / \"TASKS.md\").write_text(\"- [ ] P9-FOO BLOCKED: waiting on bar\\n- [ ] ok\\n\")\n        res = run_hook(\"pre_compact\", _payload(), repo)\n        assert res.code == 0, res.stderr\n        block = _block(_progress(repo))\n        assert \"cpp-test\" in block\n        assert \"ctest --preset debug -R widget\" in block\n        assert \"FAILED: widget_boundary\" in block\n>       assert \".tdd/runtime/stop_gate_unresolved.md\" in block\nE       AssertionError: assert '.tdd/runtime/stop_gate_unresolved.md' in '<!-- AUTO:precompact -->\\n## 自動スナップショット (PreCompact)\\n\\n- 生成時刻: 2026-11-27T11:05:18+09:00\\n- trigger: auto\\n\\n### 完了タ...後に `make verify`\\n\\n### 最後の commit\\n\\n- 3775f42 init (1 second ago)\\n\\n### PAPER_MAPPING.md 抜粋\\n\\n- なし\\n<!-- /AUTO -->'\n\ntests/harness/test_pre_compact.py:130: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_pre_compact.py::test_failures_and_unresolved_are_transcribed\n1 failed, 13 passed in 5.93s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_failures_and_unresolved_are_transcribed"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:06:02+09:00",
+      "output_tail": "..............                                                           [100%]\n14 passed in 2.78s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_blocked_is_decided_by_the_status_column_only"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 1,
+      "reason": "BLOCKED is detected by substring anywhere in a TASKS.md line, so a DONE task named P3-SFM-BLOCKED (and rows citing P3-SFM-BLOCKED.json) are reported as blocked",
+      "timestamp": "2026-11-27T11:30:02+09:00",
+      "output_tail": "        assert res.code == 0, res.stderr\n        block = _block(_progress(repo))\n        assert \"P9-WAIT\" in block\n        assert \"P9-SPACES\" in block\n>       assert \"P3-SFM-BLOCKED\" not in block\nE       AssertionError: assert 'P3-SFM-BLOCKED' not in '<!-- AUTO:p...-- /AUTO -->'\nE         \nE         'P3-SFM-BLOCKED' is contained here:\nE           SKS.md: | P3-SFM-BLOCKED | P0 | DONE | part of P3-INTERVAL-MIN |\nE         ?           ++++++++++++++\nE           - TASKS.md: | P3-INTERVAL-MIN | P0 | IN_PROGRESS | see docs/tdd/tasks/P3-SFM-BLOCKED.json |\nE           - TASKS.md: | P9-WAIT | P1 | BLOCKED | upstream fix |\nE           - TASKS.md: | P9-SPACES | P1 |  BLOCKED  | padded cell |...\nE         \nE         ...Full output truncated, use '-vv' to show\n\ntests/harness/test_pre_compact.py:231: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_pre_compact.py::test_blocked_is_decided_by_the_status_column_only\n1 failed, 14 passed in 5.56s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_blocked_is_decided_by_the_status_column_only"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:30:17+09:00",
+      "output_tail": "...............                                                          [100%]\n15 passed in 2.50s"
+    }
+  ],
+  "commit": null
+}

@@ -95,4 +95,54 @@ Workflows exist but have never run: no git remote is configured yet.
 Last updated: 2026-11-27T11:15+0900
 
 <!-- AUTO:precompact -->
+## 自動スナップショット (PreCompact)
+
+- 生成時刻: 2026-11-27T11:32:47+09:00
+- trigger: manual
+
+### 完了タスク
+
+- 48 件(末尾 10 件: P3-MST-HEAP, P3-MST-THREE-PASS, P3-NAME-ROUTES, P3-NORMALIZE, P3-OUTER-BASE, P3-PAPER-SSSP, P3-SEARCH-SELECT, P3-SFM-BLOCKED, P3-SFM-DYADIC, P3-SFM-REF)
+
+### 作業中タスク
+
+- P0-HARNESS-PRECOMPACT: phase=GREEN, 最終イベント=GREEN, impl=.claude/hooks/pre_compact.py
+- P0-HARNESS-SETTINGS: phase=REFACTOR, 最終イベント=REFACTOR, impl=.claude/settings.json, .tdd/config.json
+- P0-HARNESS-STOPGATE: phase=GREEN, 最終イベント=GREEN, impl=.claude/hooks/stop_gate.py
+- P0-HARNESS-TDD-CLI: phase=GREEN, 最終イベント=GREEN, impl=scripts/tdd.py
+
+### 未解決の問題
+
+- Stop gate の未解決レポートあり: .tdd/runtime/stop_gate_unresolved.md を確認
+
+### TDD 状態と次のコマンド
+
+- P0-HARNESS-PRECOMPACT: `uv run python scripts/tdd.py refactor P0-HARNESS-PRECOMPACT -- ctest --preset debug`
+- P0-HARNESS-PRECOMPACT: `uv run python scripts/tdd.py done P0-HARNESS-PRECOMPACT`
+- P0-HARNESS-SETTINGS: `uv run python scripts/tdd.py refactor P0-HARNESS-SETTINGS -- ctest --preset debug`
+- P0-HARNESS-SETTINGS: `uv run python scripts/tdd.py done P0-HARNESS-SETTINGS`
+- P0-HARNESS-STOPGATE: `uv run python scripts/tdd.py refactor P0-HARNESS-STOPGATE -- ctest --preset debug`
+- P0-HARNESS-STOPGATE: `uv run python scripts/tdd.py done P0-HARNESS-STOPGATE`
+- P0-HARNESS-TDD-CLI: `uv run python scripts/tdd.py refactor P0-HARNESS-TDD-CLI -- ctest --preset debug`
+- P0-HARNESS-TDD-CLI: `uv run python scripts/tdd.py done P0-HARNESS-TDD-CLI`
+- 最後に `make verify`
+
+### 最後の commit
+
+- d7eb52f merge: Mode A paper_sssp entry with outer base case (scan Dijkstra and D-1 binary heap) and fallback records (3 minutes ago)
+
+### PAPER_MAPPING.md 抜粋
+
+```
+# Mapping Table Between the Paper and the Implementation (arXiv 2611.34911v1)
+English | [日本語](PAPER_MAPPING.ja.md)
+Maps each item of the paper (definitions, lemmas, theorems, algorithms, key constants) to modules, tests, Mode, status and deviations.
+The table format follows `.claude/skills/paper-reproduction/SKILL.md`. Line numbers `l.NNN` refer to `.cache/paper/2611.34911v1.txt` (pdftotext). The paper text is not reproduced; everything is written as paraphrase.
+- Source documents: `docs/research/01_preliminaries_primitives.md` (hereafter 01), `02_ordered_hierarchy_local.md` (02), `03_pivots_aux_outer.md` (03), `thresholds.md`.
+- Ambiguous points are collected in `docs/research/open-questions.md` (Q-xx). The "Deviations" in this table are D-xx (listed below the tables).
+- Status: TODO / RED / GREEN / VERIFIED / DEVIATES (as defined in the SKILL). In addition, rows that have been started but whose RED evidence is not yet complete are marked **IN_PROGRESS** (a provisional value, replaced once the row reaches RED).
+- Mode: A = `src/paper/`, B = `src/experimental/paper_experimental/`. "A, B" means that Mode B uses the same component with different parameters (ADR 0003: components are shared through explicit common components).
+## 0. Naming unification
+Where the module proposals in the three analysis documents disagreed on names or locations, they were unified as follows.
+```
 <!-- /AUTO -->

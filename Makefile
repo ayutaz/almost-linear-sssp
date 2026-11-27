@@ -46,6 +46,7 @@ test-regression: build
 
 test-harness:
 	uv run pytest
+	uv run python scripts/tdd.py check
 
 format:
 	@[ -z "$(CXX_SOURCES)" ] || $(CLANG_FORMAT) -i $(CXX_SOURCES)
@@ -78,6 +79,7 @@ verify:
 	ctest --preset ci
 	$(MAKE) tidy PRESET=ci
 	uv run pytest
+	uv run python scripts/tdd.py check
 
 benchmark-smoke:
 	./scripts/run_benchmarks.sh smoke
