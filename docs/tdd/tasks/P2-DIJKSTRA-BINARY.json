@@ -1,0 +1,54 @@
+{
+ "id": "P2-DIJKSTRA-BINARY",
+ "spec": "Dijkstra with the lazy-deletion binary heap (uint64_t and double): exact distances, kNoVertex/kNoEdge for source and unreachable vertices, valid shortest-path tree, std::out_of_range for invalid source, std::overflow_error on integer overflow, operation counters",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/baseline/dijkstra_binary_heap.cpp",
+   "src/baseline/dijkstra_common.hpp"
+  ],
+  "tests": [
+   "tests/unit/baseline/test_dijkstra_binary_heap.cpp",
+   "tests/unit/baseline/dijkstra_test_support.hpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "binary-heap Dijkstra: hand-computed classic graph",
+    "binary-heap Dijkstra: zero weights, multi-edges, self-loops, components",
+    "binary-heap Dijkstra: single vertex",
+    "binary-heap Dijkstra: exact dyadic doubles",
+    "binary-heap Dijkstra: invalid source and integer overflow",
+    "binary-heap Dijkstra: matches Floyd-Warshall on random graphs",
+    "binary-heap Dijkstra: operation counters"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'error|Undefined|dijkstra_binary_heap' | sort -u | head -8; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "link error: undefined symbol sssp::baseline::dijkstra_binary_heap<unsigned long long> / <double> (not implemented yet)",
+   "timestamp": "2026-11-27T10:28:07+09:00",
+   "output_tail": "sssp::SsspResult<double> (anonymous namespace)::Algo::operator()<double>(sssp::CsrGraph<double> const&, unsigned int) const in test_dijkstra_binary_heap.cpp.o\n      sssp::SsspResult<unsigned long long> (anonymous namespace)::Algo::operator()<unsigned long long>(sssp::CsrGraph<unsigned long long> const&, unsigned int) const in test_dijkstra_binary_heap.cpp.o\n  \"sssp::SsspResult<double> sssp::baseline::dijkstra_binary_heap<double>(sssp::CsrGraph<double> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<unsigned long long> sssp::baseline::dijkstra_binary_heap<unsigned long long>(sssp::CsrGraph<unsigned long long> const&, unsigned int)\", referenced from:\n: && /usr/bin/c++ -g -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_binary_heap.cpp.o tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_dary_heap.cpp.o tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_fibonacci_heap.cpp.o tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_radix_heap.cpp.o tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/test_dijkstra_binary_heap.cpp.o tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_csr_graph.cpp.o tests/CMakeFiles/sssp_unit_tests.dir/unit/test_version.cpp.o -o tests/sssp_unit_tests  libsssp.a  _deps/catch2-build/src/libCatch2Maind.a  _deps/catch2-build/src/libCatch2d.a && :\n[1/5] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/test_dijkstra_binary_heap.cpp.o\nclang++: error: linker command failed with exit code 1 (use -v to see invocation)\nUndefined symbols for architecture arm64:"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all 7 binary-heap Dijkstra tests"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'warning|error'; ctest --preset debug -R 'binary-heap Dijkstra' 2>&1 | grep -E 'tests passed|Failed|FAILED' && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:28:46+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 7\n100% tests passed, 0 tests failed out of 49"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "cd .claude/worktrees/agent-a59478a731cd46fec && cmake --build --preset debug -j8 2>&1 | grep -E 'warning|error'; ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:31:34+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 69"
+  }
+ ],
+ "commit": null
+}

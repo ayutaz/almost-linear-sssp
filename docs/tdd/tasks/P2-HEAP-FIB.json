@@ -1,0 +1,55 @@
+{
+ "id": "P2-HEAP-FIB",
+ "spec": "Indexed Fibonacci min-heap (Fredman-Tarjan) over ids [0,n): lazy insert, extract-min with consolidation, decrease-key with cut and cascading cut, node pool allocated once at construction, structural accessors (parent_of, degree, is_marked, root_count, cascading_cuts), invariant validator, comparison counter",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/baseline/heaps/fibonacci_heap.hpp"
+  ],
+  "tests": [
+   "tests/unit/baseline/heaps/test_fibonacci_heap.cpp",
+   "tests/property/baseline/test_indexed_heap_properties.cpp",
+   "tests/property/baseline/indexed_heap_model.hpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "Fibonacci heap pops in key order after decrease-key",
+    "Fibonacci heap consolidates 2^k equal-degree trees into one tree",
+    "Fibonacci heap performs a cascading cut when a marked node loses a second child",
+    "Fibonacci heap tracks membership, ties and re-insertion",
+    "Fibonacci heap rejects invalid operations",
+    "Fibonacci heap works with floating-point keys",
+    "Fibonacci heap counts key comparisons",
+    "Fibonacci heap matches the reference model"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E 'fatal error' | sort -u | head -8; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'baseline/heaps/fibonacci_heap.hpp' file not found (heap not implemented yet)",
+   "timestamp": "2026-11-27T10:24:50+09:00",
+   "output_tail": "tests/property/baseline/test_indexed_heap_properties.cpp:6:10: fatal error: 'baseline/heaps/dary_heap.hpp' file not found\ntests/unit/baseline/heaps/test_dary_heap.cpp:7:10: fatal error: 'baseline/heaps/dary_heap.hpp' file not found\ntests/unit/baseline/heaps/test_fibonacci_heap.cpp:7:10: fatal error: 'baseline/heaps/fibonacci_heap.hpp' file not found\ntests/unit/baseline/heaps/test_radix_heap.cpp:7:10: fatal error: 'baseline/heaps/radix_heap.hpp' file not found"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug -R 'Fibonacci heap' 2>&1 | grep -E 'tests passed|Failed' && ctest --preset debug 2>&1 | grep -E 'tests passed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:26:00+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n100% tests passed, 0 tests failed out of 8\n100% tests passed, 0 tests failed out of 42"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug 2>&1 | grep -E 'tests passed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:26:16+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n100% tests passed, 0 tests failed out of 42"
+  }
+ ],
+ "commit": null
+}

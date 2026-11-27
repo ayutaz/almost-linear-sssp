@@ -1,0 +1,55 @@
+{
+ "id": "P2-DIJKSTRA-RADIX",
+ "spec": "Dijkstra with the indexed radix heap (uint64_t only, monotone keys): same observable contract as the binary-heap baseline, including keys near 2^64",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/baseline/dijkstra_radix_heap.cpp",
+   "src/baseline/dijkstra_common.hpp"
+  ],
+  "tests": [
+   "tests/unit/baseline/test_dijkstra_radix_heap.cpp",
+   "tests/unit/baseline/dijkstra_test_support.hpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "radix-heap Dijkstra: hand-computed classic graph",
+    "radix-heap Dijkstra: zero weights, multi-edges, self-loops, components",
+    "radix-heap Dijkstra: single vertex",
+    "radix-heap Dijkstra: invalid source and integer overflow",
+    "radix-heap Dijkstra: matches Floyd-Warshall on random graphs",
+    "radix-heap Dijkstra: operation counters"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E \"error|sssp::baseline::dijkstra\" | sort -u | head -10; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "link error: undefined symbol sssp::baseline::dijkstra_radix_heap (not implemented yet)",
+   "timestamp": "2026-11-27T10:29:28+09:00",
+   "output_tail": "\"sssp::baseline::dijkstra_radix_heap(sssp::CsrGraph<unsigned long long> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<double> sssp::baseline::dijkstra_4ary_heap<double>(sssp::CsrGraph<double> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<double> sssp::baseline::dijkstra_fibonacci_heap<double>(sssp::CsrGraph<double> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<unsigned long long> sssp::baseline::dijkstra_4ary_heap<unsigned long long>(sssp::CsrGraph<unsigned long long> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<unsigned long long> sssp::baseline::dijkstra_fibonacci_heap<unsigned long long>(sssp::CsrGraph<unsigned long long> const&, unsigned int)\", referenced from:\nclang++: error: linker command failed with exit code 1 (use -v to see invocation)"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'warning|error'; ctest --preset debug -R 'radix-heap Dijkstra' 2>&1 | grep -E 'tests passed|Failed|FAILED' && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:30:10+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 6\n100% tests passed, 0 tests failed out of 69"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'warning|error'; ctest --preset debug -R 'radix-heap Dijkstra' 2>&1 | grep -E 'tests passed|Failed|FAILED' && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:31:31+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 6\n100% tests passed, 0 tests failed out of 69"
+  }
+ ],
+ "commit": null
+}

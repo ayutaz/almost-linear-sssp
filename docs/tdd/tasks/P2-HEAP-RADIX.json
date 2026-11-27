@@ -1,0 +1,54 @@
+{
+ "id": "P2-HEAP-RADIX",
+ "spec": "Indexed radix heap (Ahuja-Mehlhorn-Orlin-Tarjan) for monotone 64-bit unsigned keys: 65 buckets by bit width of key XOR last-popped key, intrusive doubly-linked lists over a node pool allocated once, decrease-key by bucket move, rejection of keys below the last popped key, comparisons counted only for bucket-minimum search",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/baseline/heaps/radix_heap.hpp"
+  ],
+  "tests": [
+   "tests/unit/baseline/heaps/test_radix_heap.cpp",
+   "tests/property/baseline/test_indexed_heap_properties.cpp",
+   "tests/property/baseline/indexed_heap_model.hpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "radix heap pops monotone 64-bit keys in order",
+    "radix heap decrease-key moves an item to a lower bucket",
+    "radix heap accepts keys equal to the last popped key (zero-weight edges)",
+    "radix heap enforces monotonicity and rejects invalid operations",
+    "radix heap handles the full 64-bit key range",
+    "radix heap counts comparisons only when searching a bucket minimum",
+    "radix heap matches the reference model under monotone keys"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E 'fatal error' | sort -u | head -8; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'baseline/heaps/radix_heap.hpp' file not found (heap not implemented yet)",
+   "timestamp": "2026-11-27T10:24:50+09:00",
+   "output_tail": "tests/property/baseline/test_indexed_heap_properties.cpp:6:10: fatal error: 'baseline/heaps/dary_heap.hpp' file not found\ntests/unit/baseline/heaps/test_dary_heap.cpp:7:10: fatal error: 'baseline/heaps/dary_heap.hpp' file not found\ntests/unit/baseline/heaps/test_fibonacci_heap.cpp:7:10: fatal error: 'baseline/heaps/fibonacci_heap.hpp' file not found\ntests/unit/baseline/heaps/test_radix_heap.cpp:7:10: fatal error: 'baseline/heaps/radix_heap.hpp' file not found"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug -R 'radix heap' 2>&1 | grep -E 'tests passed|Failed' && ctest --preset debug 2>&1 | grep -E 'tests passed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:26:01+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n100% tests passed, 0 tests failed out of 7\n100% tests passed, 0 tests failed out of 42"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug 2>&1 | grep -E 'tests passed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:26:16+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n100% tests passed, 0 tests failed out of 42"
+  }
+ ],
+ "commit": null
+}
