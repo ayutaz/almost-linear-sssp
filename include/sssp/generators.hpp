@@ -15,6 +15,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 
 namespace sssp::gen {
 
@@ -108,5 +109,44 @@ constexpr std::uint64_t substream_seed(std::uint64_t seed, std::uint64_t stream)
 double det_log(double x) noexcept;
 /// Exponential built only from correctly rounded IEEE operations (|x| <= ~709).
 double det_exp(double x) noexcept;
+
+// ------------------------------------------------------------------ weight distributions
+
+enum class WeightDist {
+  kUniformInt,   ///< integer uniform in [ceil(lo), floor(hi)] (0 <= lo <= hi <= 2^53)
+  kUniformReal,  ///< lo + (hi - lo) * U, U in [0,1)
+  kLogUniform,   ///< exp(uniform(log lo, log hi)), 0 < lo <= hi
+  kExponential,  ///< exponential with the given mean
+  kConstant,     ///< always lo
+  kZeroMixed,    ///< 0 with probability zero_probability, otherwise uniform in [lo, hi]
+  kWideRange,    ///< binary exponent e uniform in [0, wide_log2], then uniform in that binade,
+                 ///< capped at 2^wide_log2: covers [1, 2^wide_log2] (e.g. 1..2^50)
+};
+
+/// Parameters of a weight distribution. For integer W, real-valued draws are rounded to the
+/// nearest integer (ties up); kUniformInt and kZeroMixed draw integers directly. For double W,
+/// kUniformInt yields integral doubles and kZeroMixed draws reals in [lo, hi).
+struct WeightSpec {
+  WeightDist dist = WeightDist::kUniformInt;
+  double lo = 1.0;
+  double hi = 100.0;
+  double mean = 10.0;              ///< kExponential
+  double zero_probability = 0.25;  ///< kZeroMixed
+  int wide_log2 = 50;              ///< kWideRange, 0..62
+};
+
+/// Throws std::invalid_argument when the parameters are inconsistent for spec.dist.
+void validate_weight_spec(const WeightSpec& spec);
+
+/// One draw from the distribution (spec must be valid). Explicitly instantiated for
+/// std::uint64_t and double.
+template <class W>
+W sample_weight(const WeightSpec& spec, Xoshiro256ss& rng);
+
+/// Canonical names used by the CLI: uniform_int, uniform_real, log_uniform, exponential,
+/// constant, zero_mixed, wide_range.
+std::string_view to_string(WeightDist d) noexcept;
+/// Inverse of to_string; throws std::invalid_argument for an unknown name.
+WeightDist parse_weight_dist(std::string_view name);
 
 }  // namespace sssp::gen
