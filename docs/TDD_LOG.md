@@ -45,6 +45,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P2-EXHAUSTIVE-DIFF | DONE | 1 | - | f3dcfa9 | Test support: deterministic SplitMix64, required graph catalogue, exhaustive enumeration of all weighted simple graphs (n<=4 x {0,1,2}, n=5 x {0,1}); Bellman-Ford vs in-test Floyd-Warshall on every graph and source, each result also passing verify_sssp |
 | P2-FIX-COUNTED-VALIDATION | DONE | 1 | - | - | validate_edges must reject negative/NaN/infinite weights for every weight type with WeightTraits, including wrappers such as Counted<double> |
 | P2-GRAPH-CLI | DONE | 1 | - | - | sssp_gen CLI: --list prints generator types and weight distributions; --type/--n/--avg-degree/--weights/--seed/--out etc. generate via sssp::gen::generate and write edge-list or DIMACS; same arguments give byte-identical output, a different seed gives different output; usage errors exit 2, generation errors exit 1 |
+| P2-GRAPH-EDGELIST | DONE | 1 | none | 3f6cd75 | Edge-list utilities on EdgeList<W> (W = uint64_t, double): keep_lightest_per_pair keeps exactly the (weight, index)-least edge of every unordered vertex pair (loops optionally dropped) and maps outputs to input edge ids; relabel_vertices applies an injective vertex map (kNoVertex drops the vertex and its edges); connected_components labels vertices canonically by smallest member; extract_component / largest_component return the induced component subgraph with vertex and edge maps; all validate their input |
 | P2-GRAPH-FORMATS | DONE | 1 | - | - | EdgeList<W> and AdjacencyList<W> representations with lossless, order-preserving conversions to/from CsrGraph<W> (same edge ids, same per-vertex arc order), validation on conversion, and a timed() helper so conversion time is measured separately from algorithm time |
 | P2-GRAPH-GENERATORS | DONE | 1 | - | - | Deterministic (parameters, seed) graph generators for uint64_t and double: Erdos-Renyi G(n,m), random regular (configuration model; keep / drop / degree-preserving switching), Barabasi-Albert, 2D grid, road-like (perturbed grid, removed streets, local shortcuts, Euclidean weights, connected), uniform random tree (Pruefer), Chung-Lu scale-free, decrease-key adversary (k(k-1)/2 decrease-keys), long-path adversary (n-1 hops); connect_components option; independent topology/weight/connect sub-streams; catalog + generate() dispatch |
 | P2-GRAPH-GEOMETRIC | DONE | 1 | none | 88cb969 | random_geometric(n, radius, geo, opt): n seeded uniform points in the unit square, an edge for every pair with squared distance <= radius^2 found through a cell grid in expected O(n+m), edges in (u,v) lexicographic order, weights from the weight spec or the Euclidean length (uint64: round(len*integer_scale)); radius may be derived as sqrt(avg_degree/(pi n)); deterministic, existing generators unchanged; sssp_gen --type geometric |
@@ -106,6 +107,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P3-SFM-REF | DONE | 1 | Sec 3.5 (interface), Lemma 3.10/3.11 (reference for differential tests); research notes A8, A9, A10 | d6ea37f | Reference split-findmin (boundary set + segment tree, O(log k) per operation): split at a prescribed boundary (existing boundary rejected), decrease, query (min key and original index; ties by (inf flag, value, index)), interval_of / bounds with fresh IDs for both sides of a split; agrees with a naive model on exhaustive random sequences |
 | P3-THRESHOLD-JOINS | DONE | 1 | Sec 5.3 l.1109-1180, Lemma 5.8, Lemma 5.9 | b081d55 | Threshold components and joins: I0, O0 (min propagation in the macro-free block DAG, attaining macro edge kept), I*, O* (block-DAG order with two bottleneck sweeps on each block MST), theta = max(I*, O*), B0 = max(I0, O0); join records = block MST edges, state-to-owner joins at finite theta, corridor joins; I0/O0/I*/O* equal brute force, Lemma 5.8 bounds, Lemma 5.9 (union-find of joins <= W and < W restricted to states = SCCs of arcs <= W and < W) for every distinct W |
 | P3-WORD-OPS | DONE | 1 | Sec 2 l.301-308 (word operations, tabulated ilog, scan-stored block index/offset, uniform draws); Sec 3.5 Lemma 3.11 | ab6a8ec | Per-operation Mode A paths take integer logarithms from IlogTable (or a value computed once per range) instead of a shift loop, and the blocked split-findmin reads block index and offset from a scan-built BlockLayout instead of integer division; all results unchanged |
+| P5-EXP-PARAMS | DONE | 1 | Sec 2 l.286; Sec 5.1 l.967; Sec 5.2 l.1021-1029; Sec 5.4 l.1206-1216; Alg 5 l.2-6; Sec 6.2 l.1473-1491; Sec 7.1 l.1644; Sec 7.3; Sec 8.1 l.1977; Sec 8.2 l.2080; Sec 4.1 | 391f507 | Mode B parameter set: PaperParams validates LocalParams/OuterParams at construction (rejecting the constants that PAPER_MAPPING §2 marks not changeable), rederives h, K, P, T, H, F from b and t, decides the local branch per instance, and logs every parameter with its deviation ID into Diagnostics |
 
 ## P0-BOOTSTRAP
 
@@ -505,6 +507,15 @@ Do not edit by hand; edit the evidence files and regenerate.
 - Tests: -
 - RED (exit 127, 2026-11-27T10:33:58+0900): executable does not exist yet (tools/sssp_gen.cpp absent). The CLI is a thin wrapper over the unit-tested generate()/io API; its behaviour is checked by command-level acceptance runs because tests/CMakeLists.txt (not editable) does not pass tool paths to tests. — `./build/debug/sssp_gen --list`
 - GREEN (exit 0, 2026-11-27T10:34:27+0900) — `cd build/debug && ./sssp_gen --type er --n 1000 --avg-degree 4 --weights uniform_int --seed 1 --out g1.txt --stats && ./sssp_gen ... --seed 1 --out g2.txt && ./sssp_gen ... --seed 2 --out g3.txt && cmp g1.txt g2.txt && ! cmp -s g1.txt g3.txt; ./sssp_gen --type road --n 400 --weight-type double --format dimacs; ./sssp_gen --type nope; ./sssp_gen --type er --n abc`
+
+## P2-GRAPH-EDGELIST
+
+- Spec: Edge-list utilities on EdgeList<W> (W = uint64_t, double): keep_lightest_per_pair keeps exactly the (weight, index)-least edge of every unordered vertex pair (loops optionally dropped) and maps outputs to input edge ids; relabel_vertices applies an injective vertex map (kNoVertex drops the vertex and its edges); connected_components labels vertices canonically by smallest member; extract_component / largest_component return the induced component subgraph with vertex and edge maps; all validate their input
+- Impl: `include/sssp/edge_list.hpp`, `src/graph/edge_list.cpp`
+- Tests: `tests/unit/graph/test_edge_list.cpp`, `tests/property/graph/test_edge_list_property.cpp`
+- RED (exit 1, 2026-11-27T13:37:18+09:00): fatal error: 'sssp/edge_list.hpp' file not found: the edge-list utilities (keep_lightest_per_pair, relabel_vertices, connected_components, extract_component, component_of, largest_component) do not exist yet — `bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -R "edge_list\|keep_lightest\|relabel_vertices\|connected_components\|component"'`
+- GREEN (exit 0, 2026-11-27T13:45:12+09:00) — `bash -c 'cmake --build --preset debug -j8 && ctest --preset debug'`
+- REFACTOR (exit 0, 2026-11-27T13:54:26+09:00) — `bash -c 'cmake --build --preset debug -j8 && ctest --preset debug'`
 
 ## P2-GRAPH-FORMATS
 
@@ -1078,3 +1089,13 @@ Do not edit by hand; edit the evidence files and regenerate.
 - RED (exit 1, 2026-11-27T13:14:34+09:00): missing header paper/model/word_ops.hpp (BlockLayout: scan-built block index/offset, Sec 2 l.305-306), missing IlogTable::build_steps and the table overload uniform_below(src, h, IlogTable) (Sec 2 l.303-308) — `bash -c 'cmake --build --preset debug 2>&1 \| grep -E "error\|FAILED" \| head -20; cmake --build --preset debug > /dev/null 2>&1 && ctest --preset debug -R "word"'`
 - GREEN (exit 0, 2026-11-27T13:19:58+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug -j8'`
 - REFACTOR (exit 0, 2026-11-27T13:22:20+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug -j8'`
+
+## P5-EXP-PARAMS
+
+- Spec: Mode B parameter set: PaperParams validates LocalParams/OuterParams at construction (rejecting the constants that PAPER_MAPPING §2 marks not changeable), rederives h, K, P, T, H, F from b and t, decides the local branch per instance, and logs every parameter with its deviation ID into Diagnostics
+- Impl: `src/experimental/paper_experimental/*.hpp`, `src/experimental/paper_experimental/*.cpp`
+- Tests: `tests/unit/paper_experimental/test_*.cpp`
+- Covers: `src/paper/model/params.hpp`, `src/paper/local/local_hierarchy.hpp`, `src/paper/pivots/name_routes.hpp`, `src/paper/pivots/estimate.hpp`
+- RED (exit 1, 2026-11-27T13:40:35+09:00): missing header experimental/paper_experimental/params.hpp: the Mode B parameter types (PaperParams, LocalParams, OuterParams) do not exist yet — `bash -c 'cmake --preset debug >/dev/null && cmake --build --preset debug && ctest --preset debug -R "experimental params"'`
+- GREEN (exit 0, 2026-11-27T13:48:29+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
+- REFACTOR (exit 0, 2026-11-27T13:54:39+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
