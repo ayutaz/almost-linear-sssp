@@ -1,0 +1,103 @@
+{
+  "id": "P3-OUTER-PIPELINE",
+  "spec": "outer_construction (Alg 8 l.8-15) chains owner decomposition, NameRoutes, G', OwnerDistances, outer states, scales, partition, atom substitution, seed redirection and Evaluate, and returns per-vertex minima equal to the exact contracted distances; Mode A keeps the base case for N < 2^64 and gains PaperOptions::seed; Mode B paper_sssp forces the branch through PaperParams and fails (throws) instead of substituting a search",
+  "paper_ref": "Sec 8.3, Algorithm 8 l.8-17, Lemma 8.5, Theorem 1; Sec 8.2 Lemma 8.4; Lemma 5.15",
+  "files": {
+    "impl": [
+      "src/paper/outer/shortest_paths.hpp",
+      "src/paper/outer/shortest_paths.cpp",
+      "src/paper/sssp.hpp",
+      "src/paper/sssp.cpp",
+      "include/sssp/paper.hpp",
+      "src/experimental/paper_experimental/sssp.hpp",
+      "src/experimental/paper_experimental/sssp.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/outer/test_shortest_paths.cpp",
+      "tests/unit/paper/outer/shortest_paths_test_support.hpp",
+      "tests/differential/paper_experimental/test_outer_forced_vs_dijkstra.cpp",
+      "tests/unit/paper_experimental/test_sssp_mode_b.cpp",
+      "tests/differential/paper/test_paper_sssp_differential.cpp",
+      "tests/regression/test_outer_pipeline_*.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_unit_tests && ctest --preset debug -R \"PL-|outer construction|outer_construction|Q-69\"'",
+      "exit_code": 1,
+      "reason": "missing header paper/outer/shortest_paths.hpp: run_outer_construction / outer_construction / fallback_shares (Alg 8 l.8-15) do not exist yet",
+      "timestamp": "2026-11-27T16:50:52+09:00",
+      "output_tail": "[0/2] Re-checking globbed directories...\n[1/3] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_shortest_paths.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_shortest_paths.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_shortest_paths.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_shortest_paths.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_shortest_paths.cpp.o -c ./tests/unit/paper/outer/test_shortest_paths.cpp\n./tests/unit/paper/outer/test_shortest_paths.cpp:25:10: fatal error: 'paper/outer/shortest_paths.hpp' file not found\n   25 | #include \"paper/outer/shortest_paths.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "./build/debug/tests/sssp_unit_tests '[pipeline]'",
+      "exit_code": 42,
+      "reason": "test expectation error, not an implementation fault: the L3 check demanded a finite attachment on all three blocks {1,3}. Note 04 Sec 3.5 defines L3 as 'a nonsingleton block with a finite attachment' (at least one); by Sec 8.1 l.1973-1983 nothing enters outward window 1 (no lower-shell neighbour, no macro head), so I0 is infinite there and that block is unattached (Q-66), as SC-5 of P3-OUTER-SCALES derives by hand. The expectation is corrected to: three blocks of two states with s_U = 3, two attached (inward window 0, outward window 0), one unattached",
+      "timestamp": "2026-11-27T16:52:32+09:00",
+      "output_tail": "with message:\n  L3\n\n./tests/unit/paper/outer/test_shortest_paths.cpp:121: FAILED:\n  CHECK( (b.kind == OuterBlockKind::kAligned || b.kind == OuterBlockKind::kUnaligned) )\nwith expansion:\n  false\nwith message:\n  L3\n\n./tests/unit/paper/outer/test_shortest_paths.cpp:121: FAILED:\n  CHECK( (b.kind == OuterBlockKind::kAligned || b.kind == OuterBlockKind::kUnaligned) )\nwith expansion:\n  false\nwith message:\n  L3\n\n===============================================================================\ntest cases:    10 |     8 passed | 2 failed\nassertions: 10711 | 10703 passed | 8 failed"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"PL-|outer construction|outer_construction|Q-69|outer scales|outer states|paper_sssp|Mode A\" -j4'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T16:55:15+09:00",
+      "output_tail": "        Start 1224: property:Alg 4 Mode A at k = 209953: sparse multigraph, quarter-integer doubles\n103/108 Test #1221: property:Alg 4 Mode A at k = 209953: grid, exponential weights ...............................................   Passed    8.73 sec\n        Start 1225: property:Alg 4 Mode A at k = 262142 (last L = 18): sparse multigraph, exponential weights\n104/108 Test #1223: property:Alg 4 Mode A at k = 209953: clustered with heavy bridges ............................................   Passed    7.70 sec\n        Start 1226: property:Alg 4 Mode A at k = 262143 (first L = 19): sparse multigraph, tied weights\n105/108 Test #1224: property:Alg 4 Mode A at k = 209953: sparse multigraph, quarter-integer doubles ..............................   Passed   10.77 sec\n106/108 Test #1225: property:Alg 4 Mode A at k = 262142 (last L = 18): sparse multigraph, exponential weights ....................   Passed   13.62 sec\n107/108 Test #1124: differential:Alg 4 Mode A + Evaluate at k = 262143 (first L = 19): grid, exponential weights .................   Passed   63.35 sec\n108/108 Test #1226: property:Alg 4 Mode A at k = 262143 (first L = 19): sparse multigraph, tied weights ..........................   Passed   11.89 sec\n\n100% tests passed, 0 tests failed out of 108\n\nLabel Time Summary:\ndifferential         =  25.45 sec*proc (15 tests)\ndifferential-slow    = 429.04 sec*proc (11 tests)\nproperty             =  29.24 sec*proc (10 tests)\nproperty-slow        =  70.98 sec*proc (8 tests)\nunit                 =   4.58 sec*proc (64 tests)\n\nTotal Test time (real) = 145.89 sec"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_unit_tests sssp_differential_tests -k 0 && ctest --preset debug -R \"Mode B|Mode A|PaperOptions\"'",
+      "exit_code": 1,
+      "reason": "missing Mode B entry experimental/paper_experimental/sssp.hpp (paper_sssp with PaperParams, outer_construction_params) and missing Mode A wiring: PaperOptions::seed, kDefaultPaperSeed, paper::outer_construction(c, seed, diag)",
+      "timestamp": "2026-11-27T16:56:37+09:00",
+      "output_tail": "   18 | #include \"experimental/paper_experimental/sssp.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[2/5] Building CXX object tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_paper_sssp_differential.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_paper_sssp_differential.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_paper_sssp_differential.cpp.o -MF tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_paper_sssp_differential.cpp.o.d -o tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_paper_sssp_differential.cpp.o -c ./tests/differential/paper/test_paper_sssp_differential.cpp\n./tests/differential/paper/test_paper_sssp_differential.cpp:142:55: error: no member named 'kDefaultPaperSeed' in namespace 'sssp::paper'\n  142 |       sssp::paper::outer_construction(c, sssp::paper::kDefaultPaperSeed, diag);\n      |                                          ~~~~~~~~~~~~~^\n./tests/differential/paper/test_paper_sssp_differential.cpp:163:32: error: no member named 'seed' in 'sssp::paper::PaperOptions'\n  163 |   static_assert(PaperOptions{}.seed == sssp::paper::kDefaultPaperSeed);\n      |                 ~~~~~~~~~~~~~~ ^\n./tests/differential/paper/test_paper_sssp_differential.cpp:163:53: error: no member named 'kDefaultPaperSeed' in namespace 'sssp::paper'\n  163 |   static_assert(PaperOptions{}.seed == sssp::paper::kDefaultPaperSeed);\n      |                                        ~~~~~~~~~~~~~^\n./tests/differential/paper/test_paper_sssp_differential.cpp:171:9: error: no member named 'seed' in 'sssp::paper::PaperOptions'\n  171 |       o.seed = seed;\n      |       ~ ^\n4 errors generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"PL-|outer construction|outer_construction|Q-69|Mode B|Mode A|PaperOptions|paper_sssp|paper algorithm|paper-faithful\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T17:04:32+09:00",
+      "output_tail": "        Start 1213: property:Alg 7 invariants with radial atoms (Mode B atom parameters, Q-04) - double\n 98/103 Test #1212: property:Alg 7 invariants with radial atoms (Mode B atom parameters, Q-04) - std::uint64_t ..................   Passed    0.12 sec\n        Start 1222: property:Mode B NameRoutes: certificates under D-9 + D-17 + D-10 on many seeds\n 99/103 Test #1213: property:Alg 7 invariants with radial atoms (Mode B atom parameters, Q-04) - double .........................   Passed    0.12 sec\n        Start 1224: property:Mode B NameRoutes: double weights, certificates under D-9 + D-17\n100/103 Test #1224: property:Mode B NameRoutes: double weights, certificates under D-9 + D-17 ...................................   Passed    0.04 sec\n101/103 Test #1222: property:Mode B NameRoutes: certificates under D-9 + D-17 + D-10 on many seeds ..............................   Passed    0.46 sec\n102/103 Test #1093: differential:Mode B local (D-8, D-11) + Evaluate equals Dijkstra; grid equals exact - std::uint64_t .........   Passed    3.34 sec\n103/103 Test #1094: differential:Mode B local (D-8, D-11) + Evaluate equals Dijkstra; grid equals exact - double ................   Passed    3.33 sec\n\n100% tests passed, 0 tests failed out of 103\n\nLabel Time Summary:\ndifferential         =  16.92 sec*proc (23 tests)\ndifferential-slow    = 944.44 sec*proc (11 tests)\nproperty             =   5.34 sec*proc (7 tests)\nproperty-slow        =  71.87 sec*proc (8 tests)\nunit                 =   6.17 sec*proc (54 tests)\n\nTotal Test time (real) = 266.40 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"PL-|outer construction|outer_construction|Q-69|Mode B|Mode A|PaperOptions|paper_sssp|paper algorithm|paper-faithful\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:01:36+09:00",
+      "output_tail": "        Start 1381: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep with the scan bound (Q-64), uint64\n176/181 Test #1381: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep with the scan bound (Q-64), uint64 ...................................   Passed   12.87 sec\n        Start 1382: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep with the scan bound (Q-64), dyadic double\n177/181 Test #1201: differential:PL-4: forced outer branch at N = 2000 on every generator family - double .......................................   Passed  573.02 sec\n        Start 1383: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep: separation at one scale (Lemma 6.5)\n178/181 Test #1382: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep with the scan bound (Q-64), dyadic double ............................   Passed    3.81 sec\n179/181 Test #1200: differential:PL-4: forced outer branch at N = 2000 on every generator family - std::uint64_t ................................   Passed  584.69 sec\n180/181 Test #1383: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep: separation at one scale (Lemma 6.5) .................................   Passed   20.05 sec\n181/181 Test #1379: property:P4-RANDOMIZED Mode B D-17 NameRoutes, seed sweep, uint64 ...........................................................   Passed  102.53 sec\n\n100% tests passed, 0 tests failed out of 181\n\nLabel Time Summary:\ndifferential         = 268.31 sec*proc (42 tests)\ndifferential-slow    = 1794.87 sec*proc (17 tests)\nproperty             = 154.80 sec*proc (19 tests)\nproperty-slow        = 1398.87 sec*proc (48 tests)\nunit                 =  15.66 sec*proc (55 tests)\n\nTotal Test time (real) = 941.75 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"PL-\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:10:11+09:00",
+      "output_tail": "      Start 1200: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 7) - std::uint64_t\n24/30 Test  #635: unit:PL-9: the source may be a pivot, a plain nonpivot or inside an atom - std::uint64_t ................   Passed    0.04 sec\n      Start 1201: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 7) - double\n25/30 Test #1105: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - std::uint64_t ........   Passed    0.02 sec\n      Start 1202: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - std::uint64_t\n26/30 Test #1204: differential:PL-8: the distances do not depend on the seed where NameRoutes samples (16 seeds) ..........   Passed   22.41 sec\n      Start 1203: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - double\n27/30 Test #1200: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 7) - std::uint64_t ...   Passed   36.81 sec\n28/30 Test #1201: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 7) - double ..........   Passed   37.11 sec\n29/30 Test #1203: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - double ..........   Passed  445.88 sec\n30/30 Test #1202: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - std::uint64_t ...   Passed  459.55 sec\n\n100% tests passed, 0 tests failed out of 30\n\nLabel Time Summary:\ndifferential         =  36.84 sec*proc (17 tests)\ndifferential-slow    = 1001.76 sec*proc (5 tests)\nunit                 =   1.05 sec*proc (8 tests)\n\nTotal Test time (real) = 472.30 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"PL-\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:24:27+09:00",
+      "output_tail": "      Start 1144: differential:PL-11: unaligned block end to end (SC-7 input, corridor 2^60)\n24/30 Test  #635: unit:PL-9: the source may be a pivot, a plain nonpivot or inside an atom - std::uint64_t ................   Passed    0.04 sec\n      Start 1146: differential:PL-11 / Q-79: a path of four edges of 2^62 is rejected by Sec 5.1 (pinned)\n25/30 Test #1144: differential:PL-11: unaligned block end to end (SC-7 input, corridor 2^60) ..............................   Passed    0.03 sec\n      Start 1105: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - std::uint64_t\n26/30 Test #1146: differential:PL-11 / Q-79: a path of four edges of 2^62 is rejected by Sec 5.1 (pinned) .................   Passed    0.03 sec\n      Start 1106: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - double\n27/30 Test #1105: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - std::uint64_t ........   Passed    0.03 sec\n28/30 Test #1106: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - double ...............   Passed    0.02 sec\n29/30 Test #1203: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - double ..........   Passed   99.26 sec\n30/30 Test #1202: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - std::uint64_t ...   Passed  101.15 sec\n\n100% tests passed, 0 tests failed out of 30\n\nLabel Time Summary:\ndifferential         =  41.18 sec*proc (17 tests)\ndifferential-slow    = 298.39 sec*proc (5 tests)\nunit                 =   1.20 sec*proc (8 tests)\n\nTotal Test time (real) = 101.83 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"PL-|D-20\" && ctest --preset debug -j4 -LE slow -R \"PL-|D-20|outer|Q-69|Mode B|Mode A|PaperOptions|paper_sssp|paper algorithm|paper-faithful|overflow|child|owner decomposition|owner_decomposition\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:52:08+09:00",
+      "output_tail": "283/289 Test #1424: regression:20261127-owner-decomposition-overflow: the same path with b = 5 (R_3 does not fit) ................   Passed    0.02 sec\n        Start 1410: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance\n284/289 Test #1419: regression:20261127-evaluate-mass-overflow: a distance of 2^64 still throws std::overflow_error ..............   Passed    0.02 sec\n        Start 1425: regression:20261127-owner-decomposition-overflow: path of four edges of 2^62 with b = 2\n285/289 Test #1417: regression:20261127-evaluate-mass-overflow: one edge of length 2^63 - 1 (passes before the fix) ..............   Passed    0.03 sec\n        Start 1426: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix)\n286/289 Test #1423: regression:20261127-owner-decomposition-overflow: path of 2^63 - 1, 2^62, 2^62 with b = 2 ....................   Passed    0.04 sec\n287/289 Test #1410: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ...................   Passed    0.04 sec\n288/289 Test #1425: regression:20261127-owner-decomposition-overflow: path of four edges of 2^62 with b = 2 ......................   Passed    0.03 sec\n289/289 Test #1426: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix) .........   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 289\n\nLabel Time Summary:\ndifferential    = 307.97 sec*proc (50 tests)\nproperty        = 230.59 sec*proc (32 tests)\nregression      =   0.46 sec*proc (16 tests)\nunit            =  21.99 sec*proc (191 tests)\n\nTotal Test time (real) = 140.38 sec"
+    }
+  ],
+  "commit": "966190a"
+}
