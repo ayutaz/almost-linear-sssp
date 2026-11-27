@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "paper/local/saturating.hpp"
 #include "paper/model/params.hpp"
 #include "paper/primitives/dsu.hpp"
 #include "paper/primitives/mst.hpp"
@@ -87,6 +88,17 @@ RootedOrder root_at(const TreeAdjacency& a, std::size_t n, Vertex root) {
   return r;
 }
 
+/// The reduced-graph test of l.965-966, w <= D_T(u, v) = rd(u) + rd(v) - 2 rd(lca), decided
+/// without subtraction as w + 2 rd(lca) <= rd(u) + rd(v) in TreeLength<W> ("Range of the
+/// arithmetic", owner_decomposition.hpp). Integer W: both sides are exact 128-bit sums. double:
+/// rounded sums in the extended reals; never raises.
+template <class W>
+bool within_tree_distance(W w, TreeLength<W> rd_u, TreeLength<W> rd_v, TreeLength<W> rd_lca) {
+  const TreeLength<W> lhs = TreeLength<W>{w} + rd_lca + rd_lca;
+  const TreeLength<W> rhs = rd_u + rd_v;
+  return !(rhs < lhs);
+}
+
 }  // namespace
 
 std::size_t local_separator_size(std::size_t n) {
@@ -113,11 +125,12 @@ OwnerDecomposition<W> owner_decomposition(const CsrGraph<W>& g, std::size_t b, D
   RootedOrder rooted = root_at(adj, n, od.root);
   od.tree_parent = rooted.parent;
   od.tree_parent_edge = rooted.parent_edge;
-  od.root_distance.assign(n, W{0});
+  od.root_distance.assign(n, TreeLength<W>{0});
   for (const Vertex v : rooted.order) {
     if (v == od.root) continue;
-    od.root_distance[v] = WeightTraits<W>::checked_add(od.root_distance[od.tree_parent[v]],
-                                                       edges[od.tree_parent_edge[v]].weight);
+    // Not a path length from a source: exact in 128 bits (integers), never raises.
+    od.root_distance[v] =
+        od.root_distance[od.tree_parent[v]] + TreeLength<W>{edges[od.tree_parent_edge[v]].weight};
   }
   const ForestQueries tree_queries(od.tree_parent);
   std::vector<std::uint8_t> in_tree(edges.size(), 0);
@@ -132,14 +145,10 @@ OwnerDecomposition<W> owner_decomposition(const CsrGraph<W>& g, std::size_t b, D
     }
     bool keep = false;
     if (e.u != e.v) {  // a loop (positive) is always heavier than its empty tree path
-      // w <= D_T(u, v) = rd(u) + rd(v) - 2 rd(lca), decided without subtraction.
       const std::optional<Vertex> lca = tree_queries.lca(e.u, e.v);
       if (!lca) throw std::logic_error("owner_decomposition: T is not spanning");
-      const W lca_rd = od.root_distance[*lca];
-      const W lhs =
-          WeightTraits<W>::checked_add(WeightTraits<W>::checked_add(e.weight, lca_rd), lca_rd);
-      const W rhs = WeightTraits<W>::checked_add(od.root_distance[e.u], od.root_distance[e.v]);
-      keep = !(rhs < lhs);
+      keep = within_tree_distance<W>(e.weight, od.root_distance[e.u], od.root_distance[e.v],
+                                     od.root_distance[*lca]);
     }
     od.reduced[i] = keep ? 1 : 0;
     if (!keep) ++dropped;
@@ -236,7 +245,8 @@ OwnerDecomposition<W> owner_decomposition(const CsrGraph<W>& g, std::size_t b, D
         }
         od.owner[y] = pi;
         od.radius[y] = std::max(od.radius[x], edges[e].weight);
-        od.owner_distance[y] = WeightTraits<W>::checked_add(od.owner_distance[x], edges[e].weight);
+        // R_y = R_x + w; infinity() if it does not fit W (an auxiliary tree distance).
+        od.owner_distance[y] = sat::add(od.owner_distance[x], edges[e].weight);
         od.owner_hops[y] = od.owner_hops[x] + 1;
         queue.push_back(y);
       }
