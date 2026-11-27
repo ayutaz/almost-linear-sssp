@@ -45,7 +45,13 @@
 // Numerics (Q-06, Q-55 plan A): exactness is established for std::uint64_t and for dyadic
 // double inputs whose sums are exact. Components throw (std::overflow_error, std::domain_error,
 // std::logic_error) when a quantity they need is not representable; nothing is retried by
-// another method.
+// another method. Observed in the tests of note 04 PL-7, PL-10 and PL-11 (Mode B forcing):
+//   * std::uint64_t: the Sec 7.3 calendars reject R >= 2^54 (D-20); Sec 4.2 order_children
+//     and the Sec 5.1 root distances throw on some inputs with weights near 2^62 whose
+//     distances all fit (open fixes P3-CHILDORDER-OVERFLOW, P3-OWNERDECOMP-OVERFLOW);
+//   * non-dyadic double: most runs are rejected, mainly by the tight-arc test of Lemma 8.5
+//     (restore_predecessor_tree, after this function); every result that was returned passed
+//     the tree verification within the documented tolerance.
 
 #include <cstddef>
 #include <cstdint>

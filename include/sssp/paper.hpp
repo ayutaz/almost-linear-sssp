@@ -80,8 +80,10 @@ constexpr std::optional<PaperVariant> parse_algorithm_name(std::string_view name
 /// range and throws only if a state that received nothing else never emits. For double weights
 /// Evaluate rejects a slot that rounds back to its start with std::domain_error (D-24). Neither
 /// is on this function's path for N < 2^64 (base case only); both are on the path of the outer
-/// construction. Sec 4.2 order_children can still overflow on sums of forest path lengths, an
-/// auxiliary quantity (open finding of P3-EVAL-ARITH-FIX).
+/// construction. On that path two auxiliary quantities can still overflow while every distance
+/// fits (std::overflow_error, not a result): sums of forest path lengths in Sec 4.2
+/// order_children (P3-CHILDORDER-OVERFLOW) and the MST root distances of Sec 5.1
+/// owner_decomposition (P3-OWNERDECOMP-OVERFLOW); both fixes are not on main yet.
 template <class W>
 SsspResult<W> paper_sssp(const CsrGraph<W>& g, Vertex s, PaperOptions options = {});
 

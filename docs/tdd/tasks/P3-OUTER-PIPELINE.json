@@ -21,7 +21,7 @@
       "tests/regression/test_outer_pipeline_*.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "REFACTOR",
   "events": [
     {
       "phase": "RED",
@@ -65,6 +65,30 @@
       "exit_code": 0,
       "timestamp": "2026-11-27T17:04:32+09:00",
       "output_tail": "        Start 1213: property:Alg 7 invariants with radial atoms (Mode B atom parameters, Q-04) - double\n 98/103 Test #1212: property:Alg 7 invariants with radial atoms (Mode B atom parameters, Q-04) - std::uint64_t ..................   Passed    0.12 sec\n        Start 1222: property:Mode B NameRoutes: certificates under D-9 + D-17 + D-10 on many seeds\n 99/103 Test #1213: property:Alg 7 invariants with radial atoms (Mode B atom parameters, Q-04) - double .........................   Passed    0.12 sec\n        Start 1224: property:Mode B NameRoutes: double weights, certificates under D-9 + D-17\n100/103 Test #1224: property:Mode B NameRoutes: double weights, certificates under D-9 + D-17 ...................................   Passed    0.04 sec\n101/103 Test #1222: property:Mode B NameRoutes: certificates under D-9 + D-17 + D-10 on many seeds ..............................   Passed    0.46 sec\n102/103 Test #1093: differential:Mode B local (D-8, D-11) + Evaluate equals Dijkstra; grid equals exact - std::uint64_t .........   Passed    3.34 sec\n103/103 Test #1094: differential:Mode B local (D-8, D-11) + Evaluate equals Dijkstra; grid equals exact - double ................   Passed    3.33 sec\n\n100% tests passed, 0 tests failed out of 103\n\nLabel Time Summary:\ndifferential         =  16.92 sec*proc (23 tests)\ndifferential-slow    = 944.44 sec*proc (11 tests)\nproperty             =   5.34 sec*proc (7 tests)\nproperty-slow        =  71.87 sec*proc (8 tests)\nunit                 =   6.17 sec*proc (54 tests)\n\nTotal Test time (real) = 266.40 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"PL-|outer construction|outer_construction|Q-69|Mode B|Mode A|PaperOptions|paper_sssp|paper algorithm|paper-faithful\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:01:36+09:00",
+      "output_tail": "        Start 1381: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep with the scan bound (Q-64), uint64\n176/181 Test #1381: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep with the scan bound (Q-64), uint64 ...................................   Passed   12.87 sec\n        Start 1382: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep with the scan bound (Q-64), dyadic double\n177/181 Test #1201: differential:PL-4: forced outer branch at N = 2000 on every generator family - double .......................................   Passed  573.02 sec\n        Start 1383: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep: separation at one scale (Lemma 6.5)\n178/181 Test #1382: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep with the scan bound (Q-64), dyadic double ............................   Passed    3.81 sec\n179/181 Test #1200: differential:PL-4: forced outer branch at N = 2000 on every generator family - std::uint64_t ................................   Passed  584.69 sec\n180/181 Test #1383: property:P4-RANDOMIZED Mode B D-9 Estimate, seed sweep: separation at one scale (Lemma 6.5) .................................   Passed   20.05 sec\n181/181 Test #1379: property:P4-RANDOMIZED Mode B D-17 NameRoutes, seed sweep, uint64 ...........................................................   Passed  102.53 sec\n\n100% tests passed, 0 tests failed out of 181\n\nLabel Time Summary:\ndifferential         = 268.31 sec*proc (42 tests)\ndifferential-slow    = 1794.87 sec*proc (17 tests)\nproperty             = 154.80 sec*proc (19 tests)\nproperty-slow        = 1398.87 sec*proc (48 tests)\nunit                 =  15.66 sec*proc (55 tests)\n\nTotal Test time (real) = 941.75 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"PL-\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:10:11+09:00",
+      "output_tail": "      Start 1200: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 7) - std::uint64_t\n24/30 Test  #635: unit:PL-9: the source may be a pivot, a plain nonpivot or inside an atom - std::uint64_t ................   Passed    0.04 sec\n      Start 1201: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 7) - double\n25/30 Test #1105: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - std::uint64_t ........   Passed    0.02 sec\n      Start 1202: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - std::uint64_t\n26/30 Test #1204: differential:PL-8: the distances do not depend on the seed where NameRoutes samples (16 seeds) ..........   Passed   22.41 sec\n      Start 1203: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - double\n27/30 Test #1200: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 7) - std::uint64_t ...   Passed   36.81 sec\n28/30 Test #1201: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 7) - double ..........   Passed   37.11 sec\n29/30 Test #1203: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - double ..........   Passed  445.88 sec\n30/30 Test #1202: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - std::uint64_t ...   Passed  459.55 sec\n\n100% tests passed, 0 tests failed out of 30\n\nLabel Time Summary:\ndifferential         =  36.84 sec*proc (17 tests)\ndifferential-slow    = 1001.76 sec*proc (5 tests)\nunit                 =   1.05 sec*proc (8 tests)\n\nTotal Test time (real) = 472.30 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"PL-\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:24:27+09:00",
+      "output_tail": "      Start 1144: differential:PL-11: unaligned block end to end (SC-7 input, corridor 2^60)\n24/30 Test  #635: unit:PL-9: the source may be a pivot, a plain nonpivot or inside an atom - std::uint64_t ................   Passed    0.04 sec\n      Start 1146: differential:PL-11 / Q-79: a path of four edges of 2^62 is rejected by Sec 5.1 (pinned)\n25/30 Test #1144: differential:PL-11: unaligned block end to end (SC-7 input, corridor 2^60) ..............................   Passed    0.03 sec\n      Start 1105: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - std::uint64_t\n26/30 Test #1146: differential:PL-11 / Q-79: a path of four edges of 2^62 is rejected by Sec 5.1 (pinned) .................   Passed    0.03 sec\n      Start 1106: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - double\n27/30 Test #1105: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - std::uint64_t ........   Passed    0.03 sec\n28/30 Test #1106: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - double ...............   Passed    0.02 sec\n29/30 Test #1203: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - double ..........   Passed   99.26 sec\n30/30 Test #1202: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - std::uint64_t ...   Passed  101.15 sec\n\n100% tests passed, 0 tests failed out of 30\n\nLabel Time Summary:\ndifferential         =  41.18 sec*proc (17 tests)\ndifferential-slow    = 298.39 sec*proc (5 tests)\nunit                 =   1.20 sec*proc (8 tests)\n\nTotal Test time (real) = 101.83 sec"
     }
   ],
   "commit": null
