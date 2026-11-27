@@ -1,0 +1,42 @@
+{
+  "id": "P0-BOOTSTRAP",
+  "spec": "scripts/bootstrap.sh checks clang++, cmake>=3.24, ninja, clang-format, clang-tidy, uv (required) and gh (optional) by command, fails when a required tool is missing or too old in both modes, and otherwise runs uv sync and configures the debug preset",
+  "paper_ref": "none",
+  "files": {
+    "impl": [
+      "scripts/bootstrap.sh"
+    ],
+    "tests": [
+      "tests/python/test_bootstrap.py"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "uv run pytest -q tests/python/test_bootstrap.py --deselect tests/python/test_bootstrap.py::test_macos_install_mode_brews_only_missing_formulae_then_configures",
+      "exit_code": 1,
+      "reason": "old bootstrap.sh checks Linux tools via dpkg-query (absent in sandbox), never checks gh or a C++ compiler, ignores HOMEBREW_PREFIX, never configures the debug preset and continues past an old cmake; test_macos_install_mode_* deselected for RED because the old script would call the host's real Homebrew",
+      "timestamp": "2026-11-27T13:36:46+09:00",
+      "output_tail": "E           \u001b[32mok\u001b[0m  cmake 3.28.3\nE           \u001b[32mok\u001b[0m  clang-format/clang-tidy in /opt/homebrew/opt/llvm/bin (Makefile picks this path up automatically)\nE         \u001b[1;34m==>\u001b[0m all tools present\nE         \nE       assert 0 == 1\nE        +  where 0 = CompletedProcess(args=['/bin/bash', '~/Desktop/almost-linear-sssp/.claude/worktrees/agent-aebb08702cee314b...omebrew/opt/llvm/bin (Makefile picks this path up automatically)\\n\\x1b[1;34m==>\\x1b[0m all tools present\\n', stderr='').returncode\n\ntests/python/test_bootstrap.py:330: AssertionError\n=========================== short test summary info ============================\nFAILED tests/python/test_bootstrap.py::test_check_passes_when_every_tool_is_present\nFAILED tests/python/test_bootstrap.py::test_check_accepts_versioned_llvm_tools\nFAILED tests/python/test_bootstrap.py::test_check_fails_when_a_required_tool_is_missing[clang++]\nFAILED tests/python/test_bootstrap.py::test_missing_gh_is_reported_but_optional\nFAILED tests/python/test_bootstrap.py::test_install_mode_runs_uv_sync_then_configures_debug_preset_with_clang\nFAILED tests/python/test_bootstrap.py::test_install_mode_keeps_a_user_supplied_cxx\nFAILED tests/python/test_bootstrap.py::test_install_mode_fails_when_configure_fails\nFAILED tests/python/test_bootstrap.py::test_install_mode_with_old_cmake_stops_before_sync_and_configure\nFAILED tests/python/test_bootstrap.py::test_install_mode_apt_installs_only_what_is_missing\nFAILED tests/python/test_bootstrap.py::test_macos_missing_compiler_points_to_command_line_tools\nFAILED tests/python/test_bootstrap.py::test_macos_without_homebrew_fails_with_hint"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "uv run pytest -q tests/python",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T13:41:14+09:00",
+      "output_tail": "............................................ssssssssssss................ [ 23%]\n........................................................................ [ 46%]\n........................................................................ [ 69%]\n........................................................................ [ 92%]\n........................                                                 [100%]"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "uv run pytest -q tests/python",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T13:43:05+09:00",
+      "output_tail": "............................................ssssssssssss................ [ 23%]\n........................................................................ [ 46%]\n........................................................................ [ 69%]\n........................................................................ [ 92%]\n........................                                                 [100%]"
+    }
+  ],
+  "commit": "f43dbc5"
+}

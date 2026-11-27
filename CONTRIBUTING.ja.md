@@ -7,7 +7,8 @@
 ## 準備
 
 ```bash
-./scripts/bootstrap.sh          # ツールの確認 + uv sync + 設定
+./scripts/bootstrap.sh          # ツールの確認(無いものは入れる)+ uv sync + debug の設定
+./scripts/bootstrap.sh --check  # 報告だけで何も変えない(必須のツールが無ければ exit 1)
 make build && make test
 ./scripts/fetch_paper.sh        # 論文を .cache/paper/ に取得(コミットしないこと)
 ```
@@ -17,7 +18,7 @@ make build && make test
 - C++20 に対応した Clang(Apple Clang または LLVM)、CMake ≥ 3.24、Ninja
 - uv、Python ≥ 3.12
 - clang-format、clang-tidy
-- `gh`(CI の確認に使う)
+- `gh`(任意。CI の確認に使う)
 
 Python の依存関係は `uv add <pkg>`(開発用は `uv add --dev <pkg>`)で追加し、`uv run` で実行します。pip は使わないでください。
 
