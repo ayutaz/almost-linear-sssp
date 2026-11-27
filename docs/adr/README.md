@@ -23,3 +23,4 @@ Template:
 | [0005](0005-paper-not-redistributed.md) | The paper is not redistributed | Accepted |
 | [0006](0006-diagnostics-compiled-out-for-timing.md) | Diagnostics compiled out in timed builds | Accepted |
 | [0007](0007-no-fast-math.md) | No fast-math; IEEE-754 semantics for correctness | Accepted |
+| [0008](0008-mode-a-outer-base-case-variants.md) | Mode A outer base case: faithful scan Dijkstra, binary-heap variant as deviation D-1 | Accepted |
