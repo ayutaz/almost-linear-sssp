@@ -23,5 +23,5 @@
   "expected_dist": null,
   "expected": "a simple 2-regular graph on 3 vertices, i.e. the triangle {0,1},{1,2},{0,2} (include/sssp/generators.hpp: kSwitchToSimple is 'simple, exactly d')",
   "tolerance": null,
-  "fixed_by": null
+  "fixed_by": "2a6815d"
 }
