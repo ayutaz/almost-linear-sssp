@@ -1,0 +1,69 @@
+{
+  "id": "P3-CONTRACT-RESTORE",
+  "spec": "Zero-edge components are contracted (loops dropped, only the source component retained, parallel edges and original edge ids kept) to a positive-weight graph, and exact contracted distances are lifted back to all original vertices with a first-discovery tree of tight original arcs whose recomputed sums equal the labels; unreachable vertices get infinity",
+  "paper_ref": "Sec 8.3, Algorithm 8 l.2 and l.6/l.16, Lemma 8.5 (txt l.2145-2185)",
+  "files": {
+    "impl": [
+      "src/paper/outer/contract_restore.hpp",
+      "src/paper/outer/contract_restore.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/outer/test_contract_restore.cpp",
+      "tests/differential/paper/test_contract_restore_differential.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "contraction without zero edges is the identity up to renaming",
+        "all-zero graph contracts to a single vertex",
+        "zero cycles are contracted and the restored tree has no cycle",
+        "source inside a zero component",
+        "only the source component is retained",
+        "parallel edges are kept, every loop is discarded",
+        "contraction counters report removed vertices and edges",
+        "restore reports tree and unreachable counts",
+        "restore rejects inputs that are not exact contracted distances",
+        "contraction rejects an invalid source",
+        "integer weights at the infinity sentinel are never tight",
+        "contract, Dijkstra on the contracted graph, restore equals Bellman-Ford"
+      ],
+      "command": "cmake --preset debug >/dev/null && cmake --build --preset debug 2>&1 && ctest --preset debug -R \"contract\"",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/outer/contract_restore.hpp' file not found (contract_zero_edges / restore_predecessor_tree do not exist yet)",
+      "timestamp": "2026-11-27T10:50:49+09:00",
+      "output_tail": "[0/2] Re-checking globbed directories...\n[1/5] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_contract_restore.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_contract_restore.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_contract_restore.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_contract_restore.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_contract_restore.cpp.o -c tests/unit/paper/outer/test_contract_restore.cpp\ntests/unit/paper/outer/test_contract_restore.cpp:13:10: fatal error: 'paper/outer/contract_restore.hpp' file not found\n   13 | #include \"paper/outer/contract_restore.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[2/5] Building CXX object tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_contract_restore_differential.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_contract_restore_differential.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_contract_restore_differential.cpp.o -MF tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_contract_restore_differential.cpp.o.d -o tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_contract_restore_differential.cpp.o -c tests/differential/paper/test_contract_restore_differential.cpp\ntests/differential/paper/test_contract_restore_differential.cpp:13:10: fatal error: 'paper/outer/contract_restore.hpp' file not found\n   13 | #include \"paper/outer/contract_restore.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "contraction without zero edges is the identity up to renaming",
+        "all-zero graph contracts to a single vertex",
+        "zero cycles are contracted and the restored tree has no cycle",
+        "source inside a zero component",
+        "only the source component is retained",
+        "parallel edges are kept, every loop is discarded",
+        "contraction counters report removed vertices and edges",
+        "restore reports tree and unreachable counts",
+        "restore rejects inputs that are not exact contracted distances",
+        "contraction rejects an invalid source",
+        "integer weights at the infinity sentinel are never tight",
+        "contract, Dijkstra on the contracted graph, restore equals Bellman-Ford"
+      ],
+      "command": "cmake --build --preset debug 2>&1 && ctest --preset debug",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:52:23+09:00",
+      "output_tail": "        Start 278: regression:Counted<double> graphs reject negative and NaN weights\n271/278 Test #278: regression:Counted<double> graphs reject negative and NaN weights .......................................   Passed    0.01 sec\n272/278 Test #276: property:Fibonacci heap matches the reference model .....................................................   Passed    0.16 sec\n273/278 Test #277: property:radix heap matches the reference model under monotone keys .....................................   Passed    0.11 sec\n274/278 Test #275: property:indexed binary and 8-ary heaps match the reference model .......................................   Passed    0.22 sec\n275/278 Test  #51: unit:4-ary-heap Dijkstra: matches Floyd-Warshall on random graphs .......................................   Passed    1.39 sec\n276/278 Test  #58: unit:binary-heap Dijkstra: matches Floyd-Warshall on random graphs ......................................   Passed    1.38 sec\n277/278 Test  #65: unit:Fibonacci-heap Dijkstra: matches Floyd-Warshall on random graphs ...................................   Passed    1.41 sec\n278/278 Test #268: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................   Passed    1.20 sec\n\n100% tests passed, 0 tests failed out of 278\n\nLabel Time Summary:\ndifferential    =   1.55 sec*proc (6 tests)\nintegration     =   0.51 sec*proc (6 tests)\nproperty        =   0.70 sec*proc (7 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =   9.00 sec*proc (258 tests)\n\nTotal Test time (real) =   2.15 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "command": "cmake --build --preset debug 2>&1 && ctest --preset debug",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T10:54:49+09:00",
+      "output_tail": "        Start 278: regression:Counted<double> graphs reject negative and NaN weights\n271/278 Test #250: unit:verify compares against a reference when given - double ............................................   Passed    0.02 sec\n272/278 Test #123: unit:negative zero is accepted and normalised to +0 .....................................................   Passed    0.01 sec\n273/278 Test #182: unit:mul_pow2 on integers is exact and detects overflow .................................................   Passed    0.01 sec\n274/278 Test #254: unit:verify is exact for integer weights regardless of tolerance ........................................   Passed    0.01 sec\n275/278 Test #278: regression:Counted<double> graphs reject negative and NaN weights .......................................   Passed    0.01 sec\n276/278 Test #151: unit:small graph builders take sizes and weights ........................................................   Passed    0.01 sec\n277/278 Test #108: unit:EdgeList -> CSR -> EdgeList preserves vertices and edge order ......................................   Passed    0.01 sec\n278/278 Test #206: unit:uniform_below rejects outcomes at least h instead of reducing modulo h .............................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 278\n\nLabel Time Summary:\ndifferential    =   1.59 sec*proc (6 tests)\nintegration     =   0.55 sec*proc (6 tests)\nproperty        =   0.72 sec*proc (7 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =   9.71 sec*proc (258 tests)\n\nTotal Test time (real) =   3.09 sec"
+    }
+  ],
+  "commit": null
+}
