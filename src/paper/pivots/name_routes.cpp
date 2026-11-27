@@ -167,6 +167,11 @@ RouteNames<W> name_routes(const PivotRoutingInstance<W>& g, model::WordRng& rng,
   std::uint64_t consecutive = 0;
   std::uint64_t max_consecutive = 0;
   std::vector<std::uint32_t> qualified_group;  // per residual position: group id or kNoRecord
+  // Sec 2 l.303-304, Q-51 decision (b): the sample draws of l.6 have ranges |U|, |U|-1, ...; one
+  // table over 1..|U| (U only shrinks) supplies their bit counts in every trial, built in
+  // O(|U|) once per call. Nothing is tabulated if the loop does not run.
+  const model::IlogTable lg(residual.size() > limit ? residual.size() : 0);
+  cnt["name_routes.ilog_table_entries"] += lg.build_steps();
 
   // Alg 5 l.5: while |U| > 32t.
   while (residual.size() > limit) {
@@ -174,7 +179,8 @@ RouteNames<W> name_routes(const PivotRoutingInstance<W>& g, model::WordRng& rng,
     ++round_trials;
     // l.6: a uniformly random 16t-element subset S of U (partial Fisher-Yates; U is a set, so
     // reordering it is harmless).
-    partial_shuffle(std::span<std::uint32_t>(residual), static_cast<std::size_t>(sample_size), rng);
+    partial_shuffle(std::span<std::uint32_t>(residual), static_cast<std::size_t>(sample_size), rng,
+                    lg);
     std::vector<Edge<W>> sample;
     sample.reserve(static_cast<std::size_t>(sample_size));
     for (std::size_t k = 0; k < sample_size; ++k) sample.push_back(g.edges[residual[k]]);
