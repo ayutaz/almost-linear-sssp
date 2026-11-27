@@ -1,0 +1,79 @@
+{
+ "id": "P3-FOREST-DSU",
+ "spec": "Disjoint sets on k items: find returns the root and compresses the whole chain; unite links by rank (tie: raise survivor), returns false for same set; ranks strictly increase along parent chains, rank<=floor(log2 k), a rank-r root holds >=2^r items; find traversals counted in Diagnostics and bounded by the Lemma 3.6 band analysis (<=3 per find + k*(b1+2))",
+ "paper_ref": "Sec 3.3, Lemma 3.6",
+ "files": {
+  "impl": [
+   "src/paper/primitives/dsu.hpp"
+  ],
+  "tests": [
+   "tests/unit/paper/primitives/test_dsu.cpp",
+   "tests/property/paper/test_dsu_property.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "dsu starts with k singleton roots of rank zero",
+    "dsu on a single item",
+    "dsu unite of a set with itself does nothing",
+    "dsu links by rank and raises the survivor only on a tie",
+    "dsu find compresses every nonroot on the chain to the root",
+    "dsu matches naive labels under random ops",
+    "dsu counts finds and find traversals into diagnostics",
+    "dsu find traversals obey the Lemma 3.6 band bound on random op sequences",
+    "dsu find traversals obey the Lemma 3.6 band bound on deep binomial trees"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug -R \"dsu\"",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/primitives/dsu.hpp' file not found (DisjointSets not implemented yet)",
+   "timestamp": "2026-11-27T10:35:12+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\n[1/5] Building CXX object tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_dsu_property.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_dsu_property.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_dsu_property.cpp.o -MF tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_dsu_property.cpp.o.d -o tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_dsu_property.cpp.o -c tests/property/paper/test_dsu_property.cpp\ntests/property/paper/test_dsu_property.cpp:10:10: fatal error: 'paper/primitives/dsu.hpp' file not found\n   10 | #include \"paper/primitives/dsu.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[2/5] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_dsu.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_dsu.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_dsu.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_dsu.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_dsu.cpp.o -c tests/unit/paper/primitives/test_dsu.cpp\ntests/unit/paper/primitives/test_dsu.cpp:7:10: fatal error: 'paper/primitives/dsu.hpp' file not found\n    7 | #include \"paper/primitives/dsu.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all 9 dsu test cases"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:35:33+09:00",
+   "output_tail": " 6/15 Test  #8: unit:dsu unite of a set with itself does nothing ....................................   Passed    0.01 sec\n      Start 14: property:dsu find traversals obey the Lemma 3.6 band bound on random op sequences\n 7/15 Test  #9: unit:dsu links by rank and raises the survivor only on a tie ........................   Passed    0.01 sec\n      Start 15: property:dsu find traversals obey the Lemma 3.6 band bound on deep binomial trees\n 8/15 Test #10: unit:dsu find compresses every nonroot on the chain to the root .....................   Passed    0.01 sec\n 9/15 Test  #2: unit:CSR keeps multi-edges, self-loops and isolated vertices ........................   Passed    0.04 sec\n10/15 Test  #7: unit:dsu on a single item ...........................................................   Passed    0.04 sec\n11/15 Test  #3: unit:CSR rejects invalid input with clear errors ....................................   Passed    0.05 sec\n12/15 Test #12: unit:dsu counts finds and find traversals into diagnostics ..........................   Passed    0.02 sec\n13/15 Test #15: property:dsu find traversals obey the Lemma 3.6 band bound on deep binomial trees ...   Passed    0.02 sec\n14/15 Test #11: unit:dsu matches naive labels under random ops ......................................   Passed    0.04 sec\n15/15 Test #14: property:dsu find traversals obey the Lemma 3.6 band bound on random op sequences ...   Passed    0.15 sec\n\n100% tests passed, 0 tests failed out of 15\n\nLabel Time Summary:\nproperty    =   0.17 sec*proc (2 tests)\nunit        =   0.34 sec*proc (13 tests)\n\nTotal Test time (real) =   1.01 sec"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "dsu find traversals obey the Lemma 3.6 band bound on random op sequences",
+    "dsu find traversals obey the Lemma 3.6 band bound on deep binomial trees"
+   ],
+   "command": "touch tests/property/paper/test_dsu_property.cpp && out=$(cmake --build --preset release -j8 --target sssp_property_tests 2>&1); echo \"$out\"; ! grep -q \"warning:\" <<< \"$out\"",
+   "exit_code": 1,
+   "reason": "release preset (SSSP_DIAGNOSTICS=OFF): helper band_bound is unused when the counter-based property tests are compiled out -> -Wunused-function warning (zero-warning policy)",
+   "timestamp": "2026-11-27T10:47:13+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\n[1/3] Building CXX object tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_dsu_property.cpp.o\ntests/property/paper/test_dsu_property.cpp:22:15: warning: unused function 'band_bound' [-Wunused-function]\n   22 | std::uint64_t band_bound(std::uint64_t k, std::uint64_t finds) {\n      |               ^~~~~~~~~~\n1 warning generated.\n[2/3] Linking CXX executable tests/sssp_property_tests"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "release build of sssp_property_tests has zero warnings"
+   ],
+   "command": "touch tests/property/paper/test_dsu_property.cpp && out=$(cmake --build --preset release -j8 --target sssp_property_tests 2>&1); echo \"$out\"; ! grep -q \"warning:\" <<< \"$out\"",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:47:27+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\n[1/3] Building CXX object tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_dsu_property.cpp.o\n[2/3] Linking CXX executable tests/sssp_property_tests"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "full suite after moving diagnostics-only helpers under SSSP_DIAGNOSTICS"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:47:36+09:00",
+   "output_tail": "28/37 Test #28: unit:level ancestor test block size must lie in [2, 8] ........................................   Passed    0.01 sec\n      Start 22: unit:forest queries on the empty forest and on isolated vertices\n29/37 Test #25: unit:level ancestor on a hand-built tree ......................................................   Passed    0.02 sec\n      Start 21: unit:forest lca returns nullopt for vertices in different trees\n30/37 Test #23: unit:forest queries reject invalid parent arrays ..............................................   Passed    0.01 sec\n31/37 Test #31: unit:forest level ancestor uses original depths and stays inside the tree .....................   Passed    0.02 sec\n32/37 Test #22: unit:forest queries on the empty forest and on isolated vertices ..............................   Passed    0.02 sec\n33/37 Test #21: unit:forest lca returns nullopt for vertices in different trees ...............................   Passed    0.02 sec\n34/37 Test #19: unit:lca equals naive on all pairs of small random trees ......................................   Passed    0.41 sec\n35/37 Test #30: unit:level ancestor equals naive for all (v, j) on small random trees .........................   Passed    0.46 sec\n36/37 Test #37: property:forest queries agree with binary lifting on deep and degenerate shapes ...............   Passed    0.87 sec\n37/37 Test #36: property:forest queries agree with binary lifting on random forests ...........................   Passed    1.00 sec\n\n100% tests passed, 0 tests failed out of 37\n\nLabel Time Summary:\nproperty    =   2.07 sec*proc (4 tests)\nunit        =   1.97 sec*proc (33 tests)\n\nTotal Test time (real) =   1.41 sec"
+  }
+ ],
+ "commit": "3b3db8f"
+}

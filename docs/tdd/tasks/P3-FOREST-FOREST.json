@@ -1,0 +1,48 @@
+{
+ "id": "P3-FOREST-FOREST",
+ "spec": "ForestQueries on a rooted forest (parent array): augment by a common root, record each vertex's original component; lca(u,v) returns nullopt for different trees and the naive LCA otherwise; level_ancestor(v,j) for 0<=j<=depth(v) (original depths) equals the naive ancestor, other j rejected; depth and component match the naive walk; BinaryLiftingRef offers the same API and agrees with ForestQueries on random forests (differential property tests, several fixed seeds)",
+ "paper_ref": "Sec 3.4, Lemma 3.9 (uses Lemmas 3.7, 3.8)",
+ "files": {
+  "impl": [
+   "src/paper/primitives/forest_queries.hpp",
+   "src/paper/primitives/forest_queries.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/primitives/test_lca.cpp",
+   "tests/unit/paper/primitives/test_level_ancestor.cpp",
+   "tests/property/paper/test_forest_queries_property.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "forest lca returns nullopt for vertices in different trees",
+    "forest queries on the empty forest and on isolated vertices",
+    "forest queries reject invalid parent arrays",
+    "forest lca equals naive on all pairs of small random forests",
+    "forest level ancestor uses original depths and stays inside the tree",
+    "forest level ancestor equals naive for all (v, j) in small random forests",
+    "forest queries agree with binary lifting on random forests",
+    "forest queries agree with binary lifting on deep and degenerate shapes"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug -R \"forest\"",
+   "exit_code": 1,
+   "reason": "compile error: no member ForestQueries / BinaryLiftingRef in namespace sssp::paper (Lemma 3.9 wrapper and reference not implemented yet)",
+   "timestamp": "2026-11-27T10:44:31+09:00",
+   "output_tail": "tests/unit/paper/primitives/test_lca.cpp:188:21: error: use of undeclared identifier 'BinaryLiftingRef'\n  188 |   REQUIRE_THROWS_AS(BinaryLiftingRef(Parents{kNoVertex, 2}), std::out_of_range);\n      |                     ^\ntests/unit/paper/primitives/test_lca.cpp:189:21: error: use of undeclared identifier 'BinaryLiftingRef'\n  189 |   REQUIRE_THROWS_AS(BinaryLiftingRef(Parents{kNoVertex, 2, 1}), std::invalid_argument);\n      |                     ^\ntests/unit/paper/primitives/test_lca.cpp:190:21: error: use of undeclared identifier 'BinaryLiftingRef'\n  190 |   REQUIRE_THROWS_AS(BinaryLiftingRef(Parents{0}), std::invalid_argument);\n      |                     ^\ntests/unit/paper/primitives/test_lca.cpp:200:45: error: no member named 'ForestQueries' in namespace 'sssp::paper'\n  200 |         check_forest_all_pairs(sssp::paper::ForestQueries(parent), parent);\n      |                                ~~~~~~~~~~~~~^\ntests/unit/paper/primitives/test_lca.cpp:201:45: error: no member named 'ForestQueries' in namespace 'sssp::paper'\n  201 |         check_forest_all_pairs(sssp::paper::ForestQueries(parent, 4), parent);\n      |                                ~~~~~~~~~~~~~^\ntests/unit/paper/primitives/test_lca.cpp:202:45: error: no member named 'BinaryLiftingRef' in namespace 'sssp::paper'\n  202 |         check_forest_all_pairs(sssp::paper::BinaryLiftingRef(parent), parent);\n      |                                ~~~~~~~~~~~~~^\n17 errors generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all 8 forest test cases (6 unit, 2 property)"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:45:49+09:00",
+   "output_tail": "28/37 Test #25: unit:level ancestor on a hand-built tree ......................................................   Passed    0.01 sec\n      Start 22: unit:forest queries on the empty forest and on isolated vertices\n29/37 Test #28: unit:level ancestor test block size must lie in [2, 8] ........................................   Passed    0.01 sec\n      Start 21: unit:forest lca returns nullopt for vertices in different trees\n30/37 Test #31: unit:forest level ancestor uses original depths and stays inside the tree .....................   Passed    0.01 sec\n31/37 Test #23: unit:forest queries reject invalid parent arrays ..............................................   Passed    0.01 sec\n32/37 Test #22: unit:forest queries on the empty forest and on isolated vertices ..............................   Passed    0.01 sec\n33/37 Test #21: unit:forest lca returns nullopt for vertices in different trees ...............................   Passed    0.01 sec\n34/37 Test #19: unit:lca equals naive on all pairs of small random trees ......................................   Passed    0.37 sec\n35/37 Test #30: unit:level ancestor equals naive for all (v, j) on small random trees .........................   Passed    0.45 sec\n36/37 Test #37: property:forest queries agree with binary lifting on deep and degenerate shapes ...............   Passed    0.82 sec\n37/37 Test #36: property:forest queries agree with binary lifting on random forests ...........................   Passed    0.94 sec\n\n100% tests passed, 0 tests failed out of 37\n\nLabel Time Summary:\nproperty    =   1.95 sec*proc (4 tests)\nunit        =   1.81 sec*proc (33 tests)\n\nTotal Test time (real) =   0.95 sec"
+  }
+ ],
+ "commit": "26b0f20"
+}
