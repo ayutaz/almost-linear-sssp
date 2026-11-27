@@ -39,6 +39,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # full history: `tdd.py check` verifies that every evidence commit is reachable
+          fetch-depth: 0
 
       - name: Install LLVM ${{ env.LLVM_MAJOR }} (apt)
         run: |
@@ -83,6 +85,10 @@ jobs:
       - name: ruff format check
         if: ${{ !cancelled() }}
         run: uv run ruff format --check .
+
+      - name: TDD evidence check (tdd.py check)
+        if: ${{ !cancelled() }}
+        run: uv run python scripts/tdd.py check
 
       - name: Restore FetchContent cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
