@@ -1,0 +1,65 @@
+{
+ "id": "P3-MODEL-LENGTH",
+ "spec": "Opaque length type with a separate infinity flag, counted add/compare and 2^j scaling by j doublings, overflow detection for integers and doubles, signed values as pairs of nonnegative sums compared via a+d < c+b, and the (weight, edge index) total order",
+ "paper_ref": "Sec 2, Operations on lengths and indices (txt l.292-300)",
+ "files": {
+  "impl": [
+   "src/paper/model/length.hpp",
+   "src/paper/model/length.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/model/test_length.cpp"
+  ]
+ },
+ "phase": "GREEN",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "infinity flag absorbs addition",
+    "signed pair compares a-b vs c-d via a+d vs c+b",
+    "mul_pow2 is exact for double and costs j doublings",
+    "EdgeKey ties broken by index"
+   ],
+   "command": "cmake --build --preset debug 2>&1 && ctest --preset debug -R length",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/model/length.hpp' file not found (feature absent)",
+   "timestamp": "2026-11-27T10:38:30+09:00",
+   "output_tail": "-- Google Benchmark version: v1.9.4, normalized to 1.9.4\n-- Enabling additional flags: -DINCLUDE_DIRECTORIES=build/debug/_deps/benchmark-src/include\n-- Performing Test HAVE_THREAD_SAFETY_ATTRIBUTES -- success\n-- Performing Test HAVE_STD_REGEX -- success\n-- Performing Test HAVE_GNU_POSIX_REGEX -- failed to compile\n-- Performing Test HAVE_POSIX_REGEX -- success\n-- Performing Test HAVE_STEADY_CLOCK -- success\n-- Performing Test HAVE_PTHREAD_AFFINITY -- failed to compile\n-- Configuring done (0.3s)\n-- Generating done (0.0s)\n-- Build files have been written to: build/debug\n[0/4] Re-checking globbed directories...\n[1/5] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_length.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_length.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_length.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_length.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_length.cpp.o -c tests/unit/paper/model/test_length.cpp\ntests/unit/paper/model/test_length.cpp:12:10: fatal error: 'paper/model/length.hpp' file not found\n   12 | #include \"paper/model/length.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "mul_pow2 on integers is exact and detects overflow"
+   ],
+   "command": "cmake --build --preset debug 2>&1 && ctest --preset debug -R \"mul_pow2 on integers\"",
+   "exit_code": 8,
+   "reason": "Expectation error in the test, not in the implementation: the test required mul_pow2(3, 62) to overflow, but 3*2^62 = 13835058055282163712 < 2^64-1, so by the spec (exact doubling, overflow only past the uint64 range minus the infinity sentinel) no overflow is correct. Correcting the assertion to mul_pow2(3, 62) == 3<<62 and adding mul_pow2(3, 63) (= 3*2^63 > 2^64) must overflow.",
+   "timestamp": "2026-11-27T10:39:30+09:00",
+   "output_tail": "tests/unit/paper/model/test_length.cpp:146: FAILED:\n  REQUIRE_THROWS_AS( ops.mul_pow2(L64::finite(3), 62), std::overflow_error )\nbecause no exception was thrown where one was expected:\n\n===============================================================================\ntest cases: 1 | 1 failed\nassertions: 5 | 4 passed | 1 failed\n\n\n\n0% tests passed, 1 tests failed out of 1\n\nLabel Time Summary:\nunit    =   0.01 sec*proc (1 test)\n\nTotal Test time (real) =   0.02 sec\n\nThe following tests FAILED:\n\t 22 - unit:mul_pow2 on integers is exact and detects overflow (Failed) unit\nErrors while running CTest"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "infinity flag absorbs addition",
+    "comparisons order every finite length below infinity",
+    "integer lengths detect overflow and keep 2^64-1 for the infinity sentinel",
+    "double lengths reject invalid values and detect overflow",
+    "weights convert to and from the shared infinity sentinel",
+    "mul_pow2 is exact for double and costs j doublings",
+    "mul_pow2 on integers is exact and detects overflow",
+    "signed pair compares a-b vs c-d via a+d vs c+b",
+    "signed pair addition is componentwise and negation swaps",
+    "signed pair rejects infinite components",
+    "EdgeKey ties broken by index",
+    "EdgeKey is a strict total order",
+    "LenOps without a counter sink performs the same operations"
+   ],
+   "command": "cmake --build --preset debug 2>&1 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:39:44+09:00",
+   "output_tail": "      Start 27: unit:signed pair rejects infinite components - std::uint64_t\n33/42 Test  #2: unit:CSR keeps multi-edges, self-loops and isolated vertices ......................   Passed    0.03 sec\n      Start 10: unit:word logarithms are undefined at zero\n34/42 Test #15: unit:comparisons order every finite length below infinity - std::uint64_t .........   Passed    0.01 sec\n      Start 30: unit:EdgeKey ties broken by index - double\n35/42 Test #32: unit:EdgeKey is a strict total order - double .....................................   Passed    0.01 sec\n36/42 Test  #1: unit:CSR stores both orientations of every undirected edge ........................   Passed    0.01 sec\n37/42 Test  #8: unit:ilog table rejects indices outside 1..K ......................................   Passed    0.02 sec\n38/42 Test #10: unit:word logarithms are undefined at zero ........................................   Passed    0.01 sec\n39/42 Test #27: unit:signed pair rejects infinite components - std::uint64_t ......................   Passed    0.01 sec\n40/42 Test #30: unit:EdgeKey ties broken by index - double ........................................   Passed    0.01 sec\n41/42 Test  #6: unit:ilog table equals bit_width-1 for 1..2^20 ....................................   Passed    0.12 sec\n42/42 Test #41: unit:Mode B thresholds follow injected parameters exactly .........................   Passed    0.16 sec\n\n100% tests passed, 0 tests failed out of 42\n\nLabel Time Summary:\nunit    =   0.87 sec*proc (42 tests)\n\nTotal Test time (real) =   0.57 sec"
+  }
+ ],
+ "commit": null
+}
