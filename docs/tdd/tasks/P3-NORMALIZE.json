@@ -11,7 +11,7 @@
    "tests/unit/paper/hierarchy/test_normalize.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -45,5 +45,5 @@
    "output_tail": "        Start 378: regression:Counted<double> graphs reject negative and NaN weights\n371/378 Test #202: unit:H5: a link longer than c0 times the height is reported - double ....................................   Passed    0.05 sec\n372/378 Test  #24: unit:radix heap pops monotone 64-bit keys in order ......................................................   Passed    0.02 sec\n373/378 Test #192: unit:H3: a cycle of light arcs between children is reported at the parent - double ......................   Passed    0.04 sec\n374/378 Test #378: regression:Counted<double> graphs reject negative and NaN weights .......................................   Passed    0.02 sec\n375/378 Test #214: unit:reference hierarchy of a hand-built cycle has one node at the cycle's max - std::uint64_t ..........   Passed    0.05 sec\n376/378 Test #328: unit:counting sort rejects a key outside [0, k) .........................................................   Passed    0.07 sec\n377/378 Test  #68: unit:radix-heap Dijkstra: zero weights, multi-edges, self-loops, components .............................   Passed    0.06 sec\n378/378 Test #291: unit:forest lca returns nullopt for vertices in different trees .........................................   Passed    0.11 sec\n\n100% tests passed, 0 tests failed out of 378\n\nLabel Time Summary:\ndifferential    =   2.54 sec*proc (4 tests)\nintegration     =   0.79 sec*proc (6 tests)\nproperty        =   4.71 sec*proc (11 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            =  27.49 sec*proc (356 tests)\n\nTotal Test time (real) =   4.49 sec"
   }
  ],
- "commit": null
+ "commit": "f19ed44"
 }
