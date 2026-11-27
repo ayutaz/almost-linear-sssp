@@ -52,9 +52,10 @@ opening; emissions inside `Scan(X, I, c)` lie in `I` and are `<= c`; I3 is check
 part only (new offers `>= a'` of the innermost portion), the rank part needs data the hooks do
 not carry.
 
-## Planned differential tests (`tests/differential/paper/test_evaluate_vs_dijkstra.cpp`)
+## Differential tests (`tests/differential/paper/test_evaluate_vs_dijkstra.cpp`)
 
-Not written yet: there is no Evaluate. Each test runs `evaluate` with an `InvariantChecker`
+Written with P3-EVALUATE (merged in 3ef315c); the table below is the original plan, and the file
+also adds invariant sweeps and `double` checks beyond it. Each test runs `evaluate` with an `InvariantChecker`
 attached, requires `report().ok()`, and then compares emissions with the oracle as below.
 Integer weights (`std::uint64_t`) first; `double` only with integer-valued lengths.
 
