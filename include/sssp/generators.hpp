@@ -18,6 +18,9 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #include "sssp/graph.hpp"
 #include "sssp/graph_formats.hpp"
@@ -282,5 +285,194 @@ template <class W>
 EdgeList<W> generate(const GraphSpec& spec);
 
 MultiEdgePolicy parse_multi_edge_policy(std::string_view name);
+
+// ------------------------------------------------------------------ small test graphs
+//
+// Hand-built graphs covering boundary cases for unit, differential and regression tests.
+// Header-only so they can be used with any weight type W (unsigned integer or floating point).
+
+template <class W>
+struct NamedGraph {
+  std::string name;
+  EdgeList<W> graph;
+  Vertex source = 0;
+  std::string note;  ///< what the case exercises
+};
+
+namespace small {
+
+template <class W>
+EdgeList<W> single_vertex() {
+  return {1, {}};
+}
+
+template <class W>
+EdgeList<W> no_edges(std::size_t n) {
+  return {n, {}};
+}
+
+template <class W>
+EdgeList<W> two_vertices(W w) {
+  return {2, {{0, 1, w}}};
+}
+
+/// 0 - 1 - ... - (n-1), all weights w.
+template <class W>
+EdgeList<W> path(std::size_t n, W w) {
+  EdgeList<W> g{n, {}};
+  for (std::size_t i = 0; i + 1 < n; ++i) {
+    g.edges.push_back({static_cast<Vertex>(i), static_cast<Vertex>(i + 1), w});
+  }
+  return g;
+}
+
+/// Centre 0 joined to 1..n-1, all weights w.
+template <class W>
+EdgeList<W> star(std::size_t n, W w) {
+  EdgeList<W> g{n, {}};
+  for (std::size_t i = 1; i < n; ++i) g.edges.push_back({0, static_cast<Vertex>(i), w});
+  return g;
+}
+
+/// Cycle 0 - 1 - ... - (n-1) - 0 (n >= 3), all weights w.
+template <class W>
+EdgeList<W> cycle(std::size_t n, W w) {
+  auto g = path<W>(n, w);
+  if (n >= 3) g.edges.push_back({static_cast<Vertex>(n - 1), 0, w});
+  return g;
+}
+
+/// K_n; edge {i,j} has weight w * (1 + (i + 2j) mod 5) so that shortest paths are non-trivial.
+template <class W>
+EdgeList<W> complete(std::size_t n, W w) {
+  EdgeList<W> g{n, {}};
+  for (std::size_t i = 0; i < n; ++i) {
+    for (std::size_t j = i + 1; j < n; ++j) {
+      g.edges.push_back({static_cast<Vertex>(i), static_cast<Vertex>(j),
+                         static_cast<W>(w * static_cast<W>(1 + (i + 2 * j) % 5))});
+    }
+  }
+  return g;
+}
+
+/// Heap-shaped binary tree: parent of i is (i-1)/2.
+template <class W>
+EdgeList<W> binary_tree(std::size_t n, W w) {
+  EdgeList<W> g{n, {}};
+  for (std::size_t i = 1; i < n; ++i) {
+    g.edges.push_back({static_cast<Vertex>((i - 1) / 2), static_cast<Vertex>(i), w});
+  }
+  return g;
+}
+
+/// Diamond chain with k stages: joints j_0 = 0, j_i = 3i; stage i has middles 3i-2 and 3i-1.
+/// All weights 1, so there are 2^k shortest paths of length 2k from 0 to 3k.
+template <class W>
+EdgeList<W> many_equal_paths(std::size_t k) {
+  EdgeList<W> g{1 + 3 * k, {}};
+  for (std::size_t i = 1; i <= k; ++i) {
+    const auto j0 = static_cast<Vertex>(3 * (i - 1));
+    const auto a = static_cast<Vertex>(3 * i - 2);
+    const auto b = static_cast<Vertex>(3 * i - 1);
+    const auto j1 = static_cast<Vertex>(3 * i);
+    g.edges.push_back({j0, a, W{1}});
+    g.edges.push_back({j0, b, W{1}});
+    g.edges.push_back({a, j1, W{1}});
+    g.edges.push_back({b, j1, W{1}});
+  }
+  return g;
+}
+
+}  // namespace small
+
+/// The full boundary-case suite (17 graphs; names are stable and used by other test suites).
+template <class W>
+std::vector<NamedGraph<W>> small_graph_suite() {
+  namespace sg = small;
+  std::vector<NamedGraph<W>> s;
+  s.push_back({"single_vertex", sg::single_vertex<W>(), 0, "n = 1, m = 0"});
+  s.push_back(
+      {"no_edges", sg::no_edges<W>(4), 0, "isolated vertices: all but the source unreachable"});
+  s.push_back({"two_vertices", sg::two_vertices<W>(W{5}), 0, "single edge"});
+  s.push_back({"path", sg::path<W>(8, W{2}), 0, "path, source at one end"});
+  s.push_back({"star", sg::star<W>(9, W{3}), 4, "star, source at a leaf (two hops via centre)"});
+  s.push_back({"cycle", sg::cycle<W>(7, W{1}), 0, "odd cycle: two routes, ties at the far side"});
+  s.push_back({"complete", sg::complete<W>(7, W{1}), 0, "K_7 with varied weights"});
+  s.push_back({"binary_tree", sg::binary_tree<W>(15, W{1}), 0, "complete binary tree"});
+  s.push_back({"disconnected",
+               {7, {{0, 1, W{1}}, {1, 2, W{2}}, {0, 2, W{4}}, {3, 4, W{1}}, {4, 5, W{1}}}},
+               0,
+               "triangle + path + isolated vertex: unreachable vertices keep infinity"});
+  s.push_back(
+      {"multi_edges",
+       {3, {{0, 1, W{5}}, {0, 1, W{2}}, {1, 2, W{1}}, {1, 2, W{1}}, {0, 2, W{9}}, {1, 0, W{7}}}},
+       0,
+       "parallel edges with different and equal weights, both orientations"});
+  s.push_back({"self_loops",
+               {3, {{0, 0, W{1}}, {0, 1, W{2}}, {1, 1, W{0}}, {1, 2, W{3}}}},
+               0,
+               "self-loops (weight 0 and positive) must be ignored"});
+  s.push_back({"zero_weights",
+               {6,
+                {{0, 1, W{0}},
+                 {1, 2, W{0}},
+                 {2, 0, W{0}},
+                 {2, 3, W{1}},
+                 {0, 3, W{2}},
+                 {3, 4, W{0}},
+                 {4, 5, W{3}}}},
+               0,
+               "zero-weight cycle and zero-weight edges after a positive one"});
+  s.push_back({"all_equal_weights",
+               {9,
+                {{0, 1, W{4}},
+                 {1, 2, W{4}},
+                 {3, 4, W{4}},
+                 {4, 5, W{4}},
+                 {6, 7, W{4}},
+                 {7, 8, W{4}},
+                 {0, 3, W{4}},
+                 {3, 6, W{4}},
+                 {1, 4, W{4}},
+                 {4, 7, W{4}},
+                 {2, 5, W{4}},
+                 {5, 8, W{4}}}},
+               0,
+               "3x3 grid, all weights equal: many ties"});
+  s.push_back({"mixed_magnitudes",
+               {6,
+                {{0, 1, W{1}},
+                 {1, 2, W{1000}},
+                 {0, 2, W{1000000}},
+                 {2, 3, W{3}},
+                 {3, 4, W{10000000}},
+                 {1, 4, W{1000000000}},
+                 {4, 5, W{7}}}},
+               0,
+               "weights spanning 9 orders of magnitude"});
+  {
+    // Light route of 10 edges vs. one heavy direct edge; ratio 2^50 (integers) / 1e24 (reals).
+    const std::size_t n = 11;
+    EdgeList<W> g{n, {}};
+    W light{1}, heavy{};
+    if constexpr (std::is_integral_v<W>) {
+      heavy = static_cast<W>(W{1} << 50);
+    } else {
+      light = static_cast<W>(1e-12);
+      heavy = static_cast<W>(1e12);
+    }
+    for (std::size_t i = 0; i + 1 < n; ++i) {
+      g.edges.push_back({static_cast<Vertex>(i), static_cast<Vertex>(i + 1), light});
+    }
+    g.edges.push_back({0, static_cast<Vertex>(n - 1), heavy});
+    s.push_back(
+        {"extreme_ratio", std::move(g), 0, "max/min weight >= 2^40; light long route wins"});
+  }
+  s.push_back({"long_shortest_path", adversarial_long_path<W>(40), 0,
+               "shortest path with n-1 hops and decoy skip edges"});
+  s.push_back({"many_equal_paths", sg::many_equal_paths<W>(6), 0,
+               "diamond chain: 2^6 equal shortest paths to the last vertex"});
+  return s;
+}
 
 }  // namespace sssp::gen
