@@ -12,7 +12,7 @@
       "tests/unit/paper/pivots/test_name_routes.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -53,5 +53,5 @@
       "output_tail": "        Start  89: unit:topology does not depend on the weight distribution or weight type\n341/348 Test #150: unit:small graph suite: path-structure cases - double ...................................................   Passed    0.08 sec\n342/348 Test #216: unit:estimate rejects inputs outside Algorithm 6's contract .............................................   Passed    0.06 sec\n343/348 Test #302: unit:verify detects broken results - U64 ................................................................   Passed    0.06 sec\n344/348 Test #304: unit:verify detects a zero-weight parent cycle that every distance check misses - U64 ...................   Passed    0.07 sec\n345/348 Test #218: unit:estimate bands and quotients on a geometric path (Sec 6.2) .........................................   Passed    0.05 sec\n346/348 Test  #27: unit:radix heap enforces monotonicity and rejects invalid operations ....................................   Passed    0.08 sec\n347/348 Test  #52: unit:4-ary-heap Dijkstra: operation counters ............................................................   Passed    0.06 sec\n348/348 Test  #89: unit:topology does not depend on the weight distribution or weight type .................................   Passed    0.05 sec\n\n100% tests passed, 0 tests failed out of 348\n\nLabel Time Summary:\ndifferential    =   4.18 sec*proc (4 tests)\nintegration     =   1.59 sec*proc (6 tests)\nproperty        =  26.63 sec*proc (20 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            =  50.43 sec*proc (317 tests)\n\nTotal Test time (real) =  10.41 sec"
     }
   ],
-  "commit": null
+  "commit": "a458e0e"
 }
