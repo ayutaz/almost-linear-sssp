@@ -104,4 +104,52 @@ class LcaTable {
   detail::FloorLogTable lg_;
 };
 
+/// Lemma 3.8: level ancestors by macro-micro marking, shape tables for micro trees, jump
+/// pointers at marks and ladders. O(k) preprocessing and space (for the paper's B), O(1) query.
+class LevelAncestor {
+ public:
+  LevelAncestor() = default;
+  /// Uses the paper's block size B = paper_block_size(tree.size()).
+  explicit LevelAncestor(const OrderedTree& tree);
+  /// Test hook: explicit block size in [2, 8] (see LcaTable). Mode A callers use the paper's B.
+  LevelAncestor(const OrderedTree& tree, std::uint32_t block_size);
+
+  /// The ancestor of v at depth j. Throws std::out_of_range unless 0 <= j <= depth(v).
+  [[nodiscard]] Vertex query(Vertex v, std::uint32_t j) const;
+  [[nodiscard]] std::uint32_t depth(Vertex v) const { return depth_[v]; }
+
+  [[nodiscard]] std::uint32_t block_size() const noexcept { return block_; }
+  [[nodiscard]] std::size_t num_marks() const noexcept { return jump_begin_.size() - 1; }
+  [[nodiscard]] std::size_t num_micro_trees() const noexcept { return micro_begin_.size() - 1; }
+  [[nodiscard]] std::size_t max_micro_tree_size() const noexcept { return max_micro_size_; }
+  [[nodiscard]] std::size_t jump_entries() const noexcept { return jump_.size(); }
+  [[nodiscard]] std::size_t ladder_entries() const noexcept { return ladder_.size(); }
+
+ private:
+  void build(const OrderedTree& tree, std::uint32_t block_size);
+
+  static constexpr std::uint32_t kUnmarked = 0xffffffffu;
+
+  std::uint32_t block_ = 2;
+  std::vector<std::uint32_t> depth_;
+  std::vector<std::uint32_t> mark_id_;  ///< index among marks, kUnmarked for unmarked vertices
+  // Micro trees (components of unmarked vertices).
+  std::vector<std::uint32_t> micro_;        ///< micro tree of each unmarked vertex
+  std::vector<std::uint8_t> local_pos_;     ///< local preorder position in its micro tree
+  std::vector<std::uint32_t> micro_begin_;  ///< start of each micro tree in micro_vertex_
+  std::vector<Vertex> micro_vertex_;        ///< local preorder position -> original vertex
+  std::vector<std::uint32_t> micro_shape_;  ///< leading 1, then enter = 1 / leave = 0 bits
+  std::vector<std::uint32_t> micro_top_depth_;
+  std::vector<Vertex> micro_top_parent_;   ///< marked parent of the micro tree's top vertex
+  std::vector<std::uint8_t> shape_table_;  ///< [shape][pos][relative depth] -> local pos
+  std::size_t max_micro_size_ = 0;
+  // Jump pointers at marks: jump_[jump_begin_[id] + i] is the ancestor 2^i edges above.
+  std::vector<std::uint32_t> jump_begin_;
+  std::vector<Vertex> jump_;
+  // Ladders: maximum-height paths in depth order, each extended upward by its own length.
+  std::vector<Vertex> ladder_;
+  std::vector<std::uint32_t> ladder_pos_;  ///< position of v in its own path's extended array
+  detail::FloorLogTable lg_;
+};
+
 }  // namespace sssp::paper
