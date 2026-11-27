@@ -192,6 +192,19 @@ TEST_CASE("bench cli: unsupported combinations exit with code 3", "[bench]") {
   // Known to the schema but not implemented yet, and unknown names.
   CHECK(exit_code_of(base_args({"--algorithms", "paper"})) == kExitUnsupported);
   CHECK(exit_code_of(base_args({"--algorithms", "paper-optimized"})) == kExitUnsupported);
+  // practical-local: uint64 only, a double request is refused with a message naming the type.
+  CHECK(exit_code_of(base_args({"--algorithms", "practical-local"})) == 0);
+  CHECK(exit_code_of(base_args({"--algorithms", "practical-local", "--weight-type", "double"})) ==
+        kExitUnsupported);
+  try {
+    check_supported(
+        parse_args(base_args({"--algorithms", "practical-local", "--weight-type", "double"})));
+    FAIL("expected RunnerError");
+  } catch (const RunnerError& e) {
+    const std::string msg = e.what();
+    CHECK(msg.find("practical-local") != std::string::npos);
+    CHECK(msg.find("does not support --weight-type double") != std::string::npos);
+  }
   CHECK(exit_code_of(base_args({"--algorithms", "dijkstra-binary,no-such-algo"})) ==
         kExitUnsupported);
   try {

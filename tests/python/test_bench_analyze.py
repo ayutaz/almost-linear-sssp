@@ -232,8 +232,9 @@ def test_fixed_degree_rows_land_in_a_facet():
 
 
 # Names in bench.schema that get no colour of their own: the Bellman-Ford oracle, and "paper",
-# which is reserved for the outer construction and not produced by any runner yet.
-_UNCOLOURED = {"bellman-ford", "paper"}
+# which is reserved for the outer construction and not produced by any runner yet, and the
+# ninth name "practical-local" (the palette has eight hues; names beyond fold into OTHER_COLOR).
+_UNCOLOURED = {"bellman-ford", "paper", "practical-local"}
 
 
 def test_registered_algorithms_have_distinct_colours():

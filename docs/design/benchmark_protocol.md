@@ -36,7 +36,8 @@ Dijkstra 系ベースラインを比較するときの計測手順を定める�
 | `paper-faithful-d1` | 同上。基底ケースを二分ヒープ Dijkstra で解く(逸脱 D-1、ADR 0008) | `paper-faithful` | `uint64`, `double` |
 | `paper` | 論文アルゴリズムの外側の構成(Alg 8 l.8-15)。予約名で未実装 | `paper-faithful` | `uint64`, `double` |
 | `paper-experimental` | 論文の枠組みで部品・パラメータを試験的に変えたもの | `paper-experimental` | `uint64`, `double` |
-| `paper-optimized` | 実用速度を狙った最適化版 | `practical-optimized` | `uint64`, `double` |
+| `paper-optimized` | 実用速度を狙った最適化版。予約名で未実装 | `practical-optimized` | `uint64`, `double` |
+| `practical-local` | Mode C の局所 SSSP(`practical::local_sssp`)。論文を参考にした(paper-inspired)実装。下記 | `practical-optimized` | **`uint64` のみ** |
 
 `mode` の意味:
 
@@ -46,6 +47,7 @@ Dijkstra 系ベースラインを比較するときの計測手順を定める�
 - `practical-optimized`: 実用速度を狙って最適化したもの。論文との差分は必ず記録に残す。
 
 `dijkstra-radix` × `double` のジョブはプラン(`scripts/bench/plan.py`)が作らない。対象外であり、失敗レコードにもしない。
+`practical-local` × `double` も同じ扱い(ランナーは終了コード 3 で断る。別のアルゴリズムに置き換えない)。
 
 `paper-faithful` / `paper-faithful-d1` について:
 
@@ -58,6 +60,21 @@ Dijkstra 系ベースラインを比較するときの計測手順を定める�
 - `paper-faithful` の走査型基底ケースは Θ(N²) なので、ランナーは n > 2^17 を終了コード 3 で断る
   (別のアルゴリズムに置き換えない)。プランはその組を作らず、除外した件数と理由を標準エラーに出す
   (`plan.VERTEX_LIMITS`)。`paper-faithful-d1` に上限は無い。
+
+`practical-local` について(タスク P5-PRACTICAL-LOCAL-BENCH):
+
+- 論文を参考にした(paper-inspired)実装であり、論文のアルゴリズムそのものではない。外側の構成(Sec 6〜8)を持たず、
+  縮約した連結成分の全体を 1 つの局所階層(Alg 4 の部品)に渡して評価する。**Theorem 1 の計算量は主張しない。**
+- `uint64` のみ登録する。一般の `double` では木の復元(Lemma 8.5)が `invalid_argument` を投げることがあるため、
+  `double` の解法は登録しない(`--weight-type double` は終了コード 3)。一般の `double` の木の復元は未対応。
+- 縮約後の頂点数 N が 16 以下(既定値 `direct_search_max_vertices = 16`。実測で調整した値ではない)なら、
+  二分ヒープ Dijkstra で直接解き、`FallbackRecord` を 1 件記録する(N = 1 は別の理由で 1 件)。
+  それより大きい N では階層を作り、fallback は 0 件(レコードの `fallback.count = 0`)。
+- `paper_sssp` と同じく 1 回の呼び出しを `sssp` として測り、`preprocess` と `tree` は null(§4)。
+- fallback の割合は理由ごとに、`fallback.records[i].vertices / n`(N は縮約後なので ≤ n)と
+  `fallback.records[i].edges / m` として読む。理由をまたいで足さない(Q-69)。このアルゴリズムは高々 1 件なので、
+  `fallback.vertices` / `fallback.edges` はその 1 件と一致する。時間を報告するときは、この割合を必ず並べる。
+- 性能は **not measured**(このタスクでは計測していない)。この表に載る数字はない。
 
 ### 1.3 重み型(`weight_type`)
 

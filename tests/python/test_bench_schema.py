@@ -182,6 +182,22 @@ def test_mode_a_entry_names_are_paper_faithful(algorithm):
     assert any("mode" in e for e in errs)
 
 
+def test_practical_local_is_known_practical_and_integer_only():
+    assert schema.ALGORITHM_MODES["practical-local"] == "practical-optimized"
+    assert "practical-local" in schema.INTEGER_ONLY_ALGORITHMS
+    assert (
+        errors_of(synthetic_record(algorithm="practical-local", mode="practical-optimized")) == []
+    )
+    errs = errors_of(
+        synthetic_record(
+            algorithm="practical-local", mode="practical-optimized", weight_type="double"
+        )
+    )
+    assert any("weight_type" in e for e in errs)
+    errs = errors_of(synthetic_record(algorithm="practical-local", mode="baseline"))
+    assert any("mode" in e for e in errs)
+
+
 def test_radix_heap_only_with_integer_weights():
     errs = errors_of(synthetic_record(algorithm="dijkstra-radix", weight_type="double"))
     assert any("weight_type" in e for e in errs)
