@@ -10,7 +10,7 @@
       "tests/harness/test_pre_compact.py"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -122,5 +122,5 @@
       "output_tail": "................                                                         [100%]\n16 passed in 5.65s"
     }
   ],
-  "commit": "31ad9d9"
+  "commit": "43ee0a5"
 }
