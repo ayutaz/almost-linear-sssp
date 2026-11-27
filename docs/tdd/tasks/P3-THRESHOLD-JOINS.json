@@ -1,0 +1,52 @@
+{
+  "id": "P3-THRESHOLD-JOINS",
+  "spec": "Threshold components and joins: I0, O0 (min propagation in the macro-free block DAG, attaining macro edge kept), I*, O* (block-DAG order with two bottleneck sweeps on each block MST), theta = max(I*, O*), B0 = max(I0, O0); join records = block MST edges, state-to-owner joins at finite theta, corridor joins; I0/O0/I*/O* equal brute force, Lemma 5.8 bounds, Lemma 5.9 (union-find of joins <= W and < W restricted to states = SCCs of arcs <= W and < W) for every distinct W",
+  "paper_ref": "Sec 5.3 l.1109-1180, Lemma 5.8, Lemma 5.9",
+  "files": {
+    "impl": [
+      "src/paper/local/threshold_joins.hpp",
+      "src/paper/local/threshold_joins.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/local/test_threshold_joins.cpp",
+      "tests/property/paper/test_local_joins_property.cpp",
+      "tests/unit/paper/local/local_test_support.hpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "unit:joins*"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 2>&1 | grep -E \"error|FAILED\" | head -5; exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/local/threshold_joins.hpp' file not found (Sec 5.3 joins absent)",
+      "timestamp": "2026-11-27T11:36:27+09:00",
+      "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_threshold_joins.cpp.o \n./tests/unit/paper/local/test_threshold_joins.cpp:12:10: fatal error: 'paper/local/threshold_joins.hpp' file not found\n1 error generated."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "unit:joins* (2 hand examples x uint64_t/double, 1 rejection)",
+        "property:threshold joins match brute force and satisfy Lemmas 5.8-5.9 (6 families x 3 weight laws x 4 seeds x 6 b; every distinct W, <= and <)"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:41:21+09:00",
+      "output_tail": "        Start 228: unit:Alg 4 radial branch requires a connected input\n540/547 Test #223: unit:Alg 4 records path counters and accepts a null Diagnostics .........................................................................................   Passed    0.02 sec\n541/547 Test #306: unit:paper FibHeap links equal-degree roots on extraction ...............................................................................................   Passed    0.04 sec\n542/547 Test #221: unit:Alg 4 below the threshold runs the base case and records the fallback - std::uint64_t ..............................................................   Passed    0.03 sec\n543/547 Test #170: unit:H1: an arc realised by a multi-edge physical walk is accepted - std::uint64_t ......................................................................   Passed    0.08 sec\n544/547 Test #224: unit:Alg 4 on a single vertex is a base case with one leaf ..............................................................................................   Passed    0.02 sec\n545/547 Test #222: unit:Alg 4 below the threshold runs the base case and records the fallback - double .....................................................................   Passed    0.04 sec\n546/547 Test #220: unit:local threshold is a parameter for Mode B (N > c * L_N^e) ..........................................................................................   Passed    0.04 sec\n547/547 Test #228: unit:Alg 4 radial branch requires a connected input .....................................................................................................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 547\n\nLabel Time Summary:\ndifferential    =   1.84 sec*proc (4 tests)\nintegration     =   0.69 sec*proc (6 tests)\nproperty        =  20.37 sec*proc (27 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            = 109.70 sec*proc (509 tests)\n\nTotal Test time (real) =  18.37 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "all (after clang-format)"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:44:54+09:00",
+      "output_tail": "        Start 442: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t>\n540/547 Test #119: unit:edge-list writer output is the documented text .....................................................................................................   Passed    0.09 sec\n541/547 Test #118: unit:edge-list format reads empty graphs ................................................................................................................   Passed    0.07 sec\n542/547 Test #190: unit:H5: a link longer than c0 times the height is reported - std::uint64_t .............................................................................   Passed    0.11 sec\n543/547 Test  #77: unit:Counted statistics are per thread ..................................................................................................................   Passed    0.10 sec\n544/547 Test #442: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ............................   Passed    0.07 sec\n545/547 Test  #38: unit:Bellman-Ford handles zero-weight cycles without a parent cycle - U64 ...............................................................................   Passed    0.12 sec\n546/547 Test #259: unit:infinity flag absorbs addition - double ............................................................................................................   Passed    0.47 sec\n547/547 Test #216: unit:base case rejects zero weights (zero components are contracted by the caller) ......................................................................   Passed    0.14 sec\n\n100% tests passed, 0 tests failed out of 547\n\nLabel Time Summary:\ndifferential    =   5.03 sec*proc (4 tests)\nintegration     =   3.24 sec*proc (6 tests)\nproperty        =  61.06 sec*proc (27 tests)\nregression      =   0.14 sec*proc (1 test)\nunit            = 514.05 sec*proc (509 tests)\n\nTotal Test time (real) =  73.06 sec"
+    }
+  ],
+  "commit": null
+}
