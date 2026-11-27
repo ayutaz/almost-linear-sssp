@@ -17,7 +17,7 @@
       "src/paper/pivots/estimate.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -45,5 +45,5 @@
       "output_tail": "          Start 1007: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex\n1003/1010 Test  #880: integration:file round-trip feeds an identical CSR graph - std::uint64_t ................................................................................   Passed    0.03 sec\n1004/1010 Test  #899: differential:paper algorithm names ......................................................................................................................   Passed    0.03 sec\n1005/1010 Test  #939: differential:overflow: Bellman-Ford and Dijkstra differ by design (uint64) ..............................................................................   Passed    0.02 sec\n1006/1010 Test #1009: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.01 sec\n1007/1010 Test #1006: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.02 sec\n1008/1010 Test #1008: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.02 sec\n1009/1010 Test #1007: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.02 sec\n1010/1010 Test  #960: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  215.24 sec\n\n100% tests passed, 0 tests failed out of 1010\n\nLabel Time Summary:\ndifferential    = 143.62 sec*proc (69 tests)\nintegration     =   1.66 sec*proc (6 tests)\nproperty        = 435.85 sec*proc (54 tests)\nregression      =   0.18 sec*proc (6 tests)\nunit            = 601.64 sec*proc (875 tests)\n\nTotal Test time (real) = 216.41 sec"
     }
   ],
-  "commit": null
+  "commit": "391f507"
 }
