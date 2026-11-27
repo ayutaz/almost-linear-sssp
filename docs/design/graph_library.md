@@ -1,5 +1,7 @@
 # Graph library
 
+**English** | [日本語](graph_library.ja.md) | [简体中文](graph_library.zh-CN.md)
+
 Graph representations, text IO and reproducible generators shared by every SSSP
 implementation, benchmark and test. Graphs are **undirected** with **non-negative** weights;
 weight types are `std::uint64_t` (exact) and `double` (IEEE-754).

@@ -1,5 +1,7 @@
 # Numerics: exact model vs. IEEE-754 doubles
 
+**English** | [日本語](numerics.ja.md) | [简体中文](numerics.zh-CN.md)
+
 The paper (arXiv 2611.34911v1, Sec 2) works in the **comparison-addition model**: edge lengths
 are non-negative reals, and an algorithm may only compare and add them, exactly. A CPU `double`
 rounds every addition. This document fixes how the project tells the two apart, what tolerance

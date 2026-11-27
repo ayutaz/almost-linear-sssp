@@ -7,7 +7,7 @@ C++ のベンチランナー `build/<preset>/sssp_bench_runner` の引数・出�
 出力レコードの形式は [benchmark_schema.ja.md](benchmark_schema.ja.md)、計測手順は
 [benchmark_protocol.ja.md](benchmark_protocol.ja.md)。
 
-グラフの指定は、グラフ生成器 `sssp_gen`(docs/design/graph_library.md)と**同じ名前・同じ意味**にする。
+グラフの指定は、グラフ生成器 `sssp_gen`(docs/design/graph_library.ja.md)と**同じ名前・同じ意味**にする。
 ランナーは生成器ライブラリ(`sssp::gen`)をリンクし、同じオプション解析を使うことを想定する。
 
 ## 1. 呼び出し例

@@ -1,5 +1,7 @@
 # Dijkstra baselines
 
+**English** | [日本語](baselines.ja.md) | [简体中文](baselines.zh-CN.md)
+
 The baselines are the reference point for every performance claim about the paper's
 algorithm, so they are written to be *fair* rather than clever: one shared scan loop, heaps
 implemented in this repository (no `std::priority_queue`), all heap storage allocated before

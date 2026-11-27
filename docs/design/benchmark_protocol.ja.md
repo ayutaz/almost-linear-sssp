@@ -10,7 +10,7 @@ Dijkstra 系ベースラインを比較するときの計測手順を定める�
 
 - レコードのスキーマ: [benchmark_schema.ja.md](benchmark_schema.ja.md)
 - ランナーの CLI: [benchmark_runner_cli.ja.md](benchmark_runner_cli.ja.md)
-- グラフ生成器(グラフ種類・重み分布の名前と定義): [graph_library.md](graph_library.md)
+- グラフ生成器(グラフ種類・重み分布の名前と定義): [graph_library.ja.md](graph_library.ja.md)
 
 実装: `scripts/run_benchmarks.sh`(実行)、`scripts/bench/plan.py`(ジョブ一覧)、
 `scripts/bench/envinfo.py`(環境)、`scripts/bench/schema.py`(検証)、`scripts/bench/stats.py`(統計)、
@@ -58,7 +58,7 @@ Dijkstra 系ベースラインを比較するときの計測手順を定める�
 - 毎回 1 件の `FallbackRecord`(縮約後の頂点数 N と辺数)がレコードの `fallback` にそのまま入る
   (診断 OFF のビルドでも)。時間を報告するときは、この fallback の割合を必ず並べる。
   これらの時間は「論文の前処理 + Dijkstra」の時間であり、論文の外側の構成の時間ではない。
-- `double` の検証は `Tolerance::for_path_hops(2(n − 1))`(numerics.md §3.2)。整数重みは厳密一致。
+- `double` の検証は `Tolerance::for_path_hops(2(n − 1))`(numerics.ja.md §3.2)。整数重みは厳密一致。
 - `paper-faithful` の走査型基底ケースは Θ(N²) なので、ランナーは n > 2^17 を終了コード 3 で断る
   (別のアルゴリズムに置き換えない)。プランはその組を作らず、除外した件数と理由を標準エラーに出す
   (`plan.VERTEX_LIMITS`)。`paper-faithful-d1` に上限は無い。
@@ -155,7 +155,7 @@ cmake --preset release-diag && cmake --build --preset release-diag
 1. **距離の一致**: 参照実装の距離と全頂点で比べる。
    - 参照実装は `dijkstra-binary`。小規模グラフでは `bellman-ford` も使い、参照実装自体も確かめる。
    - `uint64`: 完全一致。
-   - `double`: 許容誤差つき比較(相対誤差と絶対誤差の併用)。許容値は `docs/design/numerics.md` に従う。
+   - `double`: 許容誤差つき比較(相対誤差と絶対誤差の併用)。許容値は `docs/design/numerics.ja.md` に従う。
    - 到達不能な頂点は双方とも infinity であること。
 2. **木の整合性**: 始点以外の到達可能な頂点 v について、parent 辺 (parent[v], v) が実在し、
    `dist[parent[v]] + w(parent[v], v) = dist[v]`(`double` は許容誤差つき)が成り立ち、parent をたどると始点に戻ること。
@@ -323,7 +323,7 @@ Speedup = T(dijkstra-binary) / T(対象)
 
 ## 11. グラフ種類(`graph_type`)
 
-名前と定義は `sssp_gen --type`(docs/design/graph_library.md §6)に従う。
+名前と定義は `sssp_gen --type`(docs/design/graph_library.ja.md §6)に従う。
 
 | `graph_type` | 内容 | d の渡し方 | 注記 |
 |---|---|---|---|
@@ -344,7 +344,7 @@ Speedup = T(dijkstra-binary) / T(対象)
 
 ## 12. 重み分布(`weight_dist`)
 
-名前と定義は `sssp_gen --weights`(docs/design/graph_library.md §5)に従う。パラメータ(`lo`, `hi`, `mean`,
+名前と定義は `sssp_gen --weights`(docs/design/graph_library.ja.md §5)に従う。パラメータ(`lo`, `hi`, `mean`,
 `zero_probability`, `wide_log2`)はプロファイルでは生成器の既定値を使う。
 
 | `weight_dist` | 内容 | プロファイルでの重み型 |
