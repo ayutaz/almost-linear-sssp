@@ -15,7 +15,7 @@
       "tests/property/paper_experimental/*"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -63,7 +63,7 @@
       "output_tail": "ninja: warning: premature end of file; recovering\n[183/192] Linking CXX executable tests/sssp_integration_tests\n[184/192] Linking CXX executable tests/sssp_unit_tests\n[186/192] Linking CXX executable tests/sssp_differential_tests\n[187/192] Linking CXX executable tests/sssp_property_tests\n[188/192] Linking CXX executable tests/sssp_regression_tests\n\n100% tests passed, 0 tests failed out of 104\n\nLabel Time Summary:\ndifferential    =  18.03 sec*proc (13 tests)\nproperty        =  20.13 sec*proc (22 tests)\nunit            =   5.68 sec*proc (69 tests)\n\nTotal Test time (real) =  15.51 sec"
     }
   ],
-  "commit": "d99ccf5",
+  "commit": "4cf78b0",
   "test_reduction_allowed": [
     {
       "reason": "The D-11 exact-height switch moves out of src/paper/ (Mode A may hold only what the paper specifies), so the core's unit test of Rule::exact_height is removed; the same behaviour stays covered by 'D-11: exact heights with links no longer than the height' in tests/unit/paper_experimental/test_local_mode_b.cpp and by the pinned D-11 hashes",
