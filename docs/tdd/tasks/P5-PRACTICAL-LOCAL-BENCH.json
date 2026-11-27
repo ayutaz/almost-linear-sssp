@@ -10,7 +10,7 @@
       "tests/python/test_bench_*.py"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -47,5 +47,5 @@
       "output_tail": "47/51 Test   #84: unit:bench json: whitespace and unicode escapes .............................................   Passed    0.02 sec\n      Start 1360: unit:bench-driver:every registered algorithm gets a case for each weight type it supports\n48/51 Test #1361: unit:bench-driver:all algorithms of one input share the same graph object and sources .......   Passed    0.01 sec\n49/51 Test #1363: unit:bench-driver:check_case rejects wrong results instead of timing them ...................   Passed    0.01 sec\n50/51 Test #1360: unit:bench-driver:every registered algorithm gets a case for each weight type it supports ...   Passed    0.01 sec\n51/51 Test #1365: unit:bench-driver:registered benchmarks cover the registry and run once without error .......   Passed    1.07 sec\n\n100% tests passed, 0 tests failed out of 51\n\nLabel Time Summary:\nintegration    =   0.75 sec*proc (1 test)\nunit           =   3.24 sec*proc (50 tests)\n\nTotal Test time (real) =   4.27 sec\n........................................................................ [ 16%]\n........................................................................ [ 33%]\n........................................................................ [ 50%]\n........................................................................ [ 67%]\n........................................................................ [ 83%]\n.....................................................................    [100%]"
     }
   ],
-  "commit": null
+  "commit": "9a122d0"
 }
