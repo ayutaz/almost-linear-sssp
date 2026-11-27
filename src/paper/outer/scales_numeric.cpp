@@ -270,6 +270,9 @@ W outer_separate_cutoff(std::span<const W> table, W s) {
   return table[i];
 }
 
+// The macro argument W is a type in template argument lists (`OuterAlignedScale<W>>` reads as a
+// shift to bugprone-macro-parentheses); a type cannot be parenthesised there.
+// NOLINTBEGIN(bugprone-macro-parentheses)
 #define SSSP_OUTER_SCALES_NUMERIC_INSTANTIATE(W)                                           \
   template W scale_pow2<W>(W, std::uint64_t);                                              \
   template W outer_block_scale<W>(std::span<const W>);                                     \
@@ -283,6 +286,7 @@ W outer_separate_cutoff(std::span<const W> table, W s) {
   template std::size_t outer_grid_class<W>(const OuterGlobalGrid<W>&, std::uint32_t, W);   \
   template W outer_aligned_cutoff<W>(const OuterGlobalGrid<W>&, std::uint32_t, W);         \
   template W outer_separate_cutoff<W>(std::span<const W>, W)
+// NOLINTEND(bugprone-macro-parentheses)
 
 SSSP_OUTER_SCALES_NUMERIC_INSTANTIATE(std::uint64_t);
 SSSP_OUTER_SCALES_NUMERIC_INSTANTIATE(double);

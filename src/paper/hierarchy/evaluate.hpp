@@ -72,6 +72,45 @@
 // (proposed D-15, child_order.hpp); with a gap a few ulps short a supplemental offer can be
 // a few ulps below delta for non-integer doubles.
 //
+// [Deviation D-23, proposed] Range of the length type. The mass S(C) (normalize), the expiry
+// D0 + S(C) (Sec 4.3 l.791, Alg 3 l.9), the slot ends origin + k nu (Alg 3 l.10, Alg 2 l.10), the
+// supplemental offers max{b, z + S(i) + g(i, j)} (Alg 2 l.6) and the relaxation values
+// emitted + l (Alg 2 l.11) are SATURATED: a sum that does not fit W (uint64: reaches the sentinel
+// 2^64 - 1; double: rounds to +inf) becomes WeightTraits<W>::infinity() (the D-13 helper
+// sat::add). Each of them is an upper bound or the end of a window, never subtracted from, and
+// every comparison it enters has a finite other side (an offer or a window end below the range),
+// which +infinity decides as the true value would. Consequences, all exact for integer W:
+//   * a slot ending beyond the range is the node's last slot (it contains every later finite
+//     time); the root loop and the child slot advance stop there;
+//   * the second origin rule with a parent slot end b beyond the range computes b - j nu as
+//     a + (nu(parent) - j nu) by the same successive subtractions (counter
+//     eval_saturated_origins), so the origin is still the paper's;
+//   * a supplemental offer beyond the range is not posted (Lemma 4.6 does not use it, D-14);
+//   * a relaxation value beyond the range is not stored. Its head would hold it only if it has
+//     no finite key; such a head is marked, a later finite offer clears the mark, and if a
+//     marked state never emits, evaluate() (and PortionedEvaluator::take_result) throws
+//     std::overflow_error: its delta may not be representable, and "unreached" would be a
+//     silent wrong result (the Bellman-Ford rule of docs/design/numerics.md §6). The check is
+//     conservative: an unprotected state whose only offers exceed the range also throws.
+// Hence an integer evaluation throws std::overflow_error only if a value it would store (an
+// emission, or the only offer of a state that never emits) does not fit; the bookkeeping bounds
+// never cause it.
+//
+// [Deviation D-24, proposed] Unsupported double inputs. If nu(C) is at most half the spacing of
+// doubles at a time s where C needs a slot, s + nu(C) rounds back to s: the slot [s, s + nu) is
+// empty and so is every later one, so Alg 2 / Alg 3 cannot step through C's slots (and a
+// successive subtraction t - nu of the origin rule cannot move t). Widening the slot would let
+// a heavy arc (length >= nu) land at an earlier rank inside the same portion, which case 1 of the
+// proof of Lemma 4.6 excludes. evaluate() then throws std::domain_error (message "... rounds back
+// to its start ..." / "... rounds back to t ..."). Exactly the evaluations that form such a sum
+// are rejected; a sufficient condition for acceptance is that every slot start s of every node C
+// (all such s are at most max over roots X of D0(X) + S(X) + nu(X)) satisfies s < 2^52 nu(C), in
+// particular every input whose Sec 4 arithmetic is exact (lengths, heights and offers integer
+// multiples of a common 2^-p with all these sums below 2^(53 - p)). Example: the path
+// 0 -(2^53)- 1 -(1)- 2 from source 0 (the unit-1 child opens at 2^53); the same path from
+// source 2 is accepted and within the k 2^-53 tolerance. This narrows the double scope of Q-06 /
+// Q-55 (option A); no result is returned for a rejected input.
+//
 // The split-findmin structure is the two-level SplitFindmin of Lemma 3.11 (not
 // SplitFindminRef, so no D-3). LCA / level ancestors are ForestQueries (Lemma 3.9).
 
@@ -158,7 +197,10 @@ struct EvalResult {
 /// validate_seeded_ordered_hierarchy checks it). Only s.offers are read; the sources define
 /// delta for the caller's checks. Throws std::out_of_range for an offer at a non-existent state
 /// and std::invalid_argument for an offer that is not finite and nonnegative, plus whatever
-/// normalize() / order_children() throw on a malformed hierarchy.
+/// normalize() / order_children() throw on a malformed hierarchy. Throws std::overflow_error if
+/// a state whose only offers exceed the range of W never emits, and (double only)
+/// std::domain_error if a slot or origin step rounds back to its start (D-23 / D-24 in the file
+/// comment); bookkeeping sums beyond the range saturate and never throw.
 template <class W>
 EvalResult<W> evaluate(const SeededOrderedHierarchy<W>& s, const EvalOptions<W>& options = {});
 
@@ -275,7 +317,10 @@ class PortionedEvaluator {
   [[nodiscard]] const std::vector<std::pair<StateId, W>>& emissions() const noexcept;
 
   /// Calls on_finish and moves the result out (counters included when no `diag` was given).
-  /// The evaluator is unusable afterwards (std::logic_error).
+  /// The evaluator is unusable afterwards (std::logic_error). Throws std::overflow_error, as
+  /// evaluate() does, if a state whose only offers exceed the range of W never emitted (D-23);
+  /// callers that never take the result must apply their own check. visit_cell may throw
+  /// std::domain_error for double (D-24).
   EvalResult<W> take_result();
 
  private:

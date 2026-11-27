@@ -21,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+#include "graph/union_find.hpp"
+
 namespace sssp::gen {
 
 namespace {
@@ -234,27 +236,9 @@ EdgeList<W> finish(std::size_t n, const std::vector<Pair>& pairs, const GenOptio
   return g;
 }
 
-class UnionFind {
- public:
-  explicit UnionFind(std::size_t n) : parent_(n) {
-    for (std::size_t i = 0; i < n; ++i) parent_[i] = i;
-  }
-  std::size_t find(std::size_t x) {
-    while (parent_[x] != x) x = parent_[x] = parent_[parent_[x]];
-    return x;
-  }
-  bool unite(std::size_t a, std::size_t b) {
-    a = find(a);
-    b = find(b);
-    if (a == b) return false;
-    if (a < b) std::swap(a, b);
-    parent_[a] = b;  // smaller index becomes the root: deterministic and order-independent
-    return true;
-  }
-
- private:
-  std::vector<std::size_t> parent_;
-};
+/// Union-find over std::size_t: count_components and connect_components accept any
+/// num_vertices. Only the partition is used, never the roots (see graph/union_find.hpp).
+using UnionFind = detail::UnionFind<std::size_t>;
 
 std::size_t rounded_edge_count(std::size_t n, double avg_degree) {
   check(std::isfinite(avg_degree) && avg_degree >= 0.0, "avg_degree must be finite and >= 0");
