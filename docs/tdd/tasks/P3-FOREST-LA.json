@@ -11,7 +11,7 @@
    "tests/unit/paper/primitives/test_level_ancestor.cpp"
   ]
  },
- "phase": "REFACTOR",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -50,5 +50,5 @@
    "output_tail": "20/29 Test #15: unit:ordered tree records root, depths and children in increasing index order .................   Passed    0.01 sec\n      Start 21: unit:level ancestor on a hand-built tree\n21/29 Test #23: unit:level ancestor rejects depths below the query vertex .....................................   Passed    0.01 sec\n      Start 24: unit:level ancestor test block size must lie in [2, 8]\n22/29 Test  #9: unit:dsu links by rank and raises the survivor only on a tie ..................................   Passed    0.01 sec\n23/29 Test #21: unit:level ancestor on a hand-built tree ......................................................   Passed    0.01 sec\n24/29 Test #24: unit:level ancestor test block size must lie in [2, 8] ........................................   Passed    0.01 sec\n25/29 Test #25: unit:level ancestor equals naive for all (v, j) on path, star, caterpillar and binary trees ...   Passed    0.13 sec\n26/29 Test #28: property:dsu find traversals obey the Lemma 3.6 band bound on random op sequences .............   Passed    0.15 sec\n27/29 Test #18: unit:lca equals naive on all pairs of path, star, caterpillar and binary trees ................   Passed    0.21 sec\n28/29 Test #19: unit:lca equals naive on all pairs of small random trees ......................................   Passed    0.36 sec\n29/29 Test #26: unit:level ancestor equals naive for all (v, j) on small random trees .........................   Passed    0.44 sec\n\n100% tests passed, 0 tests failed out of 29\n\nLabel Time Summary:\nproperty    =   0.17 sec*proc (2 tests)\nunit        =   1.41 sec*proc (27 tests)\n\nTotal Test time (real) =   1.19 sec"
   }
  ],
- "commit": null
+ "commit": "d95edf9"
 }

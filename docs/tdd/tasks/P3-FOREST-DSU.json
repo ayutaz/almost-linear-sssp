@@ -11,7 +11,7 @@
    "tests/property/paper/test_dsu_property.cpp"
   ]
  },
- "phase": "REFACTOR",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -75,5 +75,5 @@
    "output_tail": "28/37 Test #28: unit:level ancestor test block size must lie in [2, 8] ........................................   Passed    0.01 sec\n      Start 22: unit:forest queries on the empty forest and on isolated vertices\n29/37 Test #25: unit:level ancestor on a hand-built tree ......................................................   Passed    0.02 sec\n      Start 21: unit:forest lca returns nullopt for vertices in different trees\n30/37 Test #23: unit:forest queries reject invalid parent arrays ..............................................   Passed    0.01 sec\n31/37 Test #31: unit:forest level ancestor uses original depths and stays inside the tree .....................   Passed    0.02 sec\n32/37 Test #22: unit:forest queries on the empty forest and on isolated vertices ..............................   Passed    0.02 sec\n33/37 Test #21: unit:forest lca returns nullopt for vertices in different trees ...............................   Passed    0.02 sec\n34/37 Test #19: unit:lca equals naive on all pairs of small random trees ......................................   Passed    0.41 sec\n35/37 Test #30: unit:level ancestor equals naive for all (v, j) on small random trees .........................   Passed    0.46 sec\n36/37 Test #37: property:forest queries agree with binary lifting on deep and degenerate shapes ...............   Passed    0.87 sec\n37/37 Test #36: property:forest queries agree with binary lifting on random forests ...........................   Passed    1.00 sec\n\n100% tests passed, 0 tests failed out of 37\n\nLabel Time Summary:\nproperty    =   2.07 sec*proc (4 tests)\nunit        =   1.97 sec*proc (33 tests)\n\nTotal Test time (real) =   1.41 sec"
   }
  ],
- "commit": null
+ "commit": "3b3db8f"
 }

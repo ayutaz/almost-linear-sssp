@@ -12,7 +12,7 @@
    "tests/unit/paper/primitives/forest_gen.hpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -43,5 +43,5 @@
    "output_tail": "14/23 Test  #5: unit:integer distance addition detects overflow .....................................   Passed    0.01 sec\n      Start  9: unit:dsu links by rank and raises the survivor only on a tie\n15/23 Test #21: unit:library exposes version and target paper .......................................   Passed    0.01 sec\n      Start 14: unit:ordered tree rejects parent arrays that are not one rooted tree\n16/23 Test #10: unit:dsu find compresses every nonroot on the chain to the root .....................   Passed    0.01 sec\n17/23 Test #16: unit:lca on a hand-built tree .......................................................   Passed    0.01 sec\n18/23 Test  #9: unit:dsu links by rank and raises the survivor only on a tie ........................   Passed    0.01 sec\n19/23 Test #15: unit:ordered tree records root, depths and children in increasing index order .......   Passed    0.01 sec\n20/23 Test #14: unit:ordered tree rejects parent arrays that are not one rooted tree ................   Passed    0.01 sec\n21/23 Test #22: property:dsu find traversals obey the Lemma 3.6 band bound on random op sequences ...   Passed    0.15 sec\n22/23 Test #18: unit:lca equals naive on all pairs of path, star, caterpillar and binary trees ......   Passed    0.20 sec\n23/23 Test #19: unit:lca equals naive on all pairs of small random trees ............................   Passed    0.36 sec\n\n100% tests passed, 0 tests failed out of 23\n\nLabel Time Summary:\nproperty    =   0.17 sec*proc (2 tests)\nunit        =   0.78 sec*proc (21 tests)\n\nTotal Test time (real) =   0.36 sec"
   }
  ],
- "commit": null
+ "commit": "3b497d4"
 }
