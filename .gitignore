@@ -1,0 +1,26 @@
+# Build
+/build/
+/out/
+/cmake-build-*/
+compile_commands.json
+.cache/
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+# Results (raw data stays local; summaries are committed explicitly)
+/results/raw/
+/results/**/*.bin
+/datasets/raw/
+/datasets/generated/
+# TDD runtime state (evidence under docs/tdd is committed)
+/.tdd/runtime/
+# Claude Code local
+.claude/settings.local.json
+.claude/state/
+# OS
+.DS_Store

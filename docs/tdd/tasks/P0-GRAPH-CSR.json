@@ -1,0 +1,7 @@
+{"id":"P0-GRAPH-CSR","spec":"Undirected CSR graph (both orientations, multi-edges, self-loops, isolated vertices), input validation (out-of-range, negative, NaN, inf), weight traits (infinity, exactness, overflow-checked add)","paper_ref":"Sec 2 (input model: undirected, non-negative real lengths)",
+ "files":{"impl":["include/sssp/graph.hpp"],"tests":["tests/unit/graph/test_csr_graph.cpp"]},
+ "phase":"DONE",
+ "events":[
+  {"phase":"RED","tests":["CSR stores both orientations of every undirected edge","CSR keeps multi-edges, self-loops and isolated vertices","CSR rejects invalid input with clear errors","weight traits define infinity per weight type","integer distance addition detects overflow"],"command":"cmake --build --preset debug","exit_code":1,"reason":"fatal error: 'sssp/graph.hpp' file not found (feature absent)","timestamp":"2026-11-27T10:15:13+0900","output_tail":"tests/unit/graph/test_csr_graph.cpp:7:10: fatal error: 'sssp/graph.hpp' file not found"},
+  {"phase":"GREEN","tests":["all 5"],"command":"cmake --build --preset debug && ctest --preset debug","exit_code":0,"timestamp":"2026-11-27T10:15:13+0900","output_tail":"100% tests passed, 0 tests failed out of 6"}],
+ "commit":null}

@@ -1,0 +1,6 @@
+file(GLOB_RECURSE _bench_srcs CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+if(_bench_srcs)
+  add_executable(sssp_bench ${_bench_srcs})
+  target_link_libraries(sssp_bench PRIVATE sssp benchmark::benchmark)
+  target_include_directories(sssp_bench PRIVATE ${PROJECT_SOURCE_DIR}/src)
+endif()

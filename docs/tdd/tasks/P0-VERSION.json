@@ -1,0 +1,7 @@
+{"id":"P0-VERSION","spec":"Library exposes its version and the target arXiv id (smoke test for build + Catch2 + CTest wiring)","paper_ref":null,
+ "files":{"impl":["include/sssp/version.hpp","src/core/version.cpp"],"tests":["tests/unit/test_version.cpp"]},
+ "phase":"DONE",
+ "events":[
+  {"phase":"RED","tests":["library exposes version and target paper"],"command":"cmake --build --preset debug","exit_code":1,"reason":"fatal error: 'sssp/version.hpp' file not found (feature absent)","timestamp":"2026-11-27T10:15:13+0900","output_tail":"tests/unit/test_version.cpp:4:10: fatal error: 'sssp/version.hpp' file not found"},
+  {"phase":"GREEN","tests":["library exposes version and target paper"],"command":"cmake --build --preset debug && ctest --preset debug","exit_code":0,"timestamp":"2026-11-27T10:15:13+0900","output_tail":"100% tests passed, 0 tests failed out of 1"}],
+ "commit":null}

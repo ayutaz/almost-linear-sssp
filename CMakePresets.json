@@ -1,0 +1,40 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {"major": 3, "minor": 24, "patch": 0},
+  "configurePresets": [
+    {"name": "base", "hidden": true, "generator": "Ninja",
+     "binaryDir": "${sourceDir}/build/${presetName}",
+     "cacheVariables": {"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"}},
+    {"name": "debug", "inherits": "base", "displayName": "Debug",
+     "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug"}},
+    {"name": "release", "inherits": "base", "displayName": "Release (-O3, diagnostics off)",
+     "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "SSSP_DIAGNOSTICS": "OFF", "SSSP_BUILD_TESTS": "ON"}},
+    {"name": "release-diag", "inherits": "base", "displayName": "Release with diagnostic counters",
+     "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "SSSP_DIAGNOSTICS": "ON"}},
+    {"name": "sanitizer", "inherits": "base", "displayName": "ASan + UBSan",
+     "cacheVariables": {"CMAKE_BUILD_TYPE": "RelWithDebInfo", "SSSP_SANITIZE": "ON", "SSSP_BUILD_BENCHMARKS": "OFF"}},
+    {"name": "coverage", "inherits": "base", "displayName": "Coverage (clang source-based)",
+     "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "SSSP_COVERAGE": "ON", "SSSP_BUILD_BENCHMARKS": "OFF"}},
+    {"name": "ci", "inherits": "base", "displayName": "CI (Debug, -Werror)",
+     "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "SSSP_WERROR": "ON"}},
+    {"name": "ci-release", "inherits": "base", "displayName": "CI Release (-Werror)",
+     "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "SSSP_WERROR": "ON"}}
+  ],
+  "buildPresets": [
+    {"name": "debug", "configurePreset": "debug"},
+    {"name": "release", "configurePreset": "release"},
+    {"name": "release-diag", "configurePreset": "release-diag"},
+    {"name": "sanitizer", "configurePreset": "sanitizer"},
+    {"name": "coverage", "configurePreset": "coverage"},
+    {"name": "ci", "configurePreset": "ci"},
+    {"name": "ci-release", "configurePreset": "ci-release"}
+  ],
+  "testPresets": [
+    {"name": "debug", "configurePreset": "debug", "output": {"outputOnFailure": true}, "execution": {"jobs": 8, "timeout": 600}},
+    {"name": "release", "configurePreset": "release", "output": {"outputOnFailure": true}, "execution": {"jobs": 8, "timeout": 600}},
+    {"name": "sanitizer", "configurePreset": "sanitizer", "output": {"outputOnFailure": true}, "execution": {"jobs": 8, "timeout": 1200}},
+    {"name": "coverage", "configurePreset": "coverage", "output": {"outputOnFailure": true}},
+    {"name": "ci", "configurePreset": "ci", "output": {"outputOnFailure": true}, "execution": {"jobs": 4, "timeout": 900}},
+    {"name": "ci-release", "configurePreset": "ci-release", "output": {"outputOnFailure": true}, "execution": {"jobs": 4, "timeout": 900}}
+  ]
+}
