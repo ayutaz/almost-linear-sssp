@@ -18,7 +18,7 @@
       "tests/differential/paper/test_local_overflow_vs_exact.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -73,5 +73,5 @@
       "output_tail": "100% tests passed, 0 tests failed out of 1175\n\nLabel Time Summary:\ndifferential    =  58.14 sec*proc (80 tests)\nintegration     =   0.80 sec*proc (7 tests)\nproperty        = 138.88 sec*proc (86 tests)\nregression      =   0.13 sec*proc (11 tests)\nunit            = 119.66 sec*proc (991 tests)\n\nTotal Test time (real) =  84.08 sec\nTest project ./build/debug\n    Start 1082: differential:Alg 4 Mode A at k = 209953: four edges of 2^62 at the root of the MST\n1/1 Test #1082: differential:Alg 4 Mode A at k = 209953: four edges of 2^62 at the root of the MST ...   Passed    2.77 sec\n\n100% tests passed, 0 tests failed out of 1\n\nLabel Time Summary:\ndifferential-slow    =   2.77 sec*proc (1 test)\n\nTotal Test time (real) =   2.78 sec"
     }
   ],
-  "commit": null
+  "commit": "c42506b"
 }
