@@ -52,24 +52,34 @@
 // calendars store every value as 2^7 times the length it stands for (calendars.hpp). Alg 7 runs
 // entirely in those units: every auxiliary length (w', R, L_Y, gaps) is scaled by calendar_scale
 // before use, so the cells [i q, (i + 1) q) are exact for integer lengths. The scaled distances
-// 2^7 J are returned in scaled_distance; distance = J is obtained by seven exact halvings
-// ([Interpretation, proposed deviation candidate] halving is not one of the Sec 2 operations;
-// every emitted value is a sum of scaled lengths, so for integers the low seven bits are zero and
-// for double the halvings are exact for normal values).
+// 2^7 J are returned in scaled_distance; distance = J is obtained by seven exact halvings.
+// [D-21] The halvings are a deviation: halving is not one of the Sec 2 operations. Every emitted
+// value is a sum of scaled lengths, so for integers the low seven bits are zero (checked) and for
+// double the halvings are exact for normal values. Sec 8 consumes scaled_distance, taken before
+// the halvings.
 //
-// Interpretations (open questions):
+// Interpretations (open questions) and deviations (PAPER_MAPPING §3):
 //   [Q-47] "direct offers from the root" (l.1860): the w' of every G' edge incident to a, posted
 //     at the native copy of its other endpoint (initial offers, before the first marker).
 //   [Q-27, Q-28] slot resumption and padding are those of PortionedEvaluator.
 //   [Supplement] the T' preorder visits children in the BFS order aux.tree_order (the paper
 //     fixes no child order; any DFS preorder gives the tour bound of l.1783-1785).
-//   [Supplement] g(i, j) is materialised as (R_i - R_lca) + (R_j - R_lca) by two subtractions
-//     of nonnegative differences (exact for integers; for double rounded, Q-06; the paper's
-//     "signed pairs of sums", Sec 2 l.299, would avoid the subtraction).
-//   [Q-55, plan A] For double, R_v (summed down T') and R_rep + L_Y (another summation order) can
-//     differ by rounding, so the family horizon can fall one ulp short of R_v; correctness is
-//     established for integer and dyadic weights only (Q-06). A vertex that is never emitted
-//     raises std::logic_error instead of returning a wrong J.
+//   [D-22] g(i, j) is materialised as one real (R_i - R_lca) + (R_j - R_lca) by two
+//     subtractions of nonnegative differences, so that the proposal z + L_i + g(i, j) is an
+//     ordinary length (exact for integers; for double rounded, Q-06 and Q-55 option A; the
+//     paper's "signed pairs of sums", Sec 2 l.299, would avoid the subtraction).
+//   [Interpretation] The inherited physical deadline of l.1833 ("the smaller of its own and
+//     inherited physical deadlines") is read as the evaluator's internal cap min(c, D0 + S) of
+//     the opened root, c being the atom's deadline (PortionedEvaluator, l.1837-1838); the atom's
+//     own deadline c = z + L_Y (l.1825) is set once, at registration, and never changed
+//     afterwards.
+//   [Q-55, option A] For double, R_v (summed down T') and R_rep + L_Y (another summation order)
+//     can differ by rounding (about one ulp). The place where this rounding bites is the atom
+//     deadline z + L_Y (l.1825), which can close the atom one ulp before v is due; the family
+//     horizon (l.1786-1787) is not the cause. Decision (lead, 2026-11-27): option A, i.e.
+//     correctness is established for integer and dyadic weights only (Q-06). With non-dyadic
+//     doubles a vertex that is never emitted raises std::logic_error instead of returning a
+//     wrong J.
 //
 // Fallback policy: every atom goes through Alg 4 (local_hierarchy via cap_local_hierarchy),
 // which pushes FallbackRecord{"local: k <= 2*L_k^4 (paper base case)", k, m} when it takes its

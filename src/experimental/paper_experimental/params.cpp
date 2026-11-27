@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "experimental/paper_experimental/local_assembly.hpp"
 #include "paper/local/assemble.hpp"
 #include "paper/pivots/estimate.hpp"
 
@@ -244,14 +245,21 @@ PaperParams::PaperParams(const LocalParams& local, const OuterParams& outer,
 
 LocalBranch PaperParams::local_branch(std::uint64_t k) const {
   if (!local_applies(k)) return LocalBranch::kBaseCase;  // Alg 4 l.2
-  if (local_.alignment == LocalAlignment::kLambda) {
-    // D-8: research note 02 §4.3 claims the Lambda formulas for N >= 2 and b >= 1.
-    return k >= 2 ? LocalBranch::kRadial : LocalBranch::kUnsupported;
-  }
-  // Sec 5.4 l.1206 as written: N >= 32 and h = b + 1 <= N (Q-03 conservative variant).
+  // The preconditions are those of the assembly engine (local_assembly_variant_applies):
+  //   (paper alignment, grid)  Sec 5.4 l.1206 as written: N >= 32 and h = b + 1 <= N (Q-03
+  //                            conservative variant); a saturated b never satisfies it.
+  //   (Lambda, grid)           D-8: research note 02 §4.3 claims the formulas for N >= 2, b >= 1.
+  //   (any, exact height)      D-11 does not use the alignment, so l.1206 does not apply; it
+  //                            needs N >= 2 only (Lemmas 5.2-5.9, Q-60).
   const SeparatorValue b = local_.separator.evaluate(k);
-  return !b.saturated && paper::local_assembly_applies(k, b.value) ? LocalBranch::kRadial
-                                                                   : LocalBranch::kUnsupported;
+  const bool paper_grid =
+      local_.alignment == LocalAlignment::kPaper && local_.assembly == LocalAssembly::kGrid;
+  if (paper_grid && b.saturated) return LocalBranch::kUnsupported;
+  return local_assembly_variant_applies(static_cast<std::size_t>(k),
+                                        static_cast<std::size_t>(b.value), local_.alignment,
+                                        local_.assembly)
+             ? LocalBranch::kRadial
+             : LocalBranch::kUnsupported;
 }
 
 LocalDerived PaperParams::local_derived(std::uint64_t k) const {
@@ -340,9 +348,14 @@ std::vector<ParamEntry> PaperParams::parameter_log() const {
                       paper_local.threshold.describe(), "D-7"));
   log.push_back(entry("local.separator", local_.separator.describe(),
                       paper_local.separator.describe(), "D-7"));
-  log.push_back(entry("local.alignment",
-                      local_.alignment == LocalAlignment::kPaper ? "paper" : "lambda", "paper",
-                      "D-8"));
+  {
+    // Q-61: both alignments stay selectable with D-11, which does not use them; the value says
+    // so. Whether the entry deviates depends on the choice, not on the suffix.
+    const bool paper_alignment = local_.alignment == LocalAlignment::kPaper;
+    ParamEntry e = entry("local.alignment", paper_alignment ? "paper" : "lambda", "paper", "D-8");
+    if (local_.assembly == LocalAssembly::kExactHeight) e.value += " (ignored under D-11)";
+    log.push_back(std::move(e));
+  }
   log.push_back(entry("local.assembly",
                       local_.assembly == LocalAssembly::kGrid ? "grid" : "exact-height", "grid",
                       "D-11"));

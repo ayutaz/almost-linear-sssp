@@ -1,0 +1,48 @@
+{
+  "id": "P3-CODE-NOTES-SYNC",
+  "spec": "Under the exact-height assembly (D-11) PaperParams::local_branch accepts the radial branch for every k >= 2 whatever the alignment (Q-60), the parameter log marks the alignment as ignored under D-11 (Q-61), PaperParams rejects a separator exponent above 64 and every fixed constant moved up or down, and the OwnerDistances notes cite D-21, D-22, Q-55 option A and the inherited-deadline reading",
+  "paper_ref": "Sec 5.4 l.1206 (alignment precondition), Sec 7.4 l.1825 (atom deadline z + L_Y), l.1833 (inherited deadline), Lemma 7.3 l.1723-1724 (2^7 calendar units), Sec 2 l.299",
+  "files": {
+    "impl": [
+      "src/paper/owner/owner_distances.hpp",
+      "src/experimental/paper_experimental/params.hpp",
+      "src/experimental/paper_experimental/params.cpp",
+      "src/experimental/paper_experimental/local_hierarchy.*",
+      "src/experimental/paper_experimental/local_assembly.*"
+    ],
+    "tests": [
+      "tests/unit/paper_experimental/*.cpp",
+      "tests/differential/paper_experimental/*.cpp",
+      "tests/property/paper_experimental/*.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"Q-60|ignored under D-11|above and below the paper|exponents above 64|D-11 accepts|unsupported instance is a failure|D-11 with the paper\"'",
+      "exit_code": 8,
+      "reason": "Q-60: local_branch returns kUnsupported (2 == 1) for (paper alignment, exact height) at k = 2..31 although D-11 does not use the alignment (unit params, unit Mode B local, differential vs Dijkstra, property Def 4.1/threshold SCCs). Q-61: parameter_log gives 'paper'/'lambda' instead of 'paper (ignored under D-11)'/'lambda (ignored under D-11)'. The kUnsupported message for D-11 names the Sec 5.4 formulas / D-8 instead of D-11. The existing unit test 'an unsupported instance is a failure' expected kUnsupported for (paper, exact height) at k = 31; per the lead's Q-60 decision (2026-11-27) that expectation applies to the grid only, so the exact-height half was replaced by the D-11 precondition N >= 2 (k = 1). New tests for the fixed constants (both directions) and separator exponents above 64 already pass (test-only gaps).",
+      "timestamp": "2026-11-27T14:58:49+09:00",
+      "output_tail": "\n20% tests passed, 8 tests failed out of 10\n\nLabel Time Summary:\ndifferential    =   0.05 sec*proc (2 tests)\nproperty        =   0.03 sec*proc (2 tests)\nunit            =   0.23 sec*proc (6 tests)\n\nTotal Test time (real) =   0.07 sec\n\nThe following tests FAILED:\n\t901 - unit:experimental params: D-11 accepts the radial branch for k >= 2 under either alignment (Failed) unit\n\t902 - unit:experimental params: the alignment is logged as ignored under D-11 (Failed) unit\n\t908 - unit:Mode B local: an unsupported instance is a failure, not a substitution (Failed) unit\n\t909 - unit:Mode B local: D-11 with the paper's alignment runs below 32 vertices (Q-60) (Failed) unit\n\t995 - differential:Mode B local (paper alignment, D-11) below 32 vertices equals Dijkstra (Q-60) - std::uint64_t (Failed) differential\n\t996 - differential:Mode B local (paper alignment, D-11) below 32 vertices equals Dijkstra (Q-60) - double (Failed) differential\n\t1112 - property:D-11 with the paper's alignment below 32 vertices: Def 4.1 and threshold SCCs - std::uint64_t (Failed) property\n\t1113 - property:D-11 with the paper's alignment below 32 vertices: Def 4.1 and threshold SCCs - double (Failed) property\nErrors while running CTest"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"experimental params|Mode B|D-8|D-11|Q-60|owner_distances|Alg 7|OwnerDistances\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:23:36+09:00",
+      "output_tail": "      Start  894: unit:experimental params: separator exponents above 64 are rejected\n60/66 Test  #915: unit:D-8: Lambda = 2N * 3hK^2 and the support end 2(3hK^2)^2 N^3 sigma .......................................   Passed    0.03 sec\n      Start  893: unit:experimental params: every fixed constant is rejected above and below the paper\n61/66 Test  #894: unit:experimental params: separator exponents above 64 are rejected ..........................................   Passed    0.03 sec\n      Start 1096: property:Alg 7 invariants (Lemmas 7.7-7.9) on seeded auxiliary graphs - std::uint64_t\n62/66 Test  #893: unit:experimental params: every fixed constant is rejected above and below the paper .........................   Passed    0.03 sec\n      Start 1097: property:Alg 7 invariants (Lemmas 7.7-7.9) on seeded auxiliary graphs - double\n63/66 Test  #995: differential:Mode B local (paper alignment, D-11) below 32 vertices equals Dijkstra (Q-60) - std::uint64_t ...   Passed   22.52 sec\n64/66 Test #1097: property:Alg 7 invariants (Lemmas 7.7-7.9) on seeded auxiliary graphs - double ...............................   Passed    3.82 sec\n65/66 Test #1096: property:Alg 7 invariants (Lemmas 7.7-7.9) on seeded auxiliary graphs - std::uint64_t ........................   Passed    3.99 sec\n66/66 Test  #996: differential:Mode B local (paper alignment, D-11) below 32 vertices equals Dijkstra (Q-60) - double ..........   Passed   22.63 sec\n\n100% tests passed, 0 tests failed out of 66\n\nLabel Time Summary:\ndifferential    =  85.10 sec*proc (9 tests)\nproperty        =  56.59 sec*proc (11 tests)\nunit            =   1.76 sec*proc (46 tests)\n\nTotal Test time (real) =  41.43 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"experimental params|Mode B|D-8|D-11|Q-60|owner_distances|Alg 7|OwnerDistances\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:24:30+09:00",
+      "output_tail": "      Start  592: unit:Alg 7 on example A: root shortcut and padded family proposals - std::uint64_t\n60/66 Test  #603: unit:Alg 7 rejects lengths whose 2^7 multiple does not fit - double ..........................................   Passed    0.03 sec\n      Start  915: unit:D-8: Lambda = 2N * 3hK^2 and the support end 2(3hK^2)^2 N^3 sigma\n61/66 Test  #596: unit:Alg 7 on example C: two graph pieces and the direction rule - std::uint64_t .............................   Passed    0.03 sec\n      Start  893: unit:experimental params: every fixed constant is rejected above and below the paper\n62/66 Test  #601: unit:Alg 7 after the paper's outer separator (Mode A pipeline) - double ......................................   Passed    0.03 sec\n      Start  894: unit:experimental params: separator exponents above 64 are rejected\n63/66 Test  #592: unit:Alg 7 on example A: root shortcut and padded family proposals - std::uint64_t ...........................   Passed    0.03 sec\n64/66 Test  #915: unit:D-8: Lambda = 2N * 3hK^2 and the support end 2(3hK^2)^2 N^3 sigma .......................................   Passed    0.03 sec\n65/66 Test  #894: unit:experimental params: separator exponents above 64 are rejected ..........................................   Passed    0.03 sec\n66/66 Test  #893: unit:experimental params: every fixed constant is rejected above and below the paper .........................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 66\n\nLabel Time Summary:\ndifferential    =  82.12 sec*proc (9 tests)\nproperty        =  45.62 sec*proc (11 tests)\nunit            =   1.74 sec*proc (46 tests)\n\nTotal Test time (real) =  32.45 sec"
+    }
+  ],
+  "commit": null
+}
