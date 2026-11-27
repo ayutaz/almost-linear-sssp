@@ -1,0 +1,42 @@
+{
+  "id": "P6-SCALING-TOOL",
+  "spec": "scripts/scaling_fit.py fits c*m, c*(m + n logloglog n), c*(m + n log n), c*m log n and c*m^alpha to release timing medians and release-diag operation counts per algorithm/family/weight type, and refuses with a stated reason when there are fewer than 4 sizes, less than 2 orders of magnitude, or no recorded fallback share",
+  "paper_ref": "none",
+  "files": {
+    "impl": [
+      "scripts/scaling_fit.py"
+    ],
+    "tests": [
+      "tests/python/test_scaling_fit.py"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "uv run pytest tests/python/test_scaling_fit.py",
+      "exit_code": 2,
+      "reason": "scripts/scaling_fit.py does not exist yet: import scaling_fit fails with ModuleNotFoundError at collection",
+      "timestamp": "2026-11-27T15:10:47+09:00",
+      "output_tail": "\n==================================== ERRORS ====================================\n______________ ERROR collecting tests/python/test_scaling_fit.py _______________\nImportError while importing test module './tests/python/test_scaling_fit.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n~/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/python/test_scaling_fit.py:14: in <module>\n    import scaling_fit\nE   ModuleNotFoundError: No module named 'scaling_fit'\n=========================== short test summary info ============================\nERROR tests/python/test_scaling_fit.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 8.40s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "uv run pytest",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:18:14+09:00",
+      "output_tail": "........................................................................ [  9%]\n........................................................................ [ 19%]\n........................................................................ [ 28%]\n........................................................................ [ 38%]\n........................................................................ [ 47%]\n........................................................................ [ 57%]\n...............................ssssssssssss............................. [ 66%]\n........................................................................ [ 76%]\n........................................................................ [ 85%]\n........................................................................ [ 95%]\n.....................................                                    [100%]\n745 passed, 13 skipped in 258.86s (0:04:18)"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "uv run pytest tests/python",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:19:33+09:00",
+      "output_tail": "............................................ssssssssssss................ [ 21%]\n........................................................................ [ 42%]\n........................................................................ [ 63%]\n........................................................................ [ 85%]\n..................................................                       [100%]\n326 passed, 13 skipped in 68.58s (0:01:08)"
+    }
+  ],
+  "commit": null
+}
