@@ -1,0 +1,155 @@
+{
+ "id": "P3-SEARCH-SELECT",
+ "spec": "Sec 3.1 primitives: DFS/BFS discovery orders, connected components, Kahn topological sort (throws on a cycle), stable counting sort and multi-coordinate radix sort, worst-case-linear BFPRT selection with a comparator, radius-limited binary-heap Dijkstra (stops when the least finite value exceeds R, settles d=R), scan-based Dijkstra O(k^2+l), search-identifier arena reuse",
+ "paper_ref": "Sec 3.1, Lemma 3.1, Lemma 3.2",
+ "files": {
+  "impl": [
+   "src/paper/primitives/search.hpp",
+   "src/paper/primitives/search.cpp",
+   "src/paper/primitives/dijkstra.hpp",
+   "src/paper/primitives/dijkstra.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/primitives/test_search.cpp",
+   "tests/unit/paper/primitives/test_sort.cpp",
+   "tests/unit/paper/primitives/test_select.cpp",
+   "tests/unit/paper/primitives/test_paper_dijkstra.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "Digraph keeps each tail's arcs in input order with their input indices",
+    "DFS and BFS discovery orders on a hand example",
+    "DFS equals the recursive preorder on random graphs",
+    "BFS visits the reachable set in nondecreasing hop distance",
+    "searches examine each adjacency entry of the reached part once",
+    "DFS uses an explicit stack (long path does not overflow the call stack)",
+    "searches reject an out-of-range root",
+    "connected components label exactly the mutually reachable classes",
+    "topological sort orders every arc forward"
+   ],
+   "command": "cmake --preset debug >/dev/null && cmake --build --preset debug && ctest --preset debug -R 'search|topolog|components|DFS|BFS|Digraph'",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/primitives/search.hpp' file not found (Sec 3.1 search primitives absent)",
+   "timestamp": "2026-11-27T10:34:58+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\n[1/3] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_search.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_search.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_search.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_search.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_search.cpp.o -c tests/unit/paper/primitives/test_search.cpp\ntests/unit/paper/primitives/test_search.cpp:13:10: fatal error: 'paper/primitives/search.hpp' file not found\n   13 | #include \"paper/primitives/search.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all search/topological/components tests + existing suite"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:36:10+09:00",
+   "output_tail": "      Start  7: unit:DFS and BFS discovery orders on a hand example\n 6/15 Test  #9: unit:BFS visits the reachable set in nondecreasing hop distance ................   Passed    0.03 sec\n      Start  1: unit:CSR stores both orientations of every undirected edge\n 7/15 Test #10: unit:searches examine each adjacency entry of the reached part once ............   Passed    0.03 sec\n      Start  4: unit:weight traits define infinity per weight type\n 8/15 Test #12: unit:searches reject an out-of-range root ......................................   Passed    0.02 sec\n 9/15 Test #14: unit:topological sort orders every arc forward .................................   Passed    0.02 sec\n10/15 Test  #3: unit:CSR rejects invalid input with clear errors ...............................   Passed    0.02 sec\n11/15 Test  #5: unit:integer distance addition detects overflow ................................   Passed    0.02 sec\n12/15 Test  #7: unit:DFS and BFS discovery orders on a hand example ............................   Passed    0.01 sec\n13/15 Test  #4: unit:weight traits define infinity per weight type .............................   Passed    0.01 sec\n14/15 Test #11: unit:DFS uses an explicit stack (long path does not overflow the call stack) ...   Passed    0.05 sec\n15/15 Test  #1: unit:CSR stores both orientations of every undirected edge .....................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 15\n\nLabel Time Summary:\nunit    =   0.32 sec*proc (15 tests)\n\nTotal Test time (real) =   0.05 sec"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "counting sort equals std::stable_sort on the key",
+    "counting sort keeps input order for all-equal keys",
+    "counting sort rejects a key outside [0, k)",
+    "radix sort is lexicographic and stable on several coordinates",
+    "radix sort with no coordinates keeps the input order",
+    "radix sort groups undirected vertex pairs (min, max)"
+   ],
+   "command": "cmake --preset debug >/dev/null && cmake --build --preset debug && ctest --preset debug -R 'sort'",
+   "exit_code": 1,
+   "reason": "no member named 'counting_sort_stable' / 'radix_sort_stable' in namespace 'sssp::paper' (Lemma 3.1 sorting absent)",
+   "timestamp": "2026-11-27T10:36:44+09:00",
+   "output_tail": "tests/unit/paper/primitives/test_sort.cpp:59:24: error: no member named 'counting_sort_stable' in namespace 'sssp::paper'\n   59 |   REQUIRE(sssp::paper::counting_sort_stable(none, 0, [](const Rec& r) { return r.key; }).empty());\n      |           ~~~~~~~~~~~~~^\nbuild/debug/_deps/catch2-src/src/catch2/../catch2/catch_test_macros.hpp:127:92: note: expanded from macro 'REQUIRE'\n  127 |   #define REQUIRE( ... ) INTERNAL_CATCH_TEST( \"REQUIRE\", Catch::ResultDisposition::Normal, __VA_ARGS__  )\n      |                                                                                            ^~~~~~~~~~~\nbuild/debug/_deps/catch2-src/src/catch2/../catch2/internal/catch_test_macro_impl.hpp:54:63: note: expanded from macro 'INTERNAL_CATCH_TEST'\n   54 |     } while( (void)0, (false) && static_cast<const bool&>( !!(__VA_ARGS__) ) ) // the expression here is never evaluated at runtime but it forces the compiler to give it a look\n      |                                                               ^~~~~~~~~~~\ntests/unit/paper/primitives/test_sort.cpp:78:35: error: no member named 'radix_sort_stable' in namespace 'sssp::paper'\n   78 |     const auto got = sssp::paper::radix_sort_stable(\n      |                      ~~~~~~~~~~~~~^\ntests/unit/paper/primitives/test_sort.cpp:87:33: error: no member named 'radix_sort_stable' in namespace 'sssp::paper'\n   87 |   const auto got = sssp::paper::radix_sort_stable(recs, std::span<const std::size_t>{},\n      |                    ~~~~~~~~~~~~~^\ntests/unit/paper/primitives/test_sort.cpp:99:33: error: no member named 'radix_sort_stable' in namespace 'sssp::paper'\n   99 |   const auto got = sssp::paper::radix_sort_stable(\n      |                    ~~~~~~~~~~~~~^\n11 errors generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "6 sort tests + full suite"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:37:16+09:00",
+   "output_tail": "      Start 19: unit:radix sort with no coordinates keeps the input order\n12/21 Test #18: unit:radix sort is lexicographic and stable on several coordinates .............   Passed    0.02 sec\n      Start 17: unit:counting sort rejects a key outside [0, k)\n13/21 Test  #3: unit:CSR rejects invalid input with clear errors ...............................   Passed    0.01 sec\n      Start 16: unit:counting sort keeps input order for all-equal keys\n14/21 Test #15: unit:counting sort equals std::stable_sort on the key ..........................   Passed    0.02 sec\n15/21 Test  #1: unit:CSR stores both orientations of every undirected edge .....................   Passed    0.01 sec\n16/21 Test  #4: unit:weight traits define infinity per weight type .............................   Passed    0.01 sec\n17/21 Test #19: unit:radix sort with no coordinates keeps the input order ......................   Passed    0.01 sec\n18/21 Test #11: unit:DFS uses an explicit stack (long path does not overflow the call stack) ...   Passed    0.05 sec\n19/21 Test #20: unit:radix sort groups undirected vertex pairs (min, max) ......................   Passed    0.02 sec\n20/21 Test #17: unit:counting sort rejects a key outside [0, k) ................................   Passed    0.01 sec\n21/21 Test #16: unit:counting sort keeps input order for all-equal keys ........................   Passed    0.01 sec\n\n100% tests passed, 0 tests failed out of 21\n\nLabel Time Summary:\nunit    =   0.35 sec*proc (21 tests)\n\nTotal Test time (real) =   0.05 sec"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "BFPRT equals nth_element for every rank on small inputs",
+    "BFPRT equals nth_element on large inputs of every shape",
+    "BFPRT honours a comparator, including ties between distinct records",
+    "BFPRT boundary cases",
+    "BFPRT uses a linear number of comparisons"
+   ],
+   "command": "cmake --preset debug >/dev/null && cmake --build --preset debug && ctest --preset debug -R 'BFPRT'",
+   "exit_code": 1,
+   "reason": "no member named 'select_bfprt' in namespace 'sssp::paper' (Lemma 3.1 selection absent)",
+   "timestamp": "2026-11-27T10:38:03+09:00",
+   "output_tail": "  127 |   #define REQUIRE( ... ) INTERNAL_CATCH_TEST( \"REQUIRE\", Catch::ResultDisposition::Normal, __VA_ARGS__  )\n      |                                                                                            ^~~~~~~~~~~\nbuild/debug/_deps/catch2-src/src/catch2/../catch2/internal/catch_test_macro_impl.hpp:54:63: note: expanded from macro 'INTERNAL_CATCH_TEST'\n   54 |     } while( (void)0, (false) && static_cast<const bool&>( !!(__VA_ARGS__) ) ) // the expression here is never evaluated at runtime but it forces the compiler to give it a look\n      |                                                               ^~~~~~~~~~~\ntests/unit/paper/primitives/test_select.cpp:95:24: error: no member named 'select_bfprt' in namespace 'sssp::paper'\n   95 |   REQUIRE(sssp::paper::select_bfprt(a, 1) == 4);\n      |           ~~~~~~~~~~~~~^\nbuild/debug/_deps/catch2-src/src/catch2/../catch2/catch_test_macros.hpp:127:92: note: expanded from macro 'REQUIRE'\n  127 |   #define REQUIRE( ... ) INTERNAL_CATCH_TEST( \"REQUIRE\", Catch::ResultDisposition::Normal, __VA_ARGS__  )\n      |                                                                                            ^~~~~~~~~~~\nbuild/debug/_deps/catch2-src/src/catch2/../catch2/internal/catch_test_macro_impl.hpp:45:40: note: expanded from macro 'INTERNAL_CATCH_TEST'\n   45 |         CATCH_INTERNAL_IGNORE_BUT_WARN(__VA_ARGS__); \\\n      |                                        ^~~~~~~~~~~\nbuild/debug/_deps/catch2-src/src/catch2/../catch2/internal/catch_compiler_capabilities.hpp:382:37: note: expanded from macro 'CATCH_INTERNAL_IGNORE_BUT_WARN'\n  382 |         (void)__builtin_constant_p( __VA_ARGS__ ) /* NOLINT(cppcoreguidelines-pro-type-vararg, \\\n      |                                     ^~~~~~~~~~~\nfatal error: too many errors emitted, stopping now [-ferror-limit=]\n20 errors generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "5 BFPRT tests + full suite"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:38:43+09:00",
+   "output_tail": "      Start  7: unit:DFS and BFS discovery orders on a hand example\n17/26 Test #14: unit:topological sort orders every arc forward .................................   Passed    0.01 sec\n      Start  1: unit:CSR stores both orientations of every undirected edge\n18/26 Test  #3: unit:CSR rejects invalid input with clear errors ...............................   Passed    0.01 sec\n      Start 17: unit:BFPRT honours a comparator, including ties between distinct records\n19/26 Test #22: unit:counting sort rejects a key outside [0, k) ................................   Passed    0.01 sec\n20/26 Test  #5: unit:integer distance addition detects overflow ................................   Passed    0.01 sec\n21/26 Test  #7: unit:DFS and BFS discovery orders on a hand example ............................   Passed    0.01 sec\n22/26 Test  #1: unit:CSR stores both orientations of every undirected edge .....................   Passed    0.01 sec\n23/26 Test #17: unit:BFPRT honours a comparator, including ties between distinct records .......   Passed    0.01 sec\n24/26 Test #15: unit:BFPRT equals nth_element for every rank on small inputs ...................   Passed    0.07 sec\n25/26 Test #16: unit:BFPRT equals nth_element on large inputs of every shape ...................   Passed    0.19 sec\n26/26 Test #19: unit:BFPRT uses a linear number of comparisons .................................   Passed    0.36 sec\n\n100% tests passed, 0 tests failed out of 26\n\nLabel Time Summary:\nunit    =   0.93 sec*proc (26 tests)\n\nTotal Test time (real) =   0.36 sec"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "indexed binary heap matches a multiset model",
+    "binary-heap and scan Dijkstra equal Floyd-Warshall (uint64)",
+    "binary-heap and scan Dijkstra equal Floyd-Warshall (double)",
+    "Dijkstra boundary inputs",
+    "radius cutoff settles exactly the vertices at distance at most R",
+    "radius boundary: distance exactly R is settled, the search stops above R",
+    "a reused arena initializes only the entries a search touches",
+    "search identifiers survive wrap-around",
+    "operation counts respect Lemma 3.2"
+   ],
+   "command": "cmake --preset debug >/dev/null && cmake --build --preset debug && ctest --preset debug -R 'Dijkstra|radius|arena|heap|identifiers|Lemma 3.2'",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/primitives/dijkstra.hpp' file not found (Lemma 3.2 search, heap and arena absent)",
+   "timestamp": "2026-11-27T10:40:32+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\n[1/3] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_paper_dijkstra.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_paper_dijkstra.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_paper_dijkstra.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_paper_dijkstra.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_paper_dijkstra.cpp.o -c tests/unit/paper/primitives/test_paper_dijkstra.cpp\ntests/unit/paper/primitives/test_paper_dijkstra.cpp:18:10: fatal error: 'paper/primitives/dijkstra.hpp' file not found\n   18 | #include \"paper/primitives/dijkstra.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "radius cutoff settles exactly the vertices at distance at most R",
+    "a reused arena initializes only the entries a search touches",
+    "search identifiers survive wrap-around"
+   ],
+   "command": "ctest --preset debug -R 'radius cutoff|reused arena|wrap-around'",
+   "exit_code": 8,
+   "reason": "Test expectation error, not an implementation fault: the ball predicate 'fw <= R' counts unreachable vertices (fw = infinity) as inside when R = infinity. Lemma 3.2 says the search settles exactly the REACHABLE vertices at distance at most R, so the predicate is corrected to 'fw != infinity && fw <= R'; no expected distance value changes.",
+   "timestamp": "2026-11-27T10:42:26+09:00",
+   "output_tail": "  false == true\n\n===============================================================================\ntest cases:     1 |     0 passed | 1 failed\nassertions: 35265 | 35264 passed | 1 failed\n\n\n\n0% tests passed, 3 tests failed out of 3\n\nLabel Time Summary:\nunit    =   0.05 sec*proc (3 tests)\n\nTotal Test time (real) =   0.02 sec\n\nThe following tests FAILED:\n\t 10 - unit:radius cutoff settles exactly the vertices at distance at most R (Failed) unit\n\t 12 - unit:a reused arena initializes only the entries a search touches (Failed) unit\n\t 13 - unit:search identifiers survive wrap-around (Failed) unit\nErrors while running CTest"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "9 Dijkstra/heap/arena tests (ball predicate corrected per Lemma 3.2) + full suite"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:43:15+09:00",
+   "output_tail": "      Start  9: unit:Dijkstra boundary inputs\n26/35 Test #31: unit:counting sort rejects a key outside [0, k) .................................   Passed    0.01 sec\n      Start  1: unit:CSR stores both orientations of every undirected edge\n27/35 Test #14: unit:operation counts respect Lemma 3.2 .........................................   Passed    0.01 sec\n      Start 11: unit:radius boundary: distance exactly R is settled, the search stops above R\n28/35 Test #26: unit:BFPRT honours a comparator, including ties between distinct records ........   Passed    0.01 sec\n29/35 Test  #9: unit:Dijkstra boundary inputs ...................................................   Passed    0.01 sec\n30/35 Test  #1: unit:CSR stores both orientations of every undirected edge ......................   Passed    0.01 sec\n31/35 Test #10: unit:radius cutoff settles exactly the vertices at distance at most R ...........   Passed    0.14 sec\n32/35 Test #11: unit:radius boundary: distance exactly R is settled, the search stops above R ...   Passed    0.01 sec\n33/35 Test #25: unit:BFPRT equals nth_element on large inputs of every shape ....................   Passed    0.20 sec\n34/35 Test #28: unit:BFPRT uses a linear number of comparisons ..................................   Passed    0.36 sec\n35/35 Test  #6: unit:indexed binary heap matches a multiset model ...............................   Passed    0.41 sec\n\n100% tests passed, 0 tests failed out of 35\n\nLabel Time Summary:\nunit    =   1.65 sec*proc (35 tests)\n\nTotal Test time (real) =   0.94 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "full suite; fix -Wunused-parameter of detail::count when SSSP_DIAGNOSTICS=0 (release preset)"
+   ],
+   "command": "cmake --build --preset release && cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:44:41+09:00",
+   "output_tail": "      Start 26: unit:BFPRT honours a comparator, including ties between distinct records\n26/35 Test #31: unit:counting sort rejects a key outside [0, k) .................................   Passed    0.03 sec\n      Start 14: unit:operation counts respect Lemma 3.2\n27/35 Test  #1: unit:CSR stores both orientations of every undirected edge ......................   Passed    0.02 sec\n      Start 11: unit:radius boundary: distance exactly R is settled, the search stops above R\n28/35 Test #26: unit:BFPRT honours a comparator, including ties between distinct records ........   Passed    0.02 sec\n29/35 Test  #9: unit:Dijkstra boundary inputs ...................................................   Passed    0.03 sec\n30/35 Test #14: unit:operation counts respect Lemma 3.2 .........................................   Passed    0.02 sec\n31/35 Test #11: unit:radius boundary: distance exactly R is settled, the search stops above R ...   Passed    0.01 sec\n32/35 Test #10: unit:radius cutoff settles exactly the vertices at distance at most R ...........   Passed    0.28 sec\n33/35 Test #25: unit:BFPRT equals nth_element on large inputs of every shape ....................   Passed    0.30 sec\n34/35 Test #28: unit:BFPRT uses a linear number of comparisons ..................................   Passed    0.71 sec\n35/35 Test  #6: unit:indexed binary heap matches a multiset model ...............................   Passed    0.78 sec\n\n100% tests passed, 0 tests failed out of 35\n\nLabel Time Summary:\nunit    =   3.06 sec*proc (35 tests)\n\nTotal Test time (real) =   1.30 sec"
+  }
+ ],
+ "commit": "a5f743d"
+}
