@@ -1,0 +1,30 @@
+{
+ "id": "P2-DIFF-BASELINES",
+ "spec": "Differential test of every baseline (Bellman-Ford, binary / 4-ary / Fibonacci / radix Dijkstra) on small_graph_suite from every source and on every generator family x 10 weight distributions x SSSP_DIFF_SEEDS seeds (default 2) x 3 sources, uint64 and double: verify_sssp ok without reference, dist identical to Bellman-Ford (uint64 exact, double bit for bit per docs/design/numerics.md Sec 2), uint64 distances and overflow behaviour fixed by an in-test saturating oracle (Bellman-Ford throws iff a true distance >= 2^64-1; Dijkstra throws iff some scanned arc sum d*(u)+w >= 2^64-1).",
+ "paper_ref": null,
+ "files": {
+  "impl": [],
+  "tests": [
+   "tests/differential/test_baselines_differential.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "GREEN",
+   "tests": [
+    "differential:baselines agree on *",
+    "differential:overflow: *",
+    "differential:every baseline rejects an invalid source *",
+    "differential:verify_sssp rejects every single-vertex distance *",
+    "differential:every generator family is covered *"
+   ],
+   "command": "bash -c 'cmake --build --preset debug && ctest --preset debug && uv run pytest'",
+   "exit_code": 0,
+   "reason": "no RED: verification test of already implemented baselines (no new behaviour is specified). Sensitivity checked instead: the heavy weight distribution makes uint64 runs hit both overflow behaviours in every family (asserted), and a perturbation test asserts verify_sssp rejects every +-1 change of a single distance. SSSP_DIFF_SEEDS=1000 found no baseline counterexample; it found a generator bug, recorded as P2-DIFF-REGULAR-SWITCH.",
+   "timestamp": "2026-11-27T10:52:34+09:00",
+   "output_tail": "230/230 Test #159: unit:constant weights all equal lo - double .............................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 230\n\nLabel Time Summary:\ndifferential    =   2.47 sec*proc (25 tests)\nintegration     =   0.80 sec*proc (6 tests)\nproperty        =   0.91 sec*proc (7 tests)\nregression      =   0.03 sec*proc (2 tests)\nunit            =  12.11 sec*proc (190 tests)\n\nTotal Test time (real) =   2.93 sec"
+  }
+ ],
+ "commit": "2d1cd41"
+}

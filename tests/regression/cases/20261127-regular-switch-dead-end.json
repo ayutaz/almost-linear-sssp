@@ -1,0 +1,27 @@
+{
+  "id": "20261127-regular-switch-dead-end",
+  "summary": "random_regular(kSwitchToSimple) throws 'switching did not converge' on valid inputs: the configuration model gives three self-loops {0,0},{1,1},{2,2}; every swap of two self-loops proposes the double edge {a,b},{a,b}, which is rejected (k1 == k2), so the switching loop can never leave this state. Generator bug (not an SSSP algorithm): the input here is the generator parameters, so 'graph' holds the stuck configuration produced by the same seed with MultiEdgePolicy::kKeep.",
+  "algorithm": {
+    "name": "sssp::gen::random_regular",
+    "version": "git afc29ed (library version 0.1.0)",
+    "params": {"n": 3, "d": 2, "policy": "kSwitchToSimple", "seed": 20}
+  },
+  "weight_type": "uint64",
+  "graph": {
+    "n": 3,
+    "edges": [[1, 1, "34"], [2, 2, "20"], [0, 0, "59"]]
+  },
+  "source": null,
+  "found_by": {
+    "test": "differential:baselines agree on generated graphs: regular (keep/drop/switch)",
+    "generator": "sssp::gen::generate (type regular, multi switch)",
+    "seed": 20,
+    "params": {"SSSP_DIFF_SEEDS": 300, "sweep": "n in [2,41], d in [1,min(6,n-1)], n*d even, seeds 1..300: failures only for (3,2) 22/300, (4,2) 3/300, (4,3) 22/300, (5,2) 1/300, (5,4) 21/300, (6,5) 31/300, (7,6) 20/300"}
+  },
+  "minimised": true,
+  "failure": {"kind": "exception", "message": "random_regular: switching did not converge"},
+  "expected_dist": null,
+  "expected": "a simple 2-regular graph on 3 vertices, i.e. the triangle {0,1},{1,2},{0,2} (include/sssp/generators.hpp: kSwitchToSimple is 'simple, exactly d')",
+  "tolerance": null,
+  "fixed_by": null
+}
