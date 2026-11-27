@@ -23,6 +23,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P0-VERSION | DONE | 1 | - | - | Library exposes its version and the target arXiv id (smoke test for build + Catch2 + CTest wiring) |
 | P2-BELLMAN-FORD | DONE | 1 | - | 10b7145 | Round-based, queue-free Bellman-Ford oracle for uint64_t and double: exact distances, a shortest-path tree with parent edge ids, unreachable = infinity, integer overflow of a true distance throws, comparison/addition counters |
 | P2-BENCH-ANALYZE | REFACTOR | 2 | - | - | make report: read results/raw/*.jsonl, validate, write summary CSVs and figures of measured data only; print データなし and write nothing when there is no data |
+| P2-BENCH-CPP | DONE | 1 | none | 231581d | sssp_bench (Google Benchmark) registers every algorithm of the bench_runner registry for each weight type it supports on shared CsrGraph inputs and fixed seeded sources, times only the solver call (graph build and verification excluded), and refuses to time a case whose result disagrees with binary-heap Dijkstra or fails verify_sssp |
 | P2-BENCH-ENVINFO | REFACTOR | 1 | - | - | Environment capture for benchmark records: OS, CPU brand, P/E cores, RAM, arch, compiler, CMake build type/flags/diagnostics, git SHA/dirty, power/thermal state; macOS and Linux parsers; JSON CLI |
 | P2-BENCH-NO-SILENT-FAIL | DONE | 1 | none | c9a6e04 | run_benchmarks.sh reports a failed end-of-run environment capture on stderr and in the summary and exits 1 (the thermal validity rule needs the end state); fetch_paper.sh warns and removes a stale text copy when pdftotext fails instead of discarding the failure |
 | P2-BENCH-PAPER-REGISTER | DONE | 1 | none | 703adb2 | sssp_bench_runner and sssp_run accept paper-faithful and paper-faithful-d1 (uint64 and double), records carry the paper FallbackRecord, paper-faithful (scan base case) is refused with exit 3 above a vertex limit, and the benchmark plan schedules both names only where they are runnable |
@@ -285,6 +286,16 @@ Do not edit by hand; edit the evidence files and regenerate.
 - RED (exit 1, 2026-11-27T10:38:47+0900): correction of the previous RED (its reason was a test filter bug, now fixed): fixed-degree rows (avg_degree NaN) never match a facet because NaN == NaN is false, so the panel says 'not measured'; facet_cells does not exist yet — `uv run pytest tests/python/test_bench_analyze.py -k fixed_degree`
 - GREEN (exit 0, 2026-11-27T10:39:09+0900) — `uv run pytest tests/python/test_bench_analyze.py`
 - REFACTOR (exit 0, 2026-11-27T10:44:30+0900) — `bash -c uv run ruff check scripts/bench scripts/analyze_results.py tests/python && uv run ruff format --check scripts/bench scripts/analyze_results.py tests/python && shellcheck scripts/run_benchmarks.sh && uv run pytest tests/python`
+
+## P2-BENCH-CPP
+
+- Spec: sssp_bench (Google Benchmark) registers every algorithm of the bench_runner registry for each weight type it supports on shared CsrGraph inputs and fixed seeded sources, times only the solver call (graph build and verification excluded), and refuses to time a case whose result disagrees with binary-heap Dijkstra or fails verify_sssp
+- Impl: `benchmarks/*.cpp`, `benchmarks/*.hpp`, `benchmarks/CMakeLists.txt`
+- Tests: `benchmarks/tests/*.cpp`
+- Covers: `src/bench_runner/registry.cpp`, `include/sssp/bench_runner.hpp`, `include/sssp/verify.hpp`
+- RED (exit 1, 2026-11-27T13:40:03+09:00): benchmarks/sssp_bench_driver.cpp has no implementation yet: Suite, check_case, refusal_reason, parse_driver_args, weight_type_of are undefined symbols when linking sssp_bench_driver_tests and sssp_bench (feature absent) — `bash -c 'cmake --build --preset debug --target sssp_bench_driver_tests && ctest --preset debug -R "bench-driver"'`
+- GREEN (exit 0, 2026-11-27T13:43:57+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
+- REFACTOR (exit 0, 2026-11-27T13:51:46+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
 
 ## P2-BENCH-ENVINFO
 
