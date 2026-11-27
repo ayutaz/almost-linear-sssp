@@ -62,13 +62,37 @@ For `std::uint64_t`, `WeightTraits::checked_add` throws `std::overflow_error` wh
 `d_u + w >= 2^64 - 1` (the sum would reach `infinity()`). The check runs on **every** arc
 scanned, so a run throws as soon as any candidate sum overflows, even if that candidate would
 not have improved `dist[v]` (e.g. a huge edge back to the source). This is deliberate: the
-result is never silently wrong, and all baselines throw on exactly the same inputs. An edge of
-weight `2^64 - 1` therefore always throws once one of its endpoints is scanned.
+result is never silently wrong. An edge of weight `2^64 - 1` therefore always throws once one
+of its endpoints is scanned.
+
+Which inputs throw (the same rule holds for `double`, see below):
+
+- **Every Dijkstra baseline** throws on exactly the same inputs: iff some reachable `u` with a
+  representable distance `d(u)` has an arc of weight `w` with `d(u) + w` not representable.
+  The condition does not depend on the heap, because a vertex is scanned only with its final
+  distance and every reachable vertex with a representable distance is scanned unless the run
+  has already thrown.
+- **`bellman_ford`** (the independent oracle, which does not call `checked_add`) skips an
+  overflowing candidate and throws only iff some reachable vertex has a distance that is not
+  representable. So whenever `bellman_ford` throws, every Dijkstra throws too, but not
+  conversely: on the single edge `{0, 1, 2^64 - 2}` `bellman_ford` returns `{0, 2^64 - 2}`
+  while every Dijkstra throws when scanning vertex 1 (the arc back to 0).
+
+Both rules are pinned by `tests/differential/test_baselines_differential.cpp` (uint64, with an
+independent saturating oracle) and `tests/differential/test_double_overflow_baselines.cpp`
+(double, with an independent rounded oracle).
 
 ## Floating-point weights
 
-For `double`, `checked_add` is the plain IEEE-754 addition (round to nearest; `-ffast-math` is
-never enabled). Properties relied on:
+For `double`, `checked_add` is the IEEE-754 addition (round to nearest; `-ffast-math` is never
+enabled) of two finite distances, and it throws `std::overflow_error` if the rounded sum is not
+finite. `+inf` is the "unreachable" sentinel, so an offer that rounds to `+inf` (e.g.
+`1e308 + 1e308`, or `DBL_MAX + 2^970`, half an ulp of `DBL_MAX`) would otherwise be dropped by
+the strict `nd < dist[v]` and a reachable vertex would be reported as unreachable (regression
+`tests/regression/cases/20261127-double-sum-overflow.json`). A sum that is absorbed instead
+(`DBL_MAX + 2^969 = DBL_MAX`) is finite and does not throw. The throw rule is the one of the
+previous section with "representable" meaning "finite after rounding"; `bellman_ford` detects
+it with its own `!= +inf` check. Properties relied on:
 
 - `a + w >= a` for `w >= 0`, so arcs to settled vertices never improve them and the heap keys
   are popped in non-decreasing order;

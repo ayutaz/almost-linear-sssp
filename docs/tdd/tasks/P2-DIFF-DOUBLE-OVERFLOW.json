@@ -6,14 +6,16 @@
   "impl": [
    "include/sssp/graph.hpp",
    "src/baseline/dijkstra_common.hpp",
-   "src/baseline/dijkstra_binary_heap.cpp"
+   "src/baseline/dijkstra_binary_heap.cpp",
+   "src/baseline/bellman_ford.cpp"
   ],
   "tests": [
    "tests/regression/test_double_sum_overflow.cpp",
-   "tests/regression/cases/20261127-double-sum-overflow.json"
+   "tests/regression/cases/20261127-double-sum-overflow.json",
+   "tests/differential/test_double_overflow_baselines.cpp"
   ]
  },
- "phase": "RED",
+ "phase": "GREEN",
  "events": [
   {
    "phase": "RED",
@@ -25,6 +27,66 @@
    "reason": "dijkstra_binary_heap / dijkstra_4ary_heap / dijkstra_fibonacci_heap return dist[2] = inf without throwing for edges {0,1,1e308},{1,2,1e308} (no exception thrown where std::overflow_error was expected); bellman_ford throws. Recorded with [!shouldfail] removed; the committed test carries [!shouldfail] until the fix, whose commit must remove it.",
    "timestamp": "2026-11-27T10:54:39+09:00",
    "output_tail": "1/2 Test #229: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ...............   Passed    0.01 sec\n2/2 Test #230: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ...***Failed    0.01 sec\ntests/regression/test_double_sum_overflow.cpp:41: FAILED:\nbecause no exception was thrown where one was expected:\ntests/regression/test_double_sum_overflow.cpp:42: FAILED:\nbecause no exception was thrown where one was expected:\ntests/regression/test_double_sum_overflow.cpp:43: FAILED:\nbecause no exception was thrown where one was expected:\nThe following tests FAILED:\n\t230 - regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex (Failed) regression"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "regression:20261127-double-sum-overflow: *",
+    "differential:double overflow: *"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug -R 'double overflow|20261127-double-sum'",
+   "exit_code": 8,
+   "reason": "Second RED cycle before the fix: [!shouldfail] removed from the regression test, plus a direct WeightTraits<double>::checked_add case and tests/differential/test_double_overflow_baselines.cpp (all double baselines vs. an independent rounded oracle). Failures are the intended ones: checked_add(1e308, 1e308) and every double Dijkstra throw nothing where std::overflow_error is expected (oracle: 'dijkstra_binary_heap threw=0 expected=1'); bellman_ford and the finite large-sum case already pass.",
+   "timestamp": "2026-11-27T11:02:44+09:00",
+   "output_tail": "1/7 Test #558: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ...***Failed    0.01 sec\ntests/regression/test_double_sum_overflow.cpp:44: FAILED:\ntests/regression/test_double_sum_overflow.cpp:45: FAILED:\ntests/regression/test_double_sum_overflow.cpp:46: FAILED:\n2/7 Test #529: differential:double overflow: large but finite sums are not reported .....................................   Passed    0.01 sec\n3/7 Test #559: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ............***Failed    0.01 sec\ntests/regression/test_double_sum_overflow.cpp:53: FAILED:\ntests/regression/test_double_sum_overflow.cpp:54: FAILED:\ntests/regression/test_double_sum_overflow.cpp:56: FAILED:\n4/7 Test #527: differential:double overflow: every baseline throws on an unrepresentable distance .......................***Failed    0.01 sec\ntests/differential/test_double_overflow_baselines.cpp:130: FAILED:\ntests/differential/test_double_overflow_baselines.cpp:130: FAILED:\ntests/differential/test_double_overflow_baselines.cpp:130: FAILED:\n5/7 Test #557: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ...............   Passed    0.02 sec\n6/7 Test #530: differential:double overflow: baselines match the independent rounded oracle on huge weights .............***Failed    0.02 sec\ntests/differential/test_double_overflow_baselines.cpp:208: FAILED:\n  dijkstra_binary_heap threw=0 expected=1\n7/7 Test #528: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances .............***Failed    0.02 sec\ntests/differential/test_double_overflow_baselines.cpp:143: FAILED:\ntests/differential/test_double_overflow_baselines.cpp:143: FAILED:\ntests/differential/test_double_overflow_baselines.cpp:143: FAILED:\n29% tests passed, 5 tests failed out of 7\nThe following tests FAILED:\n\t527 - differential:double overflow: every baseline throws on an unrepresentable distance (Failed) differential\n\t528 - differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances (Failed) differential\n\t530 - differential:double overflow: baselines match the independent rounded oracle on huge weights (Failed) differential\n\t558 - regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex (Failed) regression\n\t559 - regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf (Failed) regression"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "regression:20261127-double-sum-overflow: *",
+    "differential:double overflow: *"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T11:05:52+09:00",
+   "output_tail": "Test #529: differential:double overflow: large but finite sums are not reported ...   Passed    0.03 sec\nTest #557: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ...   Passed    0.02 sec\nTest #527: differential:double overflow: every baseline throws on an unrepresentable distance ...   Passed    0.02 sec\nTest #528: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances ...   Passed    0.03 sec\nTest #530: differential:double overflow: baselines match the independent rounded oracle on huge weights ...   Passed    0.21 sec\nTest #558: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ...   Passed    0.02 sec\nTest #559: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...   Passed    0.02 sec\n100% tests passed, 0 tests failed out of 561\ndifferential    =   3.51 sec*proc (31 tests)\nintegration     =   1.01 sec*proc (6 tests)\nproperty        =  18.45 sec*proc (21 tests)\nregression      =   0.21 sec*proc (6 tests)\nunit            = 146.30 sec*proc (497 tests)\nTotal Test time (real) =  30.07 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "reason": "Comments only: bellman_ford.cpp and dijkstra_common.hpp describe the double overflow rule; bellman_ford keeps its own overflow check (not shared with checked_add) so the oracle stays independent of the code under test. Mutation check before this run: disabling the new throw in WeightTraits<double>::checked_add makes 5 tests fail (regression 558, 559; differential 527, 528, 530).",
+   "timestamp": "2026-11-27T11:13:54+09:00",
+   "output_tail": "Test #527: differential:double overflow: every baseline throws on an unrepresentable distance ...   Passed    0.13 sec\nTest #558: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ...   Passed    0.13 sec\nTest #528: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances ...   Passed    0.16 sec\nTest #559: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...   Passed    0.16 sec\nTest #530: differential:double overflow: baselines match the independent rounded oracle on huge weights ...   Passed    1.13 sec\nTest #529: differential:double overflow: large but finite sums are not reported ...   Passed    0.02 sec\nTest #557: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ...   Passed    0.02 sec\n100% tests passed, 0 tests failed out of 561\ndifferential    =  11.08 sec*proc (31 tests)\nintegration     =   1.46 sec*proc (6 tests)\nproperty        =  57.72 sec*proc (21 tests)\nregression      =   0.37 sec*proc (6 tests)\nunit            = 358.18 sec*proc (497 tests)\nTotal Test time (real) =  57.87 sec"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "build:sssp (Release",
+    " -Werror",
+    " SSSP_DIAGNOSTICS=OFF)"
+   ],
+   "command": "cmake -S . -B build/werror-nodiag -G Ninja -DCMAKE_BUILD_TYPE=Release -DSSSP_WERROR=ON -DSSSP_DIAGNOSTICS=OFF && cmake --build build/werror-nodiag --target sssp",
+   "exit_code": 1,
+   "reason": "Third cycle (requested by the lead, same task and branch): with diagnostics off every SSSP_COUNT expands to nothing, so the counter alias 'auto& ops = r.diag.ops;' in bellman_ford.cpp is unused and -Werror stops the build (-Wunused-variable). The release preset shows the same warning without -Werror; ci-release keeps SSSP_DIAGNOSTICS=ON and does not trigger it, hence the explicit configuration.",
+   "timestamp": "2026-11-27T11:19:44+09:00",
+   "output_tail": "src/baseline/bellman_ford.cpp:60:9: error: unused variable 'ops' [-Werror,-Wunused-variable]\n2 errors generated.\nFAILED: [code=1] CMakeFiles/sssp.dir/src/baseline/bellman_ford.cpp.o "
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "build:all targets (Release",
+    " -Werror",
+    " SSSP_DIAGNOSTICS=OFF)",
+    "ctest (diagnostics off)",
+    "ctest --preset debug"
+   ],
+   "command": "cmake --build build/werror-nodiag -- -k 0 && ctest --test-dir build/werror-nodiag && cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "reason": "bellman_ford.cpp: the counter alias is [[maybe_unused]] OpCounters&, as in dijkstra_common.hpp and dijkstra_binary_heap.cpp; no other src/baseline file has the warning (every target builds with -Werror and diagnostics off).",
+   "timestamp": "2026-11-27T11:23:10+09:00",
+   "output_tail": "[105/197] Building CXX object CMakeFiles/sssp.dir/src/baseline/bellman_ford.cpp.o\n[196/197] Linking CXX executable tests/sssp_property_tests\nTest #540: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ...   Passed    0.02 sec\n100% tests passed, 0 tests failed out of 544\nTotal Test time (real) =  10.39 sec\nTest #557: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ...   Passed    0.01 sec\n100% tests passed, 0 tests failed out of 561\nTotal Test time (real) =  23.21 sec"
   }
  ],
  "commit": null

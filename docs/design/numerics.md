@@ -136,6 +136,11 @@ Floating-point contraction (FMA) is irrelevant because distances use only additi
 * `bellman_ford` skips an overflowing candidate (it may lie on a non-shortest path) and throws
   `std::overflow_error` only if, after convergence, a vertex adjacent to a finite one is still
   infinite — i.e. iff some true distance is not representable.
+* The same rules hold for `double`, with "reaches infinity" read as "the rounded sum is `+inf`":
+  `WeightTraits<double>::checked_add` throws `std::overflow_error` if the rounded sum of two
+  finite distances is not finite (e.g. `1e308 + 1e308`), instead of returning the `+inf`
+  "unreachable" sentinel for a reachable vertex, and `bellman_ford` throws iff some rounded
+  distance `d̂(v)` of Sec 2 is `+inf` (details: `docs/design/baselines.md`).
 * `verify_sssp` compares integers exactly and ignores `Tolerance`; an overflowing
   `dist[parent] + w` is reported as `arithmetic_overflow`; on the certificate an overflowing
   bound is vacuous (the true constraint lies beyond the range).

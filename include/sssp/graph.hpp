@@ -46,7 +46,14 @@ struct WeightTraits<W, std::enable_if_t<std::is_floating_point_v<W>>> {
   static constexpr W infinity() noexcept { return std::numeric_limits<W>::infinity(); }
   static constexpr W zero() noexcept { return W{0}; }
   static bool is_valid_weight(W w) noexcept { return std::isfinite(w) && w >= W{0}; }
-  static W checked_add(W a, W b) noexcept { return a + b; }
+  /// Sum of two finite, non-negative distances (callers never pass infinity()), rounded to
+  /// nearest. Throws if the rounded sum is not finite: +inf is the "unreachable" sentinel, so
+  /// returning it would silently drop a reachable vertex (regression 20261127-double-sum-overflow).
+  static W checked_add(W a, W b) {
+    const W sum = a + b;
+    if (!std::isfinite(sum)) throw std::overflow_error("floating-point distance overflow");
+    return sum;
+  }
 };
 
 template <class W>
