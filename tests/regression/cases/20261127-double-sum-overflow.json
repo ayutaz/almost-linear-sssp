@@ -23,5 +23,5 @@
   "expected_dist": ["0", "1e+308", "2e+308 (not representable as a finite double)"],
   "expected": "std::overflow_error from every baseline (as bellman_ford does)",
   "tolerance": null,
-  "fixed_by": null
+  "fixed_by": "08150e9"
 }

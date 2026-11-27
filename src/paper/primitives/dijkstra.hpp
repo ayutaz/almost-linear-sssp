@@ -264,7 +264,8 @@ void offer_arcs(const CsrGraph<W>& g, Vertex v, W d, SearchArena<W, Stamp>& aren
 /// from s at distance <= radius (radius = infinity: all reachable vertices). Returns the number
 /// of settled vertices; distances, parents and the settled order are read from the arena.
 /// Throws std::out_of_range for an invalid source, std::invalid_argument for a NaN radius and,
-/// for integer lengths, std::overflow_error if an offered sum would reach infinity.
+/// std::overflow_error if an offered sum would reach infinity (integer lengths) or round to
+/// infinity (floating-point lengths).
 template <class W, class Stamp>
 std::size_t dijkstra_search(const CsrGraph<W>& g, Vertex s, W radius, SearchArena<W, Stamp>& arena,
                             OpCounters* ops = nullptr) {

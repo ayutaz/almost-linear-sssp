@@ -17,8 +17,8 @@
      "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "SSSP_COVERAGE": "ON", "SSSP_BUILD_BENCHMARKS": "OFF"}},
     {"name": "ci", "inherits": "base", "displayName": "CI (Debug, -Werror)",
      "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "SSSP_WERROR": "ON"}},
-    {"name": "ci-release", "inherits": "base", "displayName": "CI Release (-Werror)",
-     "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "SSSP_WERROR": "ON"}}
+    {"name": "ci-release", "inherits": "base", "displayName": "CI Release (-Werror, diagnostics OFF like the benchmark build)",
+     "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "SSSP_WERROR": "ON", "SSSP_DIAGNOSTICS": "OFF"}}
   ],
   "buildPresets": [
     {"name": "debug", "configurePreset": "debug"},
