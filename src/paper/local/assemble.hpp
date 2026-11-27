@@ -57,6 +57,10 @@
 //
 // Lengths are only copied, compared and added (Sec 2); the per-block power a K^i is cached per
 // near component and formed by doublings.
+//
+// Implementation (task P5-LOCAL-UNIFY, Q-59): the steps are implemented once, in the shared
+// core paper/local/assembly_core.hpp, with the constants of steps 3 and 4 passed in.
+// assemble_local_hierarchy below passes the paper's constants (c = 10, N^16) and nothing else.
 
 #include <cstddef>
 #include <cstdint>

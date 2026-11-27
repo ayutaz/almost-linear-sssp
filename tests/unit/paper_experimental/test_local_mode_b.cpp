@@ -4,8 +4,10 @@
 //     is a failure (exception), and the parameter log is written first;
 //   * the paper's alignment with the grid assembly reproduces paper::local_hierarchy exactly
 //     (hierarchy, maps, fallbacks and counters);
-//   * the Mode B assembly engine with the paper's constants reproduces
-//     paper::assemble_local_hierarchy exactly (this ties the D-8 engine to Mode A);
+//   * the Mode B assembly with the paper's alignment and the grid passes the paper's constants
+//     to the shared core: same output and counters as paper::assemble_local_hierarchy (since
+//     P5-LOCAL-UNIFY both call paper/local/assembly_core.hpp; the outputs themselves are pinned
+//     in property/paper_experimental/test_local_mode_b_property.cpp);
 //   * D-8: the Lambda formulas of research note 02 §4.3, computed by hand;
 //   * D-11: exact heights, links not longer than the height (c0 = 1); the alignment is not
 //     used, so the paper's alignment with D-11 runs for every k >= 2 (Q-60).
@@ -159,7 +161,7 @@ TEMPLATE_TEST_CASE("Mode B local: the paper's alignment and grid reproduce paper
   }
 }
 
-TEMPLATE_TEST_CASE("Mode B assembly engine with the paper's constants equals Mode A",
+TEMPLATE_TEST_CASE("Mode B assembly with the paper's alignment passes the paper's constants",
                    "[paper_experimental][local]", std::uint64_t, double) {
   using W = TestType;
   const auto g = graph_of<W>(lt::Family::kGrid, lt::Weights::kExponential, 36, 5);
@@ -176,7 +178,7 @@ TEMPLATE_TEST_CASE("Mode B assembly engine with the paper's constants equals Mod
   CHECK(got_diag.fallbacks.empty());
 }
 
-TEST_CASE("Mode B assembly engine rejects inputs outside its preconditions",
+TEST_CASE("Mode B assembly rejects inputs outside its preconditions",
           "[paper_experimental][local]") {
   using W = std::uint64_t;
   const auto g = graph_of<W>(lt::Family::kPath, lt::Weights::kUniform, 31, 2);
