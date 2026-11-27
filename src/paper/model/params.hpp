@@ -54,10 +54,11 @@ constexpr std::uint64_t capped_mul(std::uint64_t a, std::uint64_t b, std::uint64
 /// min(base^e, cap), with the running product capped once it reaches cap (Sec 2, l.304). At most
 /// 64 multiplications are performed for base >= 2.
 constexpr std::uint64_t capped_pow(std::uint64_t base, unsigned e, std::uint64_t cap) {
-  if (e == 0) return cap < 1 ? cap : 1;
+  const std::uint64_t one = cap < 1 ? cap : 1;  // min(base^0, cap)
+  if (e == 0 || base == 1) return one;
   if (base == 0) return 0;
-  if (base == 1) return cap < 1 ? cap : 1;
-  std::uint64_t acc = cap < 1 ? cap : 1;
+  // base >= 2: the product is nondecreasing, so stopping once it reaches cap is exact.
+  std::uint64_t acc = one;
   for (unsigned i = 0; i < e && acc < cap; ++i) acc = capped_mul(acc, base, cap);
   return acc;
 }

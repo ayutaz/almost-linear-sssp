@@ -10,7 +10,7 @@
    "tests/unit/paper/model/test_params.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "REFACTOR",
  "events": [
   {
    "phase": "RED",
@@ -42,6 +42,14 @@
    "exit_code": 0,
    "timestamp": "2026-11-27T10:36:54+09:00",
    "output_tail": "      Start 18: unit:outer threshold never holds below 2^64\n12/21 Test #14: unit:Mode A threshold constants are the paper's and immutable .....................   Passed    0.02 sec\n      Start 19: unit:Mode A overloads equal the parameterised tests with the paper's values\n13/21 Test #11: unit:word logarithms agree with the table on its range ............................   Passed    0.04 sec\n      Start 20: unit:Mode B thresholds follow injected parameters exactly\n14/21 Test #16: unit:capped power stops at the tested limit .......................................   Passed    0.03 sec\n15/21 Test #13: unit:L_k matches ceil(log2(k+2)) ..................................................   Passed    0.04 sec\n16/21 Test  #9: unit:word floor_log2 and ceil_log2 match definitions at power-of-two boundaries ...   Passed    0.05 sec\n17/21 Test #18: unit:outer threshold never holds below 2^64 .......................................   Passed    0.03 sec\n18/21 Test #19: unit:Mode A overloads equal the parameterised tests with the paper's values .......   Passed    0.02 sec\n19/21 Test #17: unit:local threshold first holds at 209953 ........................................   Passed    0.06 sec\n20/21 Test  #6: unit:ilog table equals bit_width-1 for 1..2^20 ....................................   Passed    0.10 sec\n21/21 Test #20: unit:Mode B thresholds follow injected parameters exactly .........................   Passed    0.15 sec\n\n100% tests passed, 0 tests failed out of 21\n\nLabel Time Summary:\nunit    =   0.75 sec*proc (21 tests)\n\nTotal Test time (real) =   0.62 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "cmake --build --preset debug 2>&1 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:42:21+09:00",
+   "output_tail": "      Start 13: unit:infinity flag absorbs addition - std::uint64_t\n44/53 Test #12: unit:word logarithms are usable in constant expressions ...........................   Passed    0.03 sec\n      Start 50: unit:random_permutation returns a permutation and is deterministic\n45/53 Test #35: unit:Mode A threshold constants are the paper's and immutable .....................   Passed    0.01 sec\n      Start 42: unit:SplitMix64 matches the published reference sequence\n46/53 Test #46: unit:uniform_below rejects outcomes at least h instead of reducing modulo h .......   Passed    0.02 sec\n47/53 Test #14: unit:infinity flag absorbs addition - double ......................................   Passed    0.01 sec\n48/53 Test #16: unit:comparisons order every finite length below infinity - double ................   Passed    0.02 sec\n49/53 Test #32: unit:EdgeKey is a strict total order - double .....................................   Passed    0.03 sec\n50/53 Test #50: unit:random_permutation returns a permutation and is deterministic ................   Passed    0.01 sec\n51/53 Test #13: unit:infinity flag absorbs addition - std::uint64_t ...............................   Passed    0.02 sec\n52/53 Test #42: unit:SplitMix64 matches the published reference sequence ..........................   Passed    0.01 sec\n53/53 Test #41: unit:Mode B thresholds follow injected parameters exactly .........................   Passed    0.15 sec\n\n100% tests passed, 0 tests failed out of 53\n\nLabel Time Summary:\nunit    =   1.13 sec*proc (53 tests)\n\nTotal Test time (real) =   0.58 sec"
   }
  ],
  "commit": null
