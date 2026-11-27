@@ -15,29 +15,29 @@
 // Everything is checked against bookkeeping written here (explicit boundary flags, linear
 // scans), independent of the implementations and of the model in test_split_findmin.cpp.
 //
-// Key increases (open question Q-16, decided by interpretation): Sec 3.5 only "lowers a key"
-// (l.579), so decrease(i, key) with key above the current key is outside the interface. The
-// decision is an assertion in builds with assertions; without assertions (NDEBUG) the call
-// must have no effect at all. The assertion is checked in a forked child process, so the test
-// runs under every preset; equal keys are not an increase and are accepted everywhere.
+// Key increases (open question Q-16, decision revised by the lead on 2026-11-27): Sec 3.5 only
+// "lowers a key" (l.579), so decrease(i, key) with key above the current key is outside the
+// interface. It throws std::invalid_argument in every build (with and without NDEBUG) and leaves
+// the structure unchanged, so a caller that forgets to check settled/retired records before an
+// update (Evaluate, l.862) fails loudly instead of keeping a stale minimum. Equal keys are not an
+// increase and are accepted everywhere. The earlier decision (assert with assertions, silent
+// no-op under NDEBUG) is superseded.
+//
+// Record indices (same revision, a [Supplement]: input checks are not paper operations):
+// decrease, query, key and interval_of with i >= k throw std::out_of_range in every build and
+// change nothing, like split(pos) with pos > k and bounds() of an identifier never issued.
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <concepts>
 #include <cstdint>
 #include <limits>
 #include <random>
 #include <span>
+#include <stdexcept>
 #include <vector>
 
 #include "paper/primitives/split_findmin.hpp"
-
-#if defined(__unix__) || defined(__APPLE__)
-#include <sys/wait.h>
-#include <unistd.h>
-
-#include <csignal>
-#define SFM_CONTRACT_HAVE_FORK 1
-#endif
 
 namespace {
 
@@ -232,48 +232,35 @@ TEMPLATE_TEST_CASE("Q-16: a decrease to the current key is accepted and changes 
   REQUIRE(s.query(6).index == 4);
 }
 
-#ifdef SFM_CONTRACT_HAVE_FORK
 namespace {
 
-constexpr int kAbortedExit = 86;   // child terminated through SIGABRT (assertion)
-constexpr int kUnchangedExit = 0;  // child returned and the structure was unchanged
-constexpr int kChangedExit = 1;    // child returned and something changed
-
-extern "C" void sfm_contract_on_abort(int /*sig*/) {
-  _exit(kAbortedExit);
-}
-
-// Runs decrease(i, raised) on a copy of `s` in a child process and reports how it ended.
+// Everything a caller can observe: keys, minima, identifiers and their bounds.
 template <class S>
-int raise_in_child(const S& s, std::uint32_t i, typename S::key_type raised) {
-  const pid_t pid = fork();
-  if (pid == 0) {
-    std::signal(SIGABRT, sfm_contract_on_abort);
-    S t = s;
-    t.decrease(i, raised);
-    for (std::uint32_t j = 0; j < s.size(); ++j) {
-      if (!(t.key(j) == s.key(j)) || !(t.query(j) == s.query(j)) ||
-          t.interval_of(j) != s.interval_of(j)) {
-        _exit(kChangedExit);
-      }
-    }
-    _exit(kUnchangedExit);
+struct Observed {
+  std::vector<typename S::key_type> keys;
+  std::vector<sssp::paper::SfmMin<typename S::key_type>> mins;
+  std::vector<IntervalId> ids;
+  std::vector<IntervalBounds> bounds;
+  friend bool operator==(const Observed&, const Observed&) = default;
+};
+
+template <class S>
+Observed<S> observe(const S& s) {
+  Observed<S> o;
+  for (std::uint32_t j = 0; j < s.size(); ++j) {
+    o.keys.push_back(s.key(j));
+    o.mins.push_back(s.query(j));
+    o.ids.push_back(s.interval_of(j));
+    o.bounds.push_back(s.bounds(s.interval_of(j)));
   }
-  int status = 0;
-  if (pid < 0 || waitpid(pid, &status, 0) != pid || !WIFEXITED(status)) return -1;
-  return WEXITSTATUS(status);
+  return o;
 }
 
 }  // namespace
 
-TEMPLATE_TEST_CASE("Q-16: raising a key asserts with assertions and is a no-op without them",
+TEMPLATE_TEST_CASE("Q-16: raising a key throws in every build and changes nothing",
                    "[split_findmin][q16]", SFM_CONTRACT_IMPLEMENTATIONS) {
   using Key = typename TestType::key_type;
-#ifdef NDEBUG
-  constexpr int expected = kUnchangedExit;
-#else
-  constexpr int expected = kAbortedExit;
-#endif
   const std::vector<Key> keys = {Key{4}, Key{2}, Key{9}, Key{2}, Key{5}, Key{1}, Key{6}, Key{3}};
   TestType s{std::span<const Key>(keys)};
   REQUIRE(s.split(5));
@@ -286,10 +273,81 @@ TEMPLATE_TEST_CASE("Q-16: raising a key asserts with assertions and is a no-op w
   // last record of the array.
   const std::vector<Raise> raises = {
       {2, Key{3}}, {0, Key{8}}, {5, kInf<Key>}, {7, Key{4}}, {1, kInf<Key>}};
+  const auto before = observe(s);
   for (const auto& r : raises) {
     INFO("record " << r.i << " raised from " << s.key(r.i) << " to " << r.to);
     REQUIRE(s.key(r.i) < r.to);
-    REQUIRE(raise_in_child(s, r.i, r.to) == expected);
+    REQUIRE_THROWS_AS(s.decrease(r.i, r.to), std::invalid_argument);
+    REQUIRE(observe(s) == before);
+  }
+  // The structure stays usable: a genuine decrease and a split still work afterwards.
+  s.decrease(7, Key{0});
+  REQUIRE(s.query(5) == sssp::paper::SfmMin<Key>{Key{0}, 7});
+  REQUIRE(s.query(0) == sssp::paper::SfmMin<Key>{Key{0}, 2});
+  REQUIRE(s.split(2));
+  REQUIRE(s.query(0) == sssp::paper::SfmMin<Key>{Key{2}, 1});
+  REQUIRE(s.query(2) == sssp::paper::SfmMin<Key>{Key{0}, 2});
+  if constexpr (std::floating_point<Key>) {
+    // NaN keys are rejected the same way (std::invalid_argument, nothing changes).
+    const auto mid = observe(s);
+    REQUIRE_THROWS_AS(s.decrease(3, std::numeric_limits<Key>::quiet_NaN()), std::invalid_argument);
+    REQUIRE(observe(s) == mid);
   }
 }
-#endif
+
+TEMPLATE_TEST_CASE("Q-16: random raises after random splits throw and change nothing",
+                   "[split_findmin][q16][random]", SFM_CONTRACT_IMPLEMENTATIONS) {
+  using Key = typename TestType::key_type;
+  for (std::uint32_t k = 1; k <= 40; ++k) {
+    std::mt19937_64 rng(31 * k + 5);
+    std::vector<Key> keys(k);
+    for (auto& x : keys) x = (rng() % 4 == 0) ? kInf<Key> : static_cast<Key>(rng() % 6);
+    TestType s{std::span<const Key>(keys)};
+    for (std::uint32_t step = 0; step < k / 2; ++step) {
+      (void)s.split(static_cast<std::uint32_t>(rng() % (k + 1)));
+    }
+    const auto before = observe(s);
+    for (std::uint32_t i = 0; i < k; ++i) {
+      if (!(keys[i] < kInf<Key>)) continue;
+      INFO("k=" << k << " record " << i << " key " << keys[i]);
+      REQUIRE_THROWS_AS(s.decrease(i, static_cast<Key>(keys[i] + Key{1})), std::invalid_argument);
+      REQUIRE_THROWS_AS(s.decrease(i, kInf<Key>), std::invalid_argument);
+      REQUIRE(observe(s) == before);
+    }
+  }
+}
+
+TEMPLATE_TEST_CASE("record indices beyond the array throw in every build and change nothing",
+                   "[split_findmin][range]", SFM_CONTRACT_IMPLEMENTATIONS) {
+  using Key = typename TestType::key_type;
+  for (const std::uint32_t k : {1U, 2U, 7U, 10U, 13U, 64U, 65U}) {
+    INFO("k=" << k);
+    std::vector<Key> keys(k);
+    for (std::uint32_t j = 0; j < k; ++j) keys[j] = static_cast<Key>((5 * j + 3) % 11);
+    TestType s{std::span<const Key>(keys)};
+    std::uint32_t splits = 0;
+    for (const std::uint32_t pos : {k / 2, k / 3, k - 1}) {
+      if (s.split(pos)) ++splits;
+    }
+    const auto before = observe(s);
+    // k itself, positions inside a padded final block or dyadic padding, and far beyond.
+    for (const std::uint32_t bad :
+         {k, k + 1, k + 2, k + 7, 2 * k + 64, std::numeric_limits<std::uint32_t>::max()}) {
+      INFO("index " << bad);
+      REQUIRE_THROWS_AS(s.decrease(bad, Key{0}), std::out_of_range);
+      REQUIRE_THROWS_AS(s.decrease(bad, kInf<Key>), std::out_of_range);
+      REQUIRE_THROWS_AS((void)s.query(bad), std::out_of_range);
+      REQUIRE_THROWS_AS((void)s.key(bad), std::out_of_range);
+      REQUIRE_THROWS_AS((void)s.interval_of(bad), std::out_of_range);
+      REQUIRE(observe(s) == before);
+    }
+    // Identifiers that were never issued and split positions beyond the array.
+    REQUIRE_THROWS_AS((void)s.bounds(2 * splits + 1), std::out_of_range);
+    REQUIRE_THROWS_AS(s.split(k + 1), std::out_of_range);
+    REQUIRE(observe(s) == before);
+    // The last valid index still works.
+    s.decrease(k - 1, Key{0});
+    REQUIRE(s.key(k - 1) == Key{0});
+    REQUIRE(s.query(k - 1).key == Key{0});
+  }
+}
