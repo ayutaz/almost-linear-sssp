@@ -15,7 +15,7 @@
       "tests/property/paper_experimental/*"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -55,5 +55,5 @@
       "output_tail": "[191/192] Linking CXX executable benchmarks/sssp_bench_driver_tests\n\n100% tests passed, 0 tests failed out of 105\n\nLabel Time Summary:\ndifferential    =  18.00 sec*proc (13 tests)\nproperty        =  19.91 sec*proc (22 tests)\nunit            =   5.60 sec*proc (70 tests)\n\nTotal Test time (real) =  15.66 sec"
     }
   ],
-  "commit": null
+  "commit": "d99ccf5"
 }
