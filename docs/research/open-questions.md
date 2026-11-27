@@ -1,6 +1,6 @@
 # Open Questions and Ambiguities (arXiv 2611.34911v1)
 
-English | [日本語](open-questions.ja.md)
+**English** | [日本語](open-questions.ja.md) | [简体中文](open-questions.zh-CN.md)
 
 The ambiguities from the three analysis documents are collected in one table with fresh IDs. Line numbers `l.NNN` refer to `.cache/paper/2611.34911v1.txt`.
 

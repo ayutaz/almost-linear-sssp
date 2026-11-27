@@ -1,6 +1,6 @@
 # Survey of Prior Work and Existing OSS
 
-English | [日本語](prior_work_and_oss.ja.md)
+**English** | [日本語](prior_work_and_oss.ja.md) | [简体中文](prior_work_and_oss.zh-CN.md)
 
 - Survey date: 2026-11-27
 - Target paper: Iman Gholami, MohammadTaghi Hajiaghayi, "Linear Single-Source Shortest Path, Almost", arXiv:2611.34911v1 (submitted 2026-11-25) <https://arxiv.org/abs/2611.34911>

@@ -1,6 +1,6 @@
 # 04. 外側の尺度と外側の流れ（論文 Sec 8.2〜8.3）：実装のための仕様
 
-[English](04_outer_scales_pipeline.md) | 日本語
+[English](04_outer_scales_pipeline.md) | **日本語** | [简体中文](04_outer_scales_pipeline.zh-CN.md)
 
 対象: arXiv 2611.34911v1 の Sec 8.2（Lemma 8.4、l.2076〜2142）と Sec 8.3（Lemma 8.5 l.2145、Algorithm 8 l.2167〜2196、Theorem 1 の証明 l.2158〜2217）。行番号は `.cache/paper/2611.34911v1.txt` のもの。
 対応する課題: **P3-OUTER-SCALES**（`src/paper/outer/scales`）と **P3-OUTER-PIPELINE**（`src/paper/outer/shortest_paths` の `outer_construction`）。

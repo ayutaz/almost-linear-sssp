@@ -1,6 +1,6 @@
 # 未解決の問い・曖昧な点(arXiv 2611.34911v1)
 
-[English](open-questions.md) | 日本語
+[English](open-questions.md) | **日本語** | [简体中文](open-questions.zh-CN.md)
 
 3 つの解析文書の曖昧点を、ID を振り直して 1 つの表にまとめた。行番号 `l.NNN` は `.cache/paper/2611.34911v1.txt` のもの。
 

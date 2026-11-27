@@ -1,6 +1,6 @@
 # 03. ピボット経路・補助距離・外側階層（論文 Sec 6〜8）
 
-[English](03_pivots_aux_outer.md) | 日本語
+[English](03_pivots_aux_outer.md) | **日本語** | [简体中文](03_pivots_aux_outer.zh-CN.md)
 
 対象: arXiv 2611.34911v1「Linear Single-Source Shortest Path, Almost」(Gholami, Hajiaghayi)。
 本文 `.cache/paper/2611.34911v1.txt` の l.1367〜2217（PDF p.29〜47）を全文読んだうえでまとめた。前提として Sec 2〜5 も読んでいる（細部の解析は別担当の文書を参照）。
