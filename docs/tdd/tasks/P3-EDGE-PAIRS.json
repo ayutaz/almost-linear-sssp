@@ -14,7 +14,7 @@
       "tests/unit/paper/primitives/test_edge_pairs.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -42,5 +42,5 @@
       "output_tail": "        Start 682: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance\n678/685 Test #644: differential:every baseline rejects an invalid source with std::out_of_range - std::uint64_t ............................................................   Passed    0.01 sec\n679/685 Test #636: differential:baselines agree on generated graphs: tree - std::uint64_t ..................................................................................   Passed    0.02 sec\n680/685 Test #684: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.01 sec\n681/685 Test #637: differential:baselines agree on generated graphs: tree - double .........................................................................................   Passed    0.02 sec\n682/685 Test #683: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.01 sec\n683/685 Test #643: differential:overflow: Bellman-Ford and Dijkstra differ by design (uint64) ..............................................................................   Passed    0.02 sec\n684/685 Test #681: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.02 sec\n685/685 Test #682: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 685\n\nLabel Time Summary:\ndifferential    =   2.54 sec*proc (27 tests)\nintegration     =   0.68 sec*proc (6 tests)\nproperty        =  21.82 sec*proc (30 tests)\nregression      =   0.13 sec*proc (5 tests)\nunit            =  89.79 sec*proc (617 tests)\n\nTotal Test time (real) =  14.44 sec"
     }
   ],
-  "commit": null
+  "commit": "bf1f7c0"
 }

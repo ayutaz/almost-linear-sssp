@@ -17,7 +17,7 @@
       "src/paper/primitives/edge_pairs.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -54,5 +54,5 @@
       "output_tail": "        Start 462: unit:level ancestor test block size must lie in [2, 8]\n689/696 Test #609: unit:Floyd-Warshall on a hand-computed graph ............................................................................................................   Passed    0.02 sec\n690/696 Test #611: unit:verify accepts a correct shortest-path tree - U64 ..................................................................................................   Passed    0.02 sec\n691/696 Test #561: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ............................   Passed    0.02 sec\n692/696 Test #571: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::DyadicSplitFindmin<double> ..........................................   Passed    0.02 sec\n693/696 Test #545: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindmin<std::uint64_t> ..................................   Passed    0.02 sec\n694/696 Test #477: unit:mst_three_pass equals the Kruskal MST on a hand example - std::uint64_t ............................................................................   Passed    0.02 sec\n695/696 Test #566: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::SplitFindminRef<std::uint64_t> ......................................   Passed    0.02 sec\n696/696 Test #462: unit:level ancestor test block size must lie in [2, 8] ..................................................................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 696\n\nLabel Time Summary:\ndifferential    =   2.58 sec*proc (27 tests)\nintegration     =   0.73 sec*proc (6 tests)\nproperty        =  24.74 sec*proc (30 tests)\nregression      =   0.12 sec*proc (5 tests)\nunit            = 111.17 sec*proc (628 tests)\n\nTotal Test time (real) =  17.45 sec"
     }
   ],
-  "commit": null
+  "commit": "8a342a9"
 }
