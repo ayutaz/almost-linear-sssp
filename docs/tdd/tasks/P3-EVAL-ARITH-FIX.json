@@ -18,7 +18,7 @@
       "tests/unit/paper/hierarchy/test_normalize.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -46,5 +46,5 @@
       "output_tail": "87/93 Test #1101: regression:Counted<double> graphs reject negative and NaN weights ..................................................................   Passed    0.01 sec\n      Start 1113: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n88/93 Test #1105: regression:20261127-evaluate-double-slot-rounding: Alg 4 + Evaluate on 0 -2^53- 1 -1- 2 ............................................   Passed    0.01 sec\n      Start 1102: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance\n89/93 Test #1103: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex .............................   Passed    0.01 sec\n      Start 1104: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf\n90/93 Test #1113: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ...................................   Passed    0.01 sec\n91/93 Test #1102: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance .........................................   Passed    0.01 sec\n92/93 Test #1104: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ......................................   Passed    0.01 sec\n93/93 Test  #956: differential:Alg 4 Mode A + Evaluate at k = 209953: random tree, uniform weights ...................................................   Passed   41.29 sec\n\n100% tests passed, 0 tests failed out of 93\n\nLabel Time Summary:\ndifferential    = 697.05 sec*proc (36 tests)\nproperty        =   1.32 sec*proc (3 tests)\nregression      =   0.23 sec*proc (14 tests)\nunit            =   1.27 sec*proc (40 tests)\n\nTotal Test time (real) = 180.32 sec"
     }
   ],
-  "commit": null
+  "commit": "a21f761"
 }
