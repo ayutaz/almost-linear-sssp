@@ -514,8 +514,8 @@ LEAKY_OUTPUT = "\n".join(  # public-safety: allow
         "E   assert '/private/va...cpp:1: error' not in x",  # public-safety: allow
         "E   '/private/var/folde...not_leak_abso0/proj' is contained here:",  # public-safety: allow
         "E   /var/folders/ab/cd1234/T/pytest-of-someone/pytest-9/t0/proj",  # public-safety: allow
-        "E   <scratchpad>",  # public-safety: allow
-        "E   ~/work/x.cpp and ~/y.py",  # public-safety: allow
+        "E   /private/tmp/claude-1/scratch/x.log",  # public-safety: allow
+        "E   /Users/someone/work/x.cpp and /home/other/y.py",  # public-safety: allow
     ]
 )
 
