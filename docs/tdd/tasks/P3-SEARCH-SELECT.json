@@ -16,7 +16,7 @@
    "tests/unit/paper/primitives/test_paper_dijkstra.cpp"
   ]
  },
- "phase": "REFACTOR",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -151,5 +151,5 @@
    "output_tail": "      Start 26: unit:BFPRT honours a comparator, including ties between distinct records\n26/35 Test #31: unit:counting sort rejects a key outside [0, k) .................................   Passed    0.03 sec\n      Start 14: unit:operation counts respect Lemma 3.2\n27/35 Test  #1: unit:CSR stores both orientations of every undirected edge ......................   Passed    0.02 sec\n      Start 11: unit:radius boundary: distance exactly R is settled, the search stops above R\n28/35 Test #26: unit:BFPRT honours a comparator, including ties between distinct records ........   Passed    0.02 sec\n29/35 Test  #9: unit:Dijkstra boundary inputs ...................................................   Passed    0.03 sec\n30/35 Test #14: unit:operation counts respect Lemma 3.2 .........................................   Passed    0.02 sec\n31/35 Test #11: unit:radius boundary: distance exactly R is settled, the search stops above R ...   Passed    0.01 sec\n32/35 Test #10: unit:radius cutoff settles exactly the vertices at distance at most R ...........   Passed    0.28 sec\n33/35 Test #25: unit:BFPRT equals nth_element on large inputs of every shape ....................   Passed    0.30 sec\n34/35 Test #28: unit:BFPRT uses a linear number of comparisons ..................................   Passed    0.71 sec\n35/35 Test  #6: unit:indexed binary heap matches a multiset model ...............................   Passed    0.78 sec\n\n100% tests passed, 0 tests failed out of 35\n\nLabel Time Summary:\nunit    =   3.06 sec*proc (35 tests)\n\nTotal Test time (real) =   1.30 sec"
   }
  ],
- "commit": null
+ "commit": "a5f743d"
 }
