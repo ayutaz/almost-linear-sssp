@@ -10,6 +10,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "paper/primitives/edge_pairs.hpp"
+
 namespace sssp::paper {
 
 namespace {
@@ -31,17 +33,6 @@ struct Dsu {
     return true;
   }
 };
-
-// Stable counting sort of edge ids by an integer key in [0, n) (Lemma 3.1).
-template <class Key>
-std::vector<EdgeId> counting_sort(const std::vector<EdgeId>& ids, std::size_t n, Key key) {
-  std::vector<std::size_t> start(n + 1, 0);
-  for (const EdgeId e : ids) ++start[key(e) + 1];
-  for (std::size_t k = 0; k < n; ++k) start[k + 1] += start[k];
-  std::vector<EdgeId> out(ids.size());
-  for (const EdgeId e : ids) out[start[key(e)]++] = e;
-  return out;
-}
 
 }  // namespace
 
@@ -66,7 +57,6 @@ LocalHierarchyResult<W> local_hierarchy_base_case(const CsrGraph<W>& g, Diagnost
   StateGraph<W> d;
   d.num_states = n;
   std::vector<ArcId> arc_of_edge(edges.size(), kNoArc);
-  std::vector<EdgeId> nonloop;
   for (std::size_t i = 0; i < edges.size(); ++i) {
     const auto& e = edges[i];
     if (e.u == e.v) continue;
@@ -76,7 +66,6 @@ LocalHierarchyResult<W> local_hierarchy_base_case(const CsrGraph<W>& g, Diagnost
     d.arcs.push_back({e.v, e.u, e.weight});
     out.arc_edge.push_back(id);
     out.arc_edge.push_back(id);
-    nonloop.push_back(id);
   }
   std::vector<Vertex> projection(n);
   std::iota(projection.begin(), projection.end(), Vertex{0});
@@ -86,23 +75,10 @@ LocalHierarchyResult<W> local_hierarchy_base_case(const CsrGraph<W>& g, Diagnost
   auto& h = out.hierarchy;
   h.c0 = 1;  // links are MST edges of weight exactly h(C)
 
-  // Alg 4 l.4, first half: retain a lightest edge per vertex pair. Two stable counting sorts
-  // order the edges by (min endpoint, max endpoint, id); the lightest (weight, id) per pair
-  // survives. [Supplement: the tie-break by id is ours; any lightest edge is allowed.]
-  const auto lo = [&](EdgeId e) -> std::size_t { return std::min(edges[e].u, edges[e].v); };
-  const auto hi = [&](EdgeId e) -> std::size_t { return std::max(edges[e].u, edges[e].v); };
-  const std::vector<EdgeId> by_pair = counting_sort(counting_sort(nonloop, n, hi), n, lo);
-  std::vector<EdgeId> kept;
-  for (std::size_t i = 0; i < by_pair.size();) {
-    EdgeId best = by_pair[i];
-    std::size_t j = i + 1;
-    while (j < by_pair.size() && lo(by_pair[j]) == lo(best) && hi(by_pair[j]) == hi(best)) {
-      if (edges[by_pair[j]].weight < edges[best].weight) best = by_pair[j];
-      ++j;
-    }
-    kept.push_back(best);
-    i = j;
-  }
+  // Alg 4 l.4, first half: retain a lightest edge per vertex pair (edge_pairs, two stable
+  // counting sorts, Lemma 3.1). [Supplement: the tie-break by id is ours; any lightest edge is
+  // allowed.]
+  std::vector<EdgeId> kept = lightest_edge_per_pair<W>(n, edges);
 
   // Alg 4 l.4, second half: Kruskal by (weight, id); the MST edges of one weight w are merged
   // simultaneously (Lemma 3.5 / Lemma 3.6 merge events): every resulting component that joins
