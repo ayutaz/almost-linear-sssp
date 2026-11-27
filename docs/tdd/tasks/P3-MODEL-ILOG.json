@@ -1,0 +1,45 @@
+{
+ "id": "P3-MODEL-ILOG",
+ "spec": "Integer floor/ceil log2 on words and an O(K) table built by the halving recurrence floor(log2 i) = floor(log2(i>>1)) + 1 from i = 1",
+ "paper_ref": "Sec 2, Operations on lengths and indices (txt l.302-304)",
+ "files": {
+  "impl": [
+   "src/paper/model/ilog.hpp",
+   "src/paper/model/ilog.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/model/test_ilog.cpp"
+  ]
+ },
+ "phase": "GREEN",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "ilog table equals bit_width-1 for 1..2^20"
+   ],
+   "command": "cmake --build --preset debug 2>&1 && ctest --preset debug -R ilog",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/model/ilog.hpp' file not found (feature absent)",
+   "timestamp": "2026-11-27T10:34:11+09:00",
+   "output_tail": "-- Google Benchmark version: v1.9.4, normalized to 1.9.4\n-- Enabling additional flags: -DINCLUDE_DIRECTORIES=build/debug/_deps/benchmark-src/include\n-- Performing Test HAVE_THREAD_SAFETY_ATTRIBUTES -- success\n-- Performing Test HAVE_STD_REGEX -- success\n-- Performing Test HAVE_GNU_POSIX_REGEX -- failed to compile\n-- Performing Test HAVE_POSIX_REGEX -- success\n-- Performing Test HAVE_STEADY_CLOCK -- success\n-- Performing Test HAVE_PTHREAD_AFFINITY -- failed to compile\n-- Configuring done (0.3s)\n-- Generating done (0.0s)\n-- Build files have been written to: build/debug\n[0/4] Re-checking globbed directories...\n[1/5] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_ilog.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_ilog.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_ilog.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_ilog.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_ilog.cpp.o -c tests/unit/paper/model/test_ilog.cpp\ntests/unit/paper/model/test_ilog.cpp:9:10: fatal error: 'paper/model/ilog.hpp' file not found\n    9 | #include \"paper/model/ilog.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "ilog table equals bit_width-1 for 1..2^20",
+    "ilog table ceil_log2 matches the defining inequality",
+    "ilog table rejects indices outside 1..K",
+    "word floor_log2 and ceil_log2 match definitions at power-of-two boundaries",
+    "word logarithms are undefined at zero",
+    "word logarithms agree with the table on its range",
+    "word logarithms are usable in constant expressions"
+   ],
+   "command": "cmake --build --preset debug 2>&1 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:34:33+09:00",
+   "output_tail": "      Start 10: unit:word logarithms are undefined at zero\n 4/13 Test #13: unit:library exposes version and target paper .....................................   Passed    0.02 sec\n      Start 11: unit:word logarithms agree with the table on its range\n 5/13 Test  #1: unit:CSR stores both orientations of every undirected edge ........................   Passed    0.02 sec\n      Start 12: unit:word logarithms are usable in constant expressions\n 6/13 Test  #2: unit:CSR keeps multi-edges, self-loops and isolated vertices ......................   Passed    0.02 sec\n 7/13 Test  #9: unit:word floor_log2 and ceil_log2 match definitions at power-of-two boundaries ...   Passed    0.01 sec\n 8/13 Test  #8: unit:ilog table rejects indices outside 1..K ......................................   Passed    0.02 sec\n 9/13 Test #10: unit:word logarithms are undefined at zero ........................................   Passed    0.01 sec\n10/13 Test  #7: unit:ilog table ceil_log2 matches the defining inequality .........................   Passed    0.03 sec\n11/13 Test #11: unit:word logarithms agree with the table on its range ............................   Passed    0.02 sec\n12/13 Test #12: unit:word logarithms are usable in constant expressions ...........................   Passed    0.02 sec\n13/13 Test  #6: unit:ilog table equals bit_width-1 for 1..2^20 ....................................   Passed    0.16 sec\n\n100% tests passed, 0 tests failed out of 13\n\nLabel Time Summary:\nunit    =   0.38 sec*proc (13 tests)\n\nTotal Test time (real) =   0.59 sec"
+  }
+ ],
+ "commit": null
+}
