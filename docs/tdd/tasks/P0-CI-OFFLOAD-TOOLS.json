@@ -12,7 +12,7 @@
       "tests/python/test_ci_wait.py"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -40,5 +40,5 @@
       "output_tail": ".................                                                        [100%]"
     }
   ],
-  "commit": null
+  "commit": "d80c86f"
 }
