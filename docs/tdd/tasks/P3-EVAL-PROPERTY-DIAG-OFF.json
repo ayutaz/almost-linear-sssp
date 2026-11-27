@@ -15,7 +15,7 @@
       "src/paper/hierarchy/evaluate.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -26,5 +26,5 @@
       "output_tail": "        Start 998: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n991/998 Test #934: differential:double overflow: baselines match the independent rounded oracle on huge weights ............................................................   Passed    0.26 sec\n992/998 Test #997: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.02 sec\n993/998 Test #998: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.08 sec\n994/998 Test #884: differential:Alg 4 + Evaluate from a native entry equals Dijkstra at every vertex - std::uint64_t .......................................................   Passed    5.79 sec\n995/998 Test #885: differential:Alg 4 + Evaluate from a native entry equals Dijkstra at every vertex - double ..............................................................   Passed    5.82 sec\n996/998 Test #936: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................................................................   Passed    2.03 sec\n997/998 Test #882: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ...................................................................   Passed   12.37 sec\n998/998 Test #948: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  112.83 sec\n\n100% tests passed, 0 tests failed out of 998\n\nLabel Time Summary:\ndifferential    =  59.52 sec*proc (69 tests)\nintegration     =   1.73 sec*proc (6 tests)\nproperty        = 254.71 sec*proc (54 tests)\nregression      =   0.16 sec*proc (6 tests)\nunit            = 286.72 sec*proc (863 tests)\n\nTotal Test time (real) = 112.84 sec"
     }
   ],
-  "commit": null
+  "commit": "7fd9125"
 }
