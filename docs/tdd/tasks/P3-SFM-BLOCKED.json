@@ -1,0 +1,77 @@
+{
+ "id": "P3-SFM-BLOCKED",
+ "spec": "Blocked split-findmin (Lemma 3.11): blocks of size B = max(2, ceil(log2(k+1))), lower structure per block, upper dyadic structure over block proxies, owner descriptors of at most three pieces; one-level (lower dyadic) and two-level (lower = one-level blocked with B' = max(2, ceil(log2(B+1))), reading A7); agrees with the naive model; counted work within the bounds assembled from the proof of Lemma 3.11",
+ "paper_ref": "Sec 3.5, Lemma 3.11 (steps 1-3 and proof); research notes A7 (inner block size B')",
+ "files": {
+  "impl": [
+   "src/paper/primitives/split_findmin.hpp",
+   "src/paper/primitives/split_findmin.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/primitives/test_split_findmin.cpp",
+   "tests/property/paper/test_split_findmin_property.cpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "split-findmin unit tests instantiated for OneLevelBlockedSplitFindmin and SplitFindmin",
+    "split-findmin: block-edge layouts of Lemma 3.11 give correct minima",
+    "split-findmin: two-level blocking uses B' = max(2, ceil(log2(B+1))) inside blocks",
+    "split-findmin property: one blocking step stays within the Lemma 3.11 bounds",
+    "split-findmin property: two blocking steps stay within the Lemma 3.11 bounds",
+    "split-findmin property: blocked work per record shrinks with the blocking depth"
+   ],
+   "command": "cmake --preset debug >/dev/null && cmake --build --preset debug -k 0 2>&1 | grep -E \"error:\" | sort -u | head -12; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "no member named 'OneLevelBlockedSplitFindmin' / 'SplitFindmin' in namespace 'sssp::paper' (feature absent)",
+   "timestamp": "2026-11-27T10:43:39+09:00",
+   "output_tail": "tests/property/paper/test_split_findmin_property.cpp:198:30: error: no member named 'OneLevelBlockedSplitFindmin' in namespace 'sssp::paper'\ntests/property/paper/test_split_findmin_property.cpp:198:64: error: expected '(' for function-style cast or type construction\ntests/property/paper/test_split_findmin_property.cpp:212:30: error: no member named 'SplitFindmin' in namespace 'sssp::paper'\ntests/property/paper/test_split_findmin_property.cpp:212:49: error: expected '(' for function-style cast or type construction\ntests/property/paper/test_split_findmin_property.cpp:226:16: error: no member named 'SplitFindmin' in namespace 'sssp::paper'\ntests/property/paper/test_split_findmin_property.cpp:226:42: error: expected '(' for function-style cast or type construction\ntests/property/paper/test_split_findmin_property.cpp:226:44: error: use of undeclared identifier 's'\ntests/property/paper/test_split_findmin_property.cpp:228:79: error: use of undeclared identifier 's'\ntests/property/paper/test_split_findmin_property.cpp:229:18: error: use of undeclared identifier 's'\ntests/unit/paper/primitives/test_split_findmin.cpp:187:1: error: expected expression\ntests/unit/paper/primitives/test_split_findmin.cpp:188:20: error: expected '(' for function-style cast or type construction\ntests/unit/paper/primitives/test_split_findmin.cpp:188:20: error: no member named 'OneLevelBlockedSplitFindmin' in namespace 'sssp::paper'"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "split-findmin unit tests (Ref, Dyadic, OneLevelBlocked, SplitFindmin",
+    " uint64_t and double)",
+    "split-findmin property: one/two blocking steps within the Lemma 3.11 bounds"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:46:17+09:00",
+   "output_tail": "79/88 Test #19: unit:split-findmin: zero records are rejected - sssp::paper::DyadicSplitFindmin<double> .................................................................   Passed    0.01 sec\n      Start 43: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::DyadicSplitFindmin<double>\n80/88 Test #18: unit:split-findmin: zero records are rejected - sssp::paper::SplitFindminRef<double> ....................................................................   Passed    0.01 sec\n      Start 39: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::DyadicSplitFindmin<std::uint64_t>\n81/88 Test #15: unit:split-findmin: zero records are rejected - sssp::paper::DyadicSplitFindmin<std::uint64_t> ..........................................................   Passed    0.01 sec\n82/88 Test #43: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::DyadicSplitFindmin<double> .............................   Passed    0.01 sec\n83/88 Test #39: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::DyadicSplitFindmin<std::uint64_t> ......................   Passed    0.01 sec\n84/88 Test #86: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.95 sec\n85/88 Test #58: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::SplitFindminRef<double> ......................   Passed    4.10 sec\n86/88 Test #54: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::SplitFindminRef<std::uint64_t> ...............   Passed    3.97 sec\n87/88 Test #59: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<double> ...................   Passed    3.03 sec\n88/88 Test #55: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<std::uint64_t> ............   Passed    2.93 sec\n\n100% tests passed, 0 tests failed out of 88\n\nLabel Time Summary:\nproperty    =   9.37 sec*proc (4 tests)\nunit        =  73.37 sec*proc (84 tests)\n\nTotal Test time (real) =  12.40 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "full suite"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:46:44+09:00",
+   "output_tail": "79/88 Test #15: unit:split-findmin: zero records are rejected - sssp::paper::DyadicSplitFindmin<std::uint64_t> ..........................................................   Passed    0.02 sec\n      Start 43: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::DyadicSplitFindmin<double>\n80/88 Test #17: unit:split-findmin: zero records are rejected - sssp::paper::SplitFindmin<std::uint64_t> ................................................................   Passed    0.05 sec\n      Start 39: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::DyadicSplitFindmin<std::uint64_t>\n81/88 Test #53: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::SplitFindmin<double> ................................................   Passed    0.03 sec\n82/88 Test #43: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::DyadicSplitFindmin<double> .............................   Passed    0.04 sec\n83/88 Test #39: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::DyadicSplitFindmin<std::uint64_t> ......................   Passed    0.04 sec\n84/88 Test #86: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    1.08 sec\n85/88 Test #58: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::SplitFindminRef<double> ......................   Passed    3.82 sec\n86/88 Test #54: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::SplitFindminRef<std::uint64_t> ...............   Passed    4.25 sec\n87/88 Test #59: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<double> ...................   Passed    4.61 sec\n88/88 Test #55: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<std::uint64_t> ............   Passed    4.59 sec\n\n100% tests passed, 0 tests failed out of 88\n\nLabel Time Summary:\nproperty    =   7.58 sec*proc (4 tests)\nunit        =  63.90 sec*proc (84 tests)\n\nTotal Test time (real) =  12.69 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "full suite (blocked constructor takes keys by const reference, clang-tidy performance-unnecessary-value-param)"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:49:06+09:00",
+   "output_tail": "79/88 Test #52: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::OneLevelBlockedSplitFindmin<double> .................................   Passed    0.16 sec\n      Start 19: unit:split-findmin: zero records are rejected - sssp::paper::DyadicSplitFindmin<double>\n80/88 Test #35: unit:split-findmin: equal keys are resolved by original index - sssp::paper::DyadicSplitFindmin<double> .................................................   Passed    0.15 sec\n      Start  7: unit:split-findmin: k=1 is one interval that cannot be split - sssp::paper::DyadicSplitFindmin<std::uint64_t>\n81/88 Test #32: unit:split-findmin: equal keys are resolved by original index - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t> .................................   Passed    0.06 sec\n82/88 Test #45: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<double> ...................................   Passed    0.16 sec\n83/88 Test #19: unit:split-findmin: zero records are rejected - sssp::paper::DyadicSplitFindmin<double> .................................................................   Passed    0.03 sec\n84/88 Test #42: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindminRef<double> ................................   Passed    0.05 sec\n85/88 Test  #7: unit:split-findmin: k=1 is one interval that cannot be split - sssp::paper::DyadicSplitFindmin<std::uint64_t> ...........................................   Passed    0.03 sec\n86/88 Test #11: unit:split-findmin: k=1 is one interval that cannot be split - sssp::paper::DyadicSplitFindmin<double> ..................................................   Passed    0.08 sec\n87/88 Test #59: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<double> ...................   Passed    7.49 sec\n88/88 Test #55: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<std::uint64_t> ............   Passed    6.46 sec\n\n100% tests passed, 0 tests failed out of 88\n\nLabel Time Summary:\nproperty    =  18.04 sec*proc (4 tests)\nunit        = 156.42 sec*proc (84 tests)\n\nTotal Test time (real) =  25.93 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "full suite (property helpers moved under SSSP_DIAGNOSTICS: no unused-function warning in the release preset)"
+   ],
+   "command": "cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:50:58+09:00",
+   "output_tail": "      Start 73: unit:split-findmin: double keys reject NaN - sssp::paper::SplitFindmin<double>\n      Start 19: unit:split-findmin: zero records are rejected - sssp::paper::DyadicSplitFindmin<double>\n80/88 Test #42: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindminRef<double> ................................   Passed    0.09 sec\n      Start  7: unit:split-findmin: k=1 is one interval that cannot be split - sssp::paper::DyadicSplitFindmin<std::uint64_t>\n81/88 Test #70: unit:split-findmin: double keys reject NaN - sssp::paper::SplitFindminRef<double> .......................................................................   Passed    0.08 sec\n82/88 Test #22: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindminRef<std::uint64_t> ...............................   Passed    0.10 sec\n83/88 Test  #1: unit:CSR stores both orientations of every undirected edge ..............................................................................................   Passed    0.03 sec\n84/88 Test #73: unit:split-findmin: double keys reject NaN - sssp::paper::SplitFindmin<double> ..........................................................................   Passed    0.02 sec\n85/88 Test #19: unit:split-findmin: zero records are rejected - sssp::paper::DyadicSplitFindmin<double> .................................................................   Passed    0.02 sec\n86/88 Test  #7: unit:split-findmin: k=1 is one interval that cannot be split - sssp::paper::DyadicSplitFindmin<std::uint64_t> ...........................................   Passed    0.02 sec\n87/88 Test #59: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<double> ...................   Passed    4.46 sec\n88/88 Test #55: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<std::uint64_t> ............   Passed    4.61 sec\n\n100% tests passed, 0 tests failed out of 88\n\nLabel Time Summary:\nproperty    =  13.92 sec*proc (4 tests)\nunit        = 111.70 sec*proc (84 tests)\n\nTotal Test time (real) =  18.68 sec"
+  }
+ ],
+ "commit": null
+}
