@@ -21,12 +21,16 @@ on:
         type: choice
         options: [all, ubuntu]
         default: all
+      ref:
+        description: "commit to test instead of the dispatched ref (a wip/ branch SHA); lets main's workflow run on an older branch"
+        type: string
+        default: ""
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.ref }}
   cancel-in-progress: true
 
 env:
@@ -56,6 +60,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
 
       - name: Toolchain (Ubuntu, apt clang ${{ env.LLVM_MAJOR }})
         if: runner.os == 'Linux'
