@@ -17,7 +17,7 @@
       "src/paper/hierarchy/evaluate.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -60,5 +60,5 @@
       "output_tail": "        Start 854: property:evaluate property: per-state counts stay bounded as N grows\n877/884 Test #461: unit:outer base case searches exactly the lightest_edge_pairs survivors (Alg 8 l.5) - std::uint64_t .....................................................   Passed    0.06 sec\n878/884 Test #529: unit:lightest_edge_pairs counts one length comparison per further edge of a pair - std::uint64_t ........................................................   Passed    0.05 sec\n879/884 Test #462: unit:outer base case searches exactly the lightest_edge_pairs survivors (Alg 8 l.5) - double ............................................................   Passed    0.06 sec\n880/884 Test #530: unit:lightest_edge_pairs counts one length comparison per further edge of a pair - double ...............................................................   Passed    0.07 sec\n881/884 Test #853: property:evaluate property: Lemma 4.7 counts on base-case hierarchies ...................................................................................   Passed    0.05 sec\n882/884 Test #509: unit:name_routes names every edge through its lightest_edge_pairs representative (Alg 5 l.4) ............................................................   Passed    0.12 sec\n883/884 Test #854: property:evaluate property: per-state counts stay bounded as N grows ....................................................................................   Passed    0.58 sec\n884/884 Test #852: property:evaluate property: Lemma 4.7 counts on reference hierarchies ...................................................................................   Passed    0.65 sec\n\n100% tests passed, 0 tests failed out of 884\n\nLabel Time Summary:\ndifferential    =  31.02 sec*proc (55 tests)\nintegration     =   1.01 sec*proc (6 tests)\nproperty        =  34.12 sec*proc (41 tests)\nregression      =   0.23 sec*proc (6 tests)\nunit            = 157.83 sec*proc (776 tests)\n\nTotal Test time (real) =  28.54 sec"
     }
   ],
-  "commit": null
+  "commit": "1f5a908"
 }
