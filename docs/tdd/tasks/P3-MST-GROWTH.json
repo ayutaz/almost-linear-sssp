@@ -12,7 +12,7 @@
    "tests/unit/paper/primitives/mst_test_support.hpp"
   ]
  },
- "phase": "REFACTOR",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -55,5 +55,5 @@
    "output_tail": "[4/5] Linking CXX executable tests/sssp_unit_tests\n100% tests passed, 0 tests failed out of 101"
   }
  ],
- "commit": null
+ "commit": "22a6118"
 }

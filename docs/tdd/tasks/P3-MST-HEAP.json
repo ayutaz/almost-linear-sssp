@@ -10,7 +10,7 @@
    "tests/unit/paper/primitives/test_fib_heap.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -65,5 +65,5 @@
    "output_tail": "[3/4] Linking CXX executable tests/sssp_unit_tests\n100% tests passed, 0 tests failed out of 120\n[3/4] Linking CXX executable tests/sssp_unit_tests\n100% tests passed, 0 tests failed out of 128"
   }
  ],
- "commit": null
+ "commit": "ab64fa6"
 }

@@ -13,7 +13,7 @@
    "tests/unit/paper/primitives/mst_test_support.hpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -92,5 +92,5 @@
    "output_tail": "ninja: no work to do.\n100% tests passed, 0 tests failed out of 120\nninja: no work to do.\n100% tests passed, 0 tests failed out of 128"
   }
  ],
- "commit": null
+ "commit": "d80e66a"
 }
