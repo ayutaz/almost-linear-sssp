@@ -1,7 +1,7 @@
 # `sssp_bench_runner` の CLI 仕様
 
 C++ のベンチランナー `build/<preset>/sssp_bench_runner` の引数・出力・終了コードを定める。
-**ランナーは未実装**(C++ 担当が実装する)。`scripts/run_benchmarks.sh` はこの仕様どおりに呼び出す。
+実装は `tools/sssp_bench_runner.cpp` と `src/bench_runner/`。`scripts/run_benchmarks.sh` はこの仕様どおりに呼び出す。
 出力レコードの形式は [benchmark_schema.md](benchmark_schema.md)、計測手順は
 [benchmark_protocol.md](benchmark_protocol.md)。
 
@@ -15,7 +15,7 @@ C++ のベンチランナー `build/<preset>/sssp_bench_runner` の引数・出�
 ```sh
 build/release/sssp_bench_runner \
   --type er --n 100000 --avg-degree 4 --weights uniform_int --weight-type uint64 --seed 1 \
-  --sources 2 --algorithms paper --trials 5 --warmup 1 --order-seed 12345 \
+  --sources 2 --algorithms paper-faithful-d1 --trials 5 --warmup 1 --order-seed 12345 \
   --timeout-sec 600 --verify reference \
   --env-json results/raw/<run_id>.release.env.json --run-id <run_id> \
   --out results/raw/<run_id>.jsonl --isolate
@@ -63,7 +63,7 @@ build/release/sssp_bench_runner \
 | `--env-json PATH` | `scripts/bench/envinfo.py` の出力。その全キー(`schema.ENV_FIELDS`)を各レコードにそのまま写す |
 | `--run-id ID` | レコードの `run_id` |
 | `--out PATH` | JSONL を**追記**で書く。1 行 1 レコード、行ごとに flush |
-| `--list` | 対応する `--type`、`--weights`、アルゴリズム(`name`, `mode`, 対応する重み型)を JSON で標準出力に出して終了 |
+| `--list` | 対応する `--type`、`--weights`、アルゴリズム(`name`, `mode`, `weight_types`, `takes_params`, `max_work`, `max_vertices`)を JSON で標準出力に出して終了。`max_work`(n × m の上限)と `max_vertices`(n の上限)は上限が無ければ null |
 | `--version` | 版と論文版 `2611.34911v1` を出して終了 |
 
 ## 3. 振る舞い
@@ -80,6 +80,9 @@ build/release/sssp_bench_runner \
    終了直前の `getrusage(RUSAGE_SELF).ru_maxrss` を入れる。**macOS は bytes、Linux は KiB なので ×1024** して
    bytes に揃える。`--isolate` でなければ `peak_rss_bytes` は null、`isolated=false`。
 7. `dijkstra-radix` に `--weight-type double` が来たら、何も書かずに終了コード 3。
+   規模の上限を超えるときも、何も書かずに終了コード 3(理由を標準エラーに出す。別のアルゴリズムに置き換えない):
+   `bellman-ford` は n × m > 2^30、`paper-faithful` は n > 2^17(走査型 Dijkstra の基底ケースが Θ(N²)。
+   `kScanBaseCaseMaxVertices`)。`paper-faithful-d1` に上限は無い。
 8. 書いたレコードは `python -m bench.schema validate` を通ること(CI の smoke で確認する)。
 
 ## 4. 終了コード
@@ -89,7 +92,7 @@ build/release/sssp_bench_runner \
 | 0 | 正常(検証失敗のレコードを含む場合も 0。失敗はレコードの `status=error` で表す) | 成功 |
 | 1 | その他の異常 | `status=error` の失敗レコードを追記し、最後に終了コード 1 |
 | 2 | 引数の誤り | 同上 |
-| 3 | 未対応の組み合わせ(例 radix × double) | 同上(プランはこの組を作らない) |
+| 3 | 未対応の組み合わせ(例 radix × double)、未実装の予約名(`paper` など)、規模の上限超え(§3 の 7) | 同上(プランはこの組を作らない) |
 | 5 | `std::bad_alloc` などメモリ不足 | `status=memory_limit` の失敗レコード |
 | 124 / 142 | 外側の `timeout` / perl `alarm` による強制終了 | `status=timeout` の失敗レコード |
 | 137 | SIGKILL(Linux の OOM killer など) | `status=error`(理由に記載) |

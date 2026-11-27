@@ -1,4 +1,5 @@
-// sssp_run: runs one baseline SSSP algorithm on a graph file and prints the result as JSON.
+// sssp_run: runs one baseline SSSP algorithm, or a Mode A variant (sssp/paper.hpp), on a graph
+// file and prints the result as JSON.
 //
 //   sssp_run --graph g.txt --algorithm dijkstra_binary --source 0 [--verify]
 //
@@ -26,6 +27,7 @@
 #include "sssp/graph.hpp"
 #include "sssp/graph_formats.hpp"
 #include "sssp/graph_io.hpp"
+#include "sssp/paper.hpp"
 #include "sssp/verify.hpp"
 
 namespace {
@@ -34,7 +36,9 @@ constexpr std::string_view kUsage =
     R"(usage: sssp_run --graph PATH --algorithm ALG --source S [options]
   --graph PATH                graph file
   --algorithm ALG             bellman_ford | dijkstra_binary | dijkstra_4ary |
-                              dijkstra_fibonacci | dijkstra_radix (uint64 only)
+                              dijkstra_fibonacci | dijkstra_radix (uint64 only) |
+                              paper-faithful | paper-faithful-d1 (Mode A, the benchmark names
+                              of include/sssp/paper.hpp; the base case is recorded as a fallback)
   --source S                  source vertex (0-based)
   --format auto|edgelist|dimacs
                               input format (default auto: *.gr is DIMACS, anything else edge list)
@@ -59,6 +63,7 @@ enum class Algorithm : std::uint8_t {
   kDijkstra4ary,
   kDijkstraFibonacci,
   kDijkstraRadix,
+  kPaper,  ///< Mode A entry; the variant is Cli::paper_variant
 };
 
 enum class Format : std::uint8_t { kAuto, kEdgeList, kDimacs };
@@ -67,6 +72,7 @@ struct Cli {
   std::string graph;
   bool has_algorithm = false;
   Algorithm algorithm = Algorithm::kBellmanFord;
+  sssp::paper::PaperVariant paper_variant = sssp::paper::PaperVariant::kFaithful;
   bool has_source = false;
   sssp::Vertex source = 0;
   Format format = Format::kAuto;
@@ -77,7 +83,11 @@ struct Cli {
   bool verify = false;
 };
 
-Algorithm parse_algorithm(std::string_view a) {
+Algorithm parse_algorithm(std::string_view a, sssp::paper::PaperVariant& variant) {
+  if (const auto v = sssp::paper::parse_algorithm_name(a)) {
+    variant = *v;
+    return Algorithm::kPaper;
+  }
   if (a == "bellman_ford") return Algorithm::kBellmanFord;
   if (a == "dijkstra_binary") return Algorithm::kDijkstraBinary;
   if (a == "dijkstra_4ary") return Algorithm::kDijkstra4ary;
@@ -110,7 +120,7 @@ Cli parse(int argc, char** argv) {
     } else if (a == "--graph") {
       c.graph = std::string(value());
     } else if (a == "--algorithm") {
-      c.algorithm = parse_algorithm(value());
+      c.algorithm = parse_algorithm(value(), c.paper_variant);
       c.has_algorithm = true;
     } else if (a == "--source") {
       c.source = parse_source(std::string(value()));
@@ -191,6 +201,8 @@ sssp::SsspResult<W> solve(const Cli& c, const sssp::CsrGraph<W>& g) {
       } else {
         throw UsageError("dijkstra_radix requires --weight-type uint64");
       }
+    case Algorithm::kPaper:
+      return sssp::paper::paper_sssp(g, c.source, sssp::paper::PaperOptions{c.paper_variant});
   }
   throw std::logic_error("unhandled algorithm");
 }

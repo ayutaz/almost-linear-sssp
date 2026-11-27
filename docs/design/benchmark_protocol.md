@@ -32,7 +32,9 @@ Dijkstra 系ベースラインを比較するときの計測手順を定める�
 | `dijkstra-4ary` | 4-ary ヒープ Dijkstra | `baseline` | `uint64`, `double` |
 | `dijkstra-fibonacci` | Fibonacci ヒープ Dijkstra | `baseline` | `uint64`, `double` |
 | `dijkstra-radix` | radix ヒープ Dijkstra | `baseline` | **`uint64` のみ** |
-| `paper` | 論文アルゴリズム(論文どおり) | `paper-faithful` | `uint64`, `double` |
+| `paper-faithful` | Mode A の入口(Alg 8)。外側の閾値 N > L_N^64 は実用規模で成り立たないため、基底ケース(l.5)を走査型 Dijkstra(Lemma 3.2)で解く。fallback として記録される | `paper-faithful` | `uint64`, `double` |
+| `paper-faithful-d1` | 同上。基底ケースを二分ヒープ Dijkstra で解く(逸脱 D-1、ADR 0008) | `paper-faithful` | `uint64`, `double` |
+| `paper` | 論文アルゴリズムの外側の構成(Alg 8 l.8-15)。予約名で未実装 | `paper-faithful` | `uint64`, `double` |
 | `paper-experimental` | 論文の枠組みで部品・パラメータを試験的に変えたもの | `paper-experimental` | `uint64`, `double` |
 | `paper-optimized` | 実用速度を狙った最適化版 | `practical-optimized` | `uint64`, `double` |
 
@@ -44,6 +46,18 @@ Dijkstra 系ベースラインを比較するときの計測手順を定める�
 - `practical-optimized`: 実用速度を狙って最適化したもの。論文との差分は必ず記録に残す。
 
 `dijkstra-radix` × `double` のジョブはプラン(`scripts/bench/plan.py`)が作らない。対象外であり、失敗レコードにもしない。
+
+`paper-faithful` / `paper-faithful-d1` について:
+
+- `paper_sssp` は 1 回の呼び出しで、ゼロ辺の縮約(l.2)・基底ケース(l.5)・木の復元(l.6)を外から分けられない。
+  全体を `sssp` として測り、`preprocess` と `tree` は null(§4)。
+- 毎回 1 件の `FallbackRecord`(縮約後の頂点数 N と辺数)がレコードの `fallback` にそのまま入る
+  (診断 OFF のビルドでも)。時間を報告するときは、この fallback の割合を必ず並べる。
+  これらの時間は「論文の前処理 + Dijkstra」の時間であり、論文の外側の構成の時間ではない。
+- `double` の検証は `Tolerance::for_path_hops(2(n − 1))`(numerics.md §3.2)。整数重みは厳密一致。
+- `paper-faithful` の走査型基底ケースは Θ(N²) なので、ランナーは n > 2^17 を終了コード 3 で断る
+  (別のアルゴリズムに置き換えない)。プランはその組を作らず、除外した件数と理由を標準エラーに出す
+  (`plan.VERTEX_LIMITS`)。`paper-faithful-d1` に上限は無い。
 
 ### 1.3 重み型(`weight_type`)
 

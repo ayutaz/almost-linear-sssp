@@ -8,11 +8,13 @@
 #include <cstdint>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "sssp/baseline.hpp"
 #include "sssp/bench_runner.hpp"
 #include "sssp/graph.hpp"
+#include "sssp/paper.hpp"
 #include "sssp/result.hpp"
 
 using sssp::CsrGraph;
@@ -103,9 +105,9 @@ sssp::bench::GraphInfo graph_info() {
 TEST_CASE("bench registry: baselines with schema names and modes", "[bench]") {
   const std::vector<std::string> expected = {"bellman-ford", "dijkstra-binary", "dijkstra-4ary",
                                              "dijkstra-fibonacci", "dijkstra-radix"};
-  std::vector<std::string> names;
+  std::vector<std::string> names;  // the baseline entries of the registry
   for (const auto& e : sssp::bench::algorithm_registry()) {
-    names.emplace_back(e.name);
+    if (e.mode == "baseline") names.emplace_back(e.name);
     REQUIRE(sssp::bench::schema_mode(e.name).has_value());
     CHECK(*sssp::bench::schema_mode(e.name) == e.mode);
     CHECK(e.solve_u64 != nullptr);
@@ -128,6 +130,54 @@ TEST_CASE("bench registry: baselines with schema names and modes", "[bench]") {
   CHECK(sssp::bench::schema_mode("paper-experimental") == "paper-experimental");
   CHECK(sssp::bench::schema_mode("paper-optimized") == "practical-optimized");
   CHECK_FALSE(sssp::bench::schema_mode("nope").has_value());
+}
+
+TEST_CASE("bench registry: Mode A entry under the names of sssp/paper.hpp", "[bench]") {
+  using sssp::paper::PaperVariant;
+  for (const PaperVariant v : sssp::paper::kPaperVariants) {
+    const std::string_view name = sssp::paper::algorithm_name(v);
+    INFO(name);
+    const auto* e = sssp::bench::find_algorithm(name);
+    REQUIRE(e != nullptr);
+    CHECK(e->name == name);
+    CHECK(e->mode == "paper-faithful");
+    CHECK(sssp::bench::schema_mode(name) == "paper-faithful");
+    CHECK(e->solve_u64 != nullptr);
+    CHECK(e->solve_f64 != nullptr);
+    CHECK_FALSE(e->takes_params);
+    // Not a relaxation baseline: double results are compared with for_path_hops(2(n-1)).
+    CHECK_FALSE(e->exact_relaxation);
+    CHECK(e->max_work == 0);
+    // Only the scan base case (Theta(N^2) vertex scans) carries a vertex limit.
+    CHECK(e->max_vertices ==
+          (v == PaperVariant::kFaithful ? sssp::bench::kScanBaseCaseMaxVertices : 0));
+  }
+  for (const auto& e : sssp::bench::algorithm_registry()) {
+    if (e.mode == "baseline") CHECK(e.max_vertices == 0);
+  }
+}
+
+TEMPLATE_TEST_CASE("bench registry: Mode A solvers return the paper's FallbackRecord", "[bench]",
+                   std::uint64_t, double) {
+  const auto g = small_graph<TestType>();
+  const auto oracle = sssp::baseline::bellman_ford(g, 0);
+  for (const sssp::paper::PaperVariant v : sssp::paper::kPaperVariants) {
+    const auto* e = sssp::bench::find_algorithm(sssp::paper::algorithm_name(v));
+    REQUIRE(e != nullptr);
+    PhaseTimer timer;
+    const auto r = e->template solver<TestType>()(g, 0, Json::object(), timer);
+    CHECK(r.dist == oracle.dist);
+    const auto direct = sssp::paper::paper_sssp(g, 0, sssp::paper::PaperOptions{v});
+    REQUIRE(r.diag.fallbacks.size() == 1);
+    REQUIRE(direct.diag.fallbacks.size() == 1);
+    CHECK(r.diag.fallbacks[0].reason == direct.diag.fallbacks[0].reason);
+    CHECK(r.diag.fallbacks[0].vertices == direct.diag.fallbacks[0].vertices);
+    CHECK(r.diag.fallbacks[0].edges == direct.diag.fallbacks[0].edges);
+    CHECK(r.diag.fallbacks[0].reason.starts_with("outer: N <= L_N^64 (paper base case"));
+    // Vertex 4 is isolated: the contracted source component has 4 vertices and 4 edges.
+    CHECK(r.diag.fallbacks[0].vertices == 4);
+    CHECK(r.diag.fallbacks[0].edges == 4);
+  }
 }
 
 TEMPLATE_TEST_CASE("bench registry: solvers agree with Bellman-Ford and time only sssp", "[bench]",

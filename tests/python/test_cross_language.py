@@ -1,13 +1,17 @@
-"""Cross-language check: C++ baselines (via ``sssp_run``) against the exact Python oracle.
+"""Cross-language check: C++ baselines and the Mode A entry (via ``sssp_run``) against the exact
+Python oracle.
 
-Graphs are produced by the C++ generator CLI ``sssp_gen``; every baseline is run by the C++ CLI
-``sssp_run``; its JSON result is checked with ``reference.exact_sssp`` (``fractions.Fraction``,
-never rounds) and ``reference.check_double``, which share no code with the C++ side.
+Graphs are produced by the C++ generator CLI ``sssp_gen``; every baseline and both Mode A variants
+(``paper-faithful``, ``paper-faithful-d1``: the names of ``include/sssp/paper.hpp``) are run by
+the C++ CLI ``sssp_run``; its JSON result is checked with ``reference.exact_sssp``
+(``fractions.Fraction``, never rounds) and ``reference.check_double``, which share no code with
+the C++ side.
 
 * ``uint64`` results must equal the exact distances (no tolerance) and form a valid tight tree.
 * ``double`` results must lie within gamma_{n-1} of the exact distances of the doubles actually
   used (docs/design/numerics.md Sec 3.1), and all relaxation-based baselines must print
-  bit-identical distances (numerics.md Sec 2).
+  bit-identical distances (numerics.md Sec 2). The Mode A variants are held to gamma_{n-1}
+  only: they are not relaxation baselines, so bit identity is not claimed for them.
 
 The executables are looked up in ``$SSSP_BUILD_DIR`` or ``build/debug``. If ``sssp_gen`` is not
 there the C++ project has not been built, and the module is skipped with that reason (CI runs
@@ -48,11 +52,13 @@ ALGORITHMS = [
     "dijkstra_fibonacci",
     "dijkstra_radix",
 ]
+PAPER_ALGORITHMS = ["paper-faithful", "paper-faithful-d1"]
 MAX_U64 = 2**64 - 1
 
 
 def algorithms_for(weight_type: str) -> list[str]:
-    return ALGORITHMS if weight_type == "uint64" else ALGORITHMS[:-1]
+    baselines = ALGORITHMS if weight_type == "uint64" else ALGORITHMS[:-1]
+    return baselines + PAPER_ALGORITHMS
 
 
 # ---------------------------------------------------------------------------
@@ -204,8 +210,11 @@ def test_double_results_within_gamma_and_bit_identical(tmp_path, kind, args, wei
             report = check_double.check(n, edges, result)  # gamma_{n-1}, weights as doubles
             assert report.ok, f"{alg} source {source}: {report.failures[:5]}"
             printed[alg] = json.loads(p.stdout)["dist"]
+        assert set(PAPER_ALGORITHMS) <= set(printed)
         first = printed["bellman_ford"]
         for alg, dist in printed.items():
+            if alg in PAPER_ALGORITHMS:
+                continue  # within gamma_{n-1} (checked above); bit identity is not claimed
             assert dist == first, f"{alg} differs from bellman_ford (must be bit-identical)"
 
 
@@ -290,7 +299,7 @@ def test_dimacs_input_matches_edge_list(tmp_path, weight_type):
 
 def test_unreachable_vertices_are_null_with_no_parent(tmp_path):
     path = write_graph(tmp_path, "disc", 5, [(0, 1, 2), (3, 4, 1)])
-    for alg in ALGORITHMS:
+    for alg in ALGORITHMS + PAPER_ALGORITHMS:
         r = run_ok(path, alg, 0, "uint64")
         assert r["dist"] == [0, 2, None, None, None]
         assert r["parent"] == [-1, 0, -1, -1, -1]
@@ -316,7 +325,7 @@ def test_overflow_behaviour_is_reported(tmp_path):
         assert "overflow" in p.stderr
         assert p.stdout == ""
     unrep = write_graph(tmp_path, "un", 3, [(0, 1, 2**63), (1, 2, 2**63)])
-    for alg in ALGORITHMS:
+    for alg in ALGORITHMS + PAPER_ALGORITHMS:
         p = run("--graph", str(unrep), "--algorithm", alg, "--source", "0")
         assert p.returncode == 1, (alg, p.returncode, p.stderr)
         assert p.stdout == ""
@@ -324,7 +333,7 @@ def test_overflow_behaviour_is_reported(tmp_path):
 
 def test_verify_flag_reports_ok(tmp_path):
     path = gen(tmp_path, "er", "--type", "er", "--n", "30", "--seed", "9")
-    for alg in ALGORITHMS:
+    for alg in ALGORITHMS + PAPER_ALGORITHMS:
         p = run("--graph", str(path), "--algorithm", alg, "--source", "2", "--verify")
         assert p.returncode == 0, p.stderr
         assert "verify: OK" in p.stderr
@@ -343,6 +352,9 @@ def test_default_weight_type_is_uint64_and_double_is_read_exactly(tmp_path):
     ("args", "code"),
     [
         (["--algorithm", "dijkstra_binary", "--source", "5"], 1),  # source out of range
+        (["--algorithm", "paper-faithful", "--source", "5"], 1),
+        (["--algorithm", "paper-faithful-d1", "--source", "5"], 1),
+        (["--algorithm", "paper", "--source", "0"], 2),  # reserved schema name, not a variant
         (["--algorithm", "nope", "--source", "0"], 2),  # unknown algorithm
         (["--algorithm", "dijkstra_radix", "--source", "0", "--weight-type", "double"], 2),
         (["--source", "0"], 2),  # missing --algorithm

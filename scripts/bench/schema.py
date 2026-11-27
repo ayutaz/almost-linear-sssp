@@ -35,7 +35,11 @@ ALGORITHM_MODES: dict[str, str] = {
     "dijkstra-fibonacci": "baseline",
     "dijkstra-radix": "baseline",
     "bellman-ford": "baseline",
-    "paper": "paper-faithful",
+    "paper": "paper-faithful",  # reserved: the outer construction (Alg 8 l.8-15), not built yet
+    # Mode A entry (include/sssp/paper.hpp algorithm_name): Alg 8 with the outer base case by the
+    # scan Dijkstra (Lemma 3.2) / by the binary-heap Dijkstra (deviation D-1, ADR 0008).
+    "paper-faithful": "paper-faithful",
+    "paper-faithful-d1": "paper-faithful",
     "paper-experimental": "paper-experimental",
     "paper-optimized": "practical-optimized",
 }

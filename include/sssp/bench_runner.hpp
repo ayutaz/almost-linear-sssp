@@ -204,8 +204,9 @@ struct AlgorithmEntry {
   /// (docs/design/numerics.md §2), so the reference comparison is exact. Otherwise the
   /// comparison uses Tolerance::for_path_hops(2(n-1)) (numerics.md §3.2).
   bool exact_relaxation = true;
-  bool takes_params = false;   ///< accepts --param
-  std::uint64_t max_work = 0;  ///< limit on n * m (0: none); larger graphs exit with code 3
+  bool takes_params = false;       ///< accepts --param
+  std::uint64_t max_work = 0;      ///< limit on n * m (0: none); larger graphs exit with code 3
+  std::uint64_t max_vertices = 0;  ///< limit on n (0: none); larger graphs exit with code 3
 
   template <class W>
   [[nodiscard]] SolveFn<W> solver() const noexcept {
@@ -219,6 +220,13 @@ struct AlgorithmEntry {
 
 /// Bellman-Ford is an O(nm) oracle: refused (exit 3) when n * m exceeds this.
 inline constexpr std::uint64_t kBellmanFordMaxWork = std::uint64_t{1} << 30;
+
+/// "paper-faithful" runs the scan Dijkstra of Lemma 3.2 as its base case (Alg 8 l.5): Theta(N^2)
+/// vertex scans on the contracted size N <= n. Refused (exit 3) when n exceeds this, never
+/// replaced by another algorithm. 2^17 admits every profile size up to 10^5 and refuses 10^6,
+/// where 10^12 scans per run do not fit the profile timeouts (benchmark_runner_cli.md §4).
+/// "paper-faithful-d1" (binary heap, O(m log N)) has no limit.
+inline constexpr std::uint64_t kScanBaseCaseMaxVertices = std::uint64_t{1} << 17;
 
 /// Every algorithm the runner can execute. New implementations are added here only.
 std::span<const AlgorithmEntry> algorithm_registry() noexcept;

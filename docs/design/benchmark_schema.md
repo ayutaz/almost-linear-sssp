@@ -36,13 +36,15 @@ PYTHONPATH=scripts uv run python -m bench.schema validate results/raw/<run_id>.j
 
 | キー | 型 | null | 内容 |
 |---|---|---|---|
-| `algorithm` | string | 不可 | `dijkstra-binary` / `dijkstra-4ary` / `dijkstra-fibonacci` / `dijkstra-radix` / `bellman-ford` / `paper` / `paper-experimental` / `paper-optimized`(未知の名前も可) |
+| `algorithm` | string | 不可 | `dijkstra-binary` / `dijkstra-4ary` / `dijkstra-fibonacci` / `dijkstra-radix` / `bellman-ford` / `paper-faithful` / `paper-faithful-d1` / `paper` / `paper-experimental` / `paper-optimized`(未知の名前も可) |
 | `mode` | enum | 不可 | `baseline` / `paper-faithful` / `paper-experimental` / `practical-optimized` |
 | `params` | object | 不可 | アルゴリズムのパラメータ(閾値、乱数 seed など)。無ければ `{}` |
 
 既知の名前と `mode` の対応は固定(`schema.ALGORITHM_MODES`): Dijkstra 系と `bellman-ford` は `baseline`、
+`paper-faithful` / `paper-faithful-d1`(Mode A の入口、`include/sssp/paper.hpp` の `algorithm_name`)と
 `paper` は `paper-faithful`、`paper-experimental` は `paper-experimental`、`paper-optimized` は
-`practical-optimized`。`baseline` はこの 5 つの基準アルゴリズム専用。
+`practical-optimized`。`baseline` はこの 5 つの基準アルゴリズム専用。`paper` は外側の構成
+(Alg 8 l.8-15)のための予約名で、まだ実装が無い(ランナーは終了コード 3)。
 
 ### 2.3 環境(`scripts/bench/envinfo.py` が作り、ランナーが `--env-json` からそのまま写す)
 
