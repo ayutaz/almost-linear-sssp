@@ -70,7 +70,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Dispatches for different runners or suites must not cancel each other.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.runner }}-${{ inputs.suite }}
   cancel-in-progress: true
 
 env:
