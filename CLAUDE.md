@@ -72,6 +72,10 @@ case, size threshold, unsupported input), push a `FallbackRecord{reason, vertice
 ## Quality gate
 `make verify` (format-check, ruff, CI build with `-Werror`, ctest, clang-tidy, pytest) must pass
 before every commit. `make sanitizer` before merging algorithmic changes.
+Offloading (to spare the local machine): on a task branch, the full gate may instead run on
+GitHub Actions — push the branch as `wip/<name>` (never forced) and dispatch the `ci` and
+`sanitizer` workflows on it; the branch is merged into `main` only when both are green.
+Locally, run at least the task's own tests and `make format-check` before committing.
 `uv run python scripts/tdd.py check` must pass (every task file is consistent).
 
 ## Resuming work
@@ -109,6 +113,6 @@ before every commit. `make sanitizer` before merging algorithmic changes.
 1. RED→GREEN(→REFACTOR) evidence recorded; `tdd.py check` passes.
 2. Acceptance criteria in `docs/TASKS.md` met, including differential + tree verification
    for any SSSP implementation.
-3. `make verify` passes locally; CI is green for the pushed commit (`gh run watch`).
+3. `make verify` passes locally (or the offloaded gate is green on the `wip/` branch); CI is green for the pushed commit (`gh run watch`).
 4. `docs/PAPER_MAPPING.md`, `docs/TASKS.md`, `docs/PROGRESS.md` updated; deviations recorded.
 5. Committed with a Conventional Commit message; `tdd.py done <ID> --commit <SHA>` recorded.
