@@ -46,12 +46,14 @@ LocalHierarchyRun<W> local_hierarchy(const CsrGraph<W>& g, const PaperParams& pa
   SSSP_COUNT(++run.diag.counters["paper_experimental_local_calls"]);
 
   if (run.branch == LocalBranch::kUnsupported) {
+    const char* why = "Lambda alignment (D-8) needs N >= 2";
+    if (l.assembly == LocalAssembly::kExactHeight) {
+      why = "exact-height assembly (D-11) needs N >= 2";  // the alignment is unused (Q-60)
+    } else if (l.alignment == LocalAlignment::kPaper) {
+      why = "Sec 5.4 formulas need N >= 32 and b + 1 <= N (l.1206)";
+    }
     throw std::invalid_argument("paper_experimental::local_hierarchy: k = " + std::to_string(k) +
-                                " passes the size test but the " +
-                                (l.alignment == LocalAlignment::kPaper
-                                     ? "Sec 5.4 formulas need N >= 32 and b + 1 <= N "
-                                       "(l.1206)"
-                                     : "Lambda alignment (D-8) needs N >= 2") +
+                                " passes the size test but the " + why +
                                 "; Mode B treats this instance as a failure");
   }
   const paper::LocalHierarchyParams size = params.local_size_params(k);
