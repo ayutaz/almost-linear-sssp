@@ -1,0 +1,83 @@
+{
+  "id": "P3-EVALUATE",
+  "spec": "evaluate() runs Alg 3 (with Alg 2 Scan) on a seeded ordered hierarchy after Sec 4.1-4.2 and emits delta(pi(x)) at every protected state and only values >= delta elsewhere, with I1-I8 observable through EvalHooks and Lemma 4.7 visit counts in Diagnostics.counters",
+  "paper_ref": "Sec 4.3, Alg 2 l.1-12, Alg 3 l.1-12, Lemma 4.6, Lemma 4.7",
+  "files": {
+    "impl": [
+      "src/paper/hierarchy/evaluate.hpp",
+      "src/paper/hierarchy/evaluate.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/hierarchy/test_evaluate.cpp",
+      "tests/differential/paper/test_evaluate_vs_dijkstra.cpp",
+      "tests/property/paper/test_evaluate_property.cpp"
+    ],
+    "covers": [
+      "src/paper/hierarchy/normalize.cpp",
+      "src/paper/hierarchy/child_order.cpp",
+      "src/paper/primitives/split_findmin.hpp",
+      "tests/support/paper/eval_invariants.hpp",
+      "tests/support/paper/eval_oracle.hpp",
+      "tests/support/paper/seeded_instances.hpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "evaluate: chain hand example, first origin rule and both split sides",
+        "evaluate vs dijkstra: RandomDirectedStateGraph",
+        "evaluate property: Lemma 4.7 counts on reference hierarchies"
+      ],
+      "command": "bash -c 'cmake --build --preset debug 2>&1 | grep -E \"error|FAILED\" | sed -E \"s#^.*/(tests/[^:]*)#\\1#\" | head -6; exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "paper/hierarchy/evaluate.hpp (EvalHooks, EvalOptions, evaluate) does not exist yet: the three new test files fail to compile on the missing header of the feature under test",
+      "timestamp": "2026-11-27T11:36:35+09:00",
+      "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_evaluate_property.cpp.o \ntests/property/paper/test_evaluate_property.cpp:39:10: fatal error: 'paper/hierarchy/evaluate.hpp' file not found\n1 error generated.\nFAILED: [code=1] tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_evaluate_vs_dijkstra.cpp.o \ntests/differential/paper/test_evaluate_vs_dijkstra.cpp:26:10: fatal error: 'paper/hierarchy/evaluate.hpp' file not found\n1 error generated."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "evaluate: chain hand example, first origin rule and both split sides",
+        "evaluate vs dijkstra: RandomDirectedStateGraph",
+        "evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60",
+        "evaluate property: Lemma 4.7 counts on reference hierarchies"
+      ],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -j 8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:45:13+09:00",
+      "output_tail": "        Start 665: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n658/665 Test #664: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.03 sec\n659/665 Test #660: property:split-findmin property: blocked work per record shrinks with the blocking depth ................................................................   Passed    0.36 sec\n660/665 Test #665: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.11 sec\n661/665 Test #651: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    2.48 sec\n662/665 Test #658: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    2.34 sec\n663/665 Test #652: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    2.93 sec\n664/665 Test #611: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ...................................................................   Passed   14.78 sec\n665/665 Test #659: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed   13.56 sec\n\n100% tests passed, 0 tests failed out of 665\n\nLabel Time Summary:\ndifferential    =  25.68 sec*proc (34 tests)\nintegration     =   0.97 sec*proc (6 tests)\nproperty        =  31.85 sec*proc (24 tests)\nregression      =   0.38 sec*proc (5 tests)\nunit            = 561.71 sec*proc (596 tests)\n\nTotal Test time (real) =  89.99 sec"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "evaluate vs dijkstra: non-integer doubles stay within a rounding tolerance (D-15)"
+      ],
+      "command": "bash -c 'cmake --build --preset debug >/dev/null && ./build/debug/tests/sssp_differential_tests \"*non-integer*\" 2>&1 | grep -v \"^/\" | tail -8; exit ${PIPESTATUS[0]}'",
+      "exit_code": 42,
+      "reason": "double rounding: an exact tie D0 = b - j nu (lengths k*0.3) is computed 1 ulp above D0, so the successive subtractions of the second origin rule (Sec 4.3 l.794) leave the parent's slot and evaluate throws logic_error; the new non-integer double differential test must accept such inputs within the documented rounding tolerance",
+      "timestamp": "2026-11-27T11:49:18+09:00",
+      "output_tail": "due to unexpected exception with messages:\n  reference/3001/x0.100000 seed 3001\n  evaluate: origin rule left the parent's slot (Def 4.1 violated)\n\n===============================================================================\ntest cases:  1 |  0 passed | 1 failed\nassertions: 45 | 44 passed | 1 failed"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "evaluate vs dijkstra: non-integer doubles stay within a rounding tolerance (D-15)"
+      ],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -j 8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:49:42+09:00",
+      "output_tail": "        Start 630: differential:overflow: Bellman-Ford and Dijkstra differ by design (uint64)\n659/666 Test #616: differential:baselines agree on generated graphs: er - double ...........................................................................................   Passed    0.01 sec\n660/666 Test #629: differential:every generator family is covered by the differential test .................................................................................   Passed    0.01 sec\n661/666 Test #623: differential:baselines agree on generated graphs: tree - std::uint64_t ..................................................................................   Passed    0.02 sec\n662/666 Test #626: differential:baselines agree on generated graphs: chung_lu - double .....................................................................................   Passed    0.01 sec\n663/666 Test #631: differential:every baseline rejects an invalid source with std::out_of_range - std::uint64_t ............................................................   Passed    0.01 sec\n664/666 Test #630: differential:overflow: Bellman-Ford and Dijkstra differ by design (uint64) ..............................................................................   Passed    0.01 sec\n665/666 Test #624: differential:baselines agree on generated graphs: tree - double .........................................................................................   Passed    0.02 sec\n666/666 Test #611: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ...................................................................   Passed    6.24 sec\n\n100% tests passed, 0 tests failed out of 666\n\nLabel Time Summary:\ndifferential    =  11.62 sec*proc (35 tests)\nintegration     =   0.51 sec*proc (6 tests)\nproperty        =  12.83 sec*proc (24 tests)\nregression      =   0.08 sec*proc (5 tests)\nunit            =  72.22 sec*proc (596 tests)\n\nTotal Test time (real) =  16.03 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -j 8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:55:48+09:00",
+      "output_tail": "659/666 Test #394: unit:paper FibHeap marks on the first child loss and cuts on the second .................................................................................   Passed    0.04 sec\n        Start 517: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindmin<double>\n660/666 Test #529: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ............................   Passed    0.02 sec\n661/666 Test #515: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::DyadicSplitFindmin<double> ...................................   Passed    0.03 sec\n662/666 Test #415: unit:growth_pass heap size counts distinct outside vertices (A11) - double ..............................................................................   Passed    0.02 sec\n663/666 Test #377: unit:contraction counters report removed vertices and edges - double ....................................................................................   Passed    0.02 sec\n664/666 Test #405: unit:singleton_quotient drops loops and keeps original indices - double .................................................................................   Passed    0.03 sec\n665/666 Test #289: unit:malformed forests are reported as structural errors without crashing - std::uint64_t ...............................................................   Passed    0.02 sec\n666/666 Test #517: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindmin<double> .........................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 666\n\nLabel Time Summary:\ndifferential    =  13.97 sec*proc (35 tests)\nintegration     =   0.77 sec*proc (6 tests)\nproperty        =  14.53 sec*proc (24 tests)\nregression      =   0.13 sec*proc (5 tests)\nunit            = 127.07 sec*proc (596 tests)\n\nTotal Test time (real) =  21.13 sec"
+    }
+  ],
+  "commit": null
+}
