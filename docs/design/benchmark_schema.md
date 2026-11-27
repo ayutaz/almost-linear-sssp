@@ -1,144 +1,146 @@
-# ベンチマーク結果のスキーマ(JSONL, schema_version "1")
+# Schema of benchmark results (JSONL, schema_version "1")
 
-ベンチマークの結果は `results/raw/<run_id>.jsonl` に、1 行 1 レコードの JSON で保存する。
-検証器は `scripts/bench/schema.py`(`validate_record`)で、この文書と同じ規則を実装している。
-計測の手順は [benchmark_protocol.md](benchmark_protocol.md)、ランナーの引数は
-[benchmark_runner_cli.md](benchmark_runner_cli.md) を参照する。
+**English** | [日本語](benchmark_schema.ja.md) | [简体中文](benchmark_schema.zh-CN.md)
+
+Benchmark results are stored in `results/raw/<run_id>.jsonl`, one JSON record per line.
+The validator `scripts/bench/schema.py` (`validate_record`) implements the same rules as this document.
+For the measurement procedure see [benchmark_protocol.md](benchmark_protocol.md), and for the runner's arguments see
+[benchmark_runner_cli.md](benchmark_runner_cli.md).
 
 ```sh
-PYTHONPATH=scripts uv run python -m bench.schema validate results/raw/<run_id>.jsonl   # 0: 有効, 1: 違反あり
+PYTHONPATH=scripts uv run python -m bench.schema validate results/raw/<run_id>.jsonl   # 0: valid, 1: violations found
 ```
 
-## 1. 全体の規則
+## 1. General rules
 
-- **下表のキーはすべて必須**。値が無いときもキーは省略せず、`null` を書く。表に無いキーは違反とする(誤字の検出のため)。
-- **未計測の値は `null`。`0` を入れない。** 時間 `times_ns.*` は 1 以上の整数か `null`。
-  `peak_rss_bytes`、`rss_after_graph_bytes`、`ram_bytes` は 1 以上の整数か `null`。
-- 整数のフィールドに `true`/`false` や `1000.0` を入れない(JSON の数値でも整数として書く)。
-- 1 レコード = 1 回の SSSP 実行(1 アルゴリズム × 1 グラフ × 1 始点 × 1 試行)。
-  ただし失敗レコード(§4)は、ランナー 1 プロセス(ジョブ)が何も出力できなかったことを表す。
-- ホスト名・ユーザー名・ローカルの絶対パスは記録しない(公開リポジトリのため)。
+- **Every key in the tables below is required.** When there is no value, do not omit the key; write `null`. A key not in the tables is a violation (to catch typos).
+- **An unmeasured value is `null`. Never put `0`.** The times `times_ns.*` are an integer >= 1 or `null`.
+  `peak_rss_bytes`, `rss_after_graph_bytes` and `ram_bytes` are an integer >= 1 or `null`.
+- Do not put `true`/`false` or `1000.0` in an integer field (write it as an integer even in JSON numbers).
+- One record = one SSSP run (1 algorithm x 1 graph x 1 source x 1 trial).
+  A failure record (§4), however, means that one runner process (job) could not output anything.
+- Do not record host names, user names or local absolute paths (this is a public repository).
 
-## 2. フィールド
+## 2. Fields
 
-### 2.1 実行と再現性
+### 2.1 Run and reproducibility
 
-| キー | 型 | null | 内容 |
+| Key | Type | null | Meaning |
 |---|---|---|---|
-| `schema_version` | string | 不可 | 常に `"1"` |
-| `run_id` | string | 不可 | `scripts/run_benchmarks.sh` の 1 回の実行の ID(例 `standard-20261127T013000Z-d5a55e7`) |
-| `timestamp` | string | 不可 | ISO-8601、**UTC オフセット必須**(例 `2026-11-27T10:30:00+09:00`) |
-| `paper_version` | string | 不可 | 再現対象の論文版。`2611.34911v1`(形式 `NNNN.NNNNNvN`) |
-| `git_sha` | string | 不可 | 計測したソースのコミット(16 進 7〜40 桁) |
-| `git_dirty` | bool | 不可 | 作業ツリーに未コミットの変更があったか。`true` の結果は公表値に使わない |
+| `schema_version` | string | not allowed | Always `"1"` |
+| `run_id` | string | not allowed | ID of one execution of `scripts/run_benchmarks.sh` (e.g. `standard-20261127T013000Z-d5a55e7`) |
+| `timestamp` | string | not allowed | ISO-8601, **UTC offset required** (e.g. `2026-11-27T10:30:00+09:00`) |
+| `paper_version` | string | not allowed | Paper version being reproduced. `2611.34911v1` (format `NNNN.NNNNNvN`) |
+| `git_sha` | string | not allowed | Commit of the measured source (7 to 40 hexadecimal digits) |
+| `git_dirty` | bool | not allowed | Whether the working tree had uncommitted changes. Results with `true` are not used for published values |
 
-### 2.2 アルゴリズム
+### 2.2 Algorithm
 
-| キー | 型 | null | 内容 |
+| Key | Type | null | Meaning |
 |---|---|---|---|
-| `algorithm` | string | 不可 | `dijkstra-binary` / `dijkstra-4ary` / `dijkstra-fibonacci` / `dijkstra-radix` / `bellman-ford` / `paper-faithful` / `paper-faithful-d1` / `paper` / `paper-experimental` / `paper-optimized` / `practical-local`(未知の名前も可) |
-| `mode` | enum | 不可 | `baseline` / `paper-faithful` / `paper-experimental` / `practical-optimized` |
-| `params` | object | 不可 | アルゴリズムのパラメータ(閾値、乱数 seed など)。無ければ `{}` |
+| `algorithm` | string | not allowed | `dijkstra-binary` / `dijkstra-4ary` / `dijkstra-fibonacci` / `dijkstra-radix` / `bellman-ford` / `paper-faithful` / `paper-faithful-d1` / `paper` / `paper-experimental` / `paper-optimized` / `practical-local` (unknown names are also accepted) |
+| `mode` | enum | not allowed | `baseline` / `paper-faithful` / `paper-experimental` / `practical-optimized` |
+| `params` | object | not allowed | Algorithm parameters (thresholds, random seeds, etc.). `{}` if none |
 
-既知の名前と `mode` の対応は固定(`schema.ALGORITHM_MODES`): Dijkstra 系と `bellman-ford` は `baseline`、
-`paper-faithful` / `paper-faithful-d1`(Mode A の入口、`include/sssp/paper.hpp` の `algorithm_name`)と
-`paper` は `paper-faithful`、`paper-experimental` は `paper-experimental`、`paper-optimized` は
-`practical-optimized`、`practical-local`(Mode C、論文を参考にした実装で Theorem 1 の計算量は主張しない。`uint64` のみで、
-`weight_type = double` のレコードは検証が拒む)は `practical-optimized`。`baseline` はこの 5 つの基準アルゴリズム専用。`paper` は外側の構成
-(Alg 8 l.8-15)のための予約名で、まだ実装が無い(ランナーは終了コード 3)。
+The correspondence between known names and `mode` is fixed (`schema.ALGORITHM_MODES`): the Dijkstra family and `bellman-ford` are `baseline`;
+`paper-faithful` / `paper-faithful-d1` (the Mode A entry point, `algorithm_name` in `include/sssp/paper.hpp`) and
+`paper` are `paper-faithful`; `paper-experimental` is `paper-experimental`; `paper-optimized` is
+`practical-optimized`; `practical-local` (Mode C, a paper-inspired implementation that does not claim the complexity of Theorem 1; `uint64` only,
+and a record with `weight_type = double` is rejected by the validator) is `practical-optimized`. `baseline` is reserved for these 5 baseline algorithms. `paper` is a reserved name for the outer construction
+(Alg 8 l.8-15) and is not implemented yet (the runner exits with code 3).
 
-### 2.3 環境(`scripts/bench/envinfo.py` が作り、ランナーが `--env-json` からそのまま写す)
+### 2.3 Environment (made by `scripts/bench/envinfo.py`; the runner copies it as is from `--env-json`)
 
-| キー | 型 | null | 内容 |
+| Key | Type | null | Meaning |
 |---|---|---|---|
-| `os` | string | 不可 | 例 `macOS 26.2 (25C56); Darwin 25.2.0`、`Ubuntu 24.04 LTS; Linux 6.8.0` |
-| `cpu` | object | 不可 | `{brand, logical_cores, physical_cores, perf_cores, efficiency_cores}`。各値は null 可。P/E コア数は macOS の `hw.perflevel0/1.physicalcpu`、Linux では null |
-| `ram_bytes` | int | 可 | 物理メモリ量 |
-| `arch` | string | 不可 | `platform.machine()`(`arm64`、`x86_64` など) |
-| `compiler` | string | 可 | `<CMAKE_CXX_COMPILER> --version` の 1 行目 |
-| `build_type` | string | 不可 | `CMAKE_BUILD_TYPE`。CMakeCache.txt が読めない環境のレコードは無効になる |
-| `build_flags` | string | 可 | `compile_commands.json` の実効フラグ(パス・入出力を除く)。無ければ CMakeCache の `CMAKE_CXX_FLAGS[_<TYPE>]` |
-| `diagnostics_enabled` | bool | 不可 | `SSSP_DIAGNOSTICS`(`release-diag` で true) |
-| `power` | object | 可 | `{source: "AC"/"Battery"/"UPS"/null, battery_percent, low_power_mode, cpu_speed_limit}`。`cpu_speed_limit` は `pmset -g therm` の `CPU_Speed_Limit`(記録が無ければ null) |
-| `load_average` | [number×3] | 可 | 計測開始時の 1/5/15 分 load average |
+| `os` | string | not allowed | e.g. `macOS 26.2 (25C56); Darwin 25.2.0`, `Ubuntu 24.04 LTS; Linux 6.8.0` |
+| `cpu` | object | not allowed | `{brand, logical_cores, physical_cores, perf_cores, efficiency_cores}`. Each value may be null. P/E core counts come from `hw.perflevel0/1.physicalcpu` on macOS and are null on Linux |
+| `ram_bytes` | int | allowed | Amount of physical memory |
+| `arch` | string | not allowed | `platform.machine()` (`arm64`, `x86_64`, etc.) |
+| `compiler` | string | allowed | First line of `<CMAKE_CXX_COMPILER> --version` |
+| `build_type` | string | not allowed | `CMAKE_BUILD_TYPE`. A record from an environment where CMakeCache.txt cannot be read is invalid |
+| `build_flags` | string | allowed | Effective flags from `compile_commands.json` (excluding paths and inputs/outputs). If absent, `CMAKE_CXX_FLAGS[_<TYPE>]` from CMakeCache |
+| `diagnostics_enabled` | bool | not allowed | `SSSP_DIAGNOSTICS` (true for `release-diag`) |
+| `power` | object | allowed | `{source: "AC"/"Battery"/"UPS"/null, battery_percent, low_power_mode, cpu_speed_limit}`. `cpu_speed_limit` is `CPU_Speed_Limit` from `pmset -g therm` (null if there is no record) |
+| `load_average` | [number×3] | allowed | 1/5/15-minute load average at the start of measurement |
 
-### 2.4 グラフ
+### 2.4 Graph
 
-| キー | 型 | null | 内容 |
+| Key | Type | null | Meaning |
 |---|---|---|---|
-| `graph_type` | string | 不可 | `sssp_gen --type` の名前(`er`、`grid`、`ba`、…) |
-| `n` | int ≥ 1 | 不可 | 実際の頂点数 |
-| `m` | int ≥ 0 | 失敗時のみ可 | 実際の無向辺数(生成後、重複除去後) |
-| `avg_degree` | number | 可 | 指定した名目の平均次数 d(= 2m/n の目標)。次数が族で決まるもの(`grid`、`road`、`tree`、`adversarial_long_path`)は null |
-| `weight_dist` | string | 不可 | `sssp_gen --weights` の名前。重みが構成で決まる族は `builtin` |
-| `weight_type` | enum | 不可 | `uint64` / `double`(`sssp_gen --weight-type` と同じ) |
-| `seed` | int ≥ 0 | 不可 | グラフ生成と始点選択の seed |
-| `source` | int | 失敗時のみ可 | 始点。`0 ≤ source < n` |
-| `reachable` | int | 可 | 始点から到達可能な頂点数(`≤ n`) |
+| `graph_type` | string | not allowed | Name from `sssp_gen --type` (`er`, `grid`, `ba`, ...) |
+| `n` | int ≥ 1 | not allowed | Actual number of vertices |
+| `m` | int ≥ 0 | only on failure | Actual number of undirected edges (after generation and removal of duplicates) |
+| `avg_degree` | number | allowed | Nominal average degree d that was specified (the target of 2m/n). null for families whose degree is fixed by the family (`grid`, `road`, `tree`, `adversarial_long_path`) |
+| `weight_dist` | string | not allowed | Name from `sssp_gen --weights`. `builtin` for families whose weights are fixed by construction |
+| `weight_type` | enum | not allowed | `uint64` / `double` (same as `sssp_gen --weight-type`) |
+| `seed` | int ≥ 0 | not allowed | Seed for graph generation and source selection |
+| `source` | int | only on failure | Source. `0 ≤ source < n` |
+| `reachable` | int | allowed | Number of vertices reachable from the source (`≤ n`) |
 
-### 2.5 試行
+### 2.5 Trial
 
-| キー | 型 | null | 内容 |
+| Key | Type | null | Meaning |
 |---|---|---|---|
-| `trial` | int ≥ 0 | 失敗時のみ可 | 試行番号(ウォームアップも 0 から数える) |
-| `warmup` | bool | 不可 | ウォームアップの実行か。true は統計から除外 |
-| `order_seed` | int | 可 | 実行順シャッフルの seed |
-| `isolated` | bool | 不可 | このプロセスで 1 アルゴリズムだけを実行したか(`--isolate`) |
-| `status` | enum | 不可 | `ok` / `timeout` / `memory_limit` / `error` |
-| `error` | string | 可 | 失敗の説明 |
+| `trial` | int ≥ 0 | only on failure | Trial number (warm-up runs are also counted from 0) |
+| `warmup` | bool | not allowed | Whether this is a warm-up run. true is excluded from statistics |
+| `order_seed` | int | allowed | Seed of the execution-order shuffle |
+| `isolated` | bool | not allowed | Whether this process ran only one algorithm (`--isolate`) |
+| `status` | enum | not allowed | `ok` / `timeout` / `memory_limit` / `error` |
+| `error` | string | allowed | Description of the failure |
 
-### 2.6 計測値
+### 2.6 Measured values
 
-| キー | 型 | null | 内容 |
+| Key | Type | null | Meaning |
 |---|---|---|---|
-| `times_ns` | object | 不可 | 下の 6 キーをちょうど持つ。各値は 1 以上の整数 [ns] か null |
-| `peak_rss_bytes` | int | 可 | 終了直前の `ru_maxrss`(bytes に正規化)。`isolated=false` では必ず null |
-| `rss_after_graph_bytes` | int | 可 | グラフ構築直後の `ru_maxrss`(bytes) |
-| `ops` | object | 可 | `include/sssp/result.hpp` の `OpCounters` の 8 キー(`vertex_scans`, `edge_scans`, `relaxations`, `comparisons`, `additions`, `queue_pushes`, `queue_pops`, `decrease_keys`)の部分集合。値は 0 以上の整数 |
-| `counters` | object | 可 | `Diagnostics::counters`(名前 → 0 以上の整数) |
-| `fallback` | object | 可 | `{count, records: [{reason, vertices, edges}], vertices, edges}`。`count = len(records)`、`vertices`/`edges` は records の和。記録していない場合は null |
-| `correctness` | object | 不可 | `{verified, ok, method}` |
+| `times_ns` | object | not allowed | Has exactly the 6 keys below. Each value is an integer >= 1 [ns] or null |
+| `peak_rss_bytes` | int | allowed | `ru_maxrss` just before exit (normalised to bytes). Always null when `isolated=false` |
+| `rss_after_graph_bytes` | int | allowed | `ru_maxrss` just after graph construction (bytes) |
+| `ops` | object | allowed | A subset of the 8 keys of `OpCounters` in `include/sssp/result.hpp` (`vertex_scans`, `edge_scans`, `relaxations`, `comparisons`, `additions`, `queue_pushes`, `queue_pops`, `decrease_keys`). Values are integers ≥ 0 |
+| `counters` | object | allowed | `Diagnostics::counters` (name → integer ≥ 0) |
+| `fallback` | object | allowed | `{count, records: [{reason, vertices, edges}], vertices, edges}`. `count = len(records)`, and `vertices`/`edges` are the sums over records. null when not recorded |
+| `correctness` | object | not allowed | `{verified, ok, method}` |
 
-`times_ns` のキー(区間の定義は benchmark_protocol.md §4):
+Keys of `times_ns` (the definition of each interval is in benchmark_protocol.md §4):
 
-| キー | 内容 |
+| Key | Meaning |
 |---|---|
-| `graph_gen` | グラフの生成または読み込み |
-| `preprocess` | アルゴリズム固有の前処理(無ければ null) |
-| `sssp` | SSSP 本体 |
-| `tree` | 最短経路木の構築(本体と分離できなければ null) |
-| `end_to_end` | 前処理 + 本体 + 木(グラフ生成と検証は含まない) |
-| `verify` | 正解検証(計測区間の外) |
+| `graph_gen` | Generation or loading of the graph |
+| `preprocess` | Algorithm-specific preprocessing (null if none) |
+| `sssp` | The SSSP body |
+| `tree` | Construction of the shortest-path tree (null if it cannot be separated from the body) |
+| `end_to_end` | Preprocessing + body + tree (excludes graph generation and verification) |
+| `verify` | Verification of correctness (outside the measured interval) |
 
 `correctness`:
 
-- `verified=false`(検証していない): `ok` と `method` は null。
-- `verified=true`: `ok` は bool、`method` は文字列(例 `reference:dijkstra-binary`、`bellman-ford`、`tree-check`)。
+- `verified=false` (not verified): `ok` and `method` are null.
+- `verified=true`: `ok` is a bool and `method` is a string (e.g. `reference:dijkstra-binary`, `bellman-ford`, `tree-check`).
 
-## 3. 整合性の規則
+## 3. Consistency rules
 
-| 規則 | 理由 |
+| Rule | Reason |
 |---|---|
-| `status=ok` なら `m`、`source`、`trial`、`times_ns.sssp`、`times_ns.end_to_end` は null 不可 | 成功した計測は必ずこれらを持つ |
-| `times_ns.end_to_end ≥ preprocess, sssp, tree`(両方が値を持つとき) | 内訳が合計を超えない |
-| `correctness.ok=false` なら `status=error` | 誤った結果の時間を統計に入れない |
-| `diagnostics_enabled=false` なら `ops` と `counters` は null | release ではカウンタがコンパイルで消える。0 を書くと「数えて 0」と区別できない |
-| `isolated=false` なら `peak_rss_bytes` は null | 複数アルゴリズムを同じプロセスで動かすと Peak RSS がどれのものか分からない |
-| 既知のアルゴリズムの `mode` は固定。`baseline` は基準アルゴリズム専用 | 比較の分類を誤らない |
-| `dijkstra-radix` は `weight_type=uint64` のみ | radix heap は単調な整数キーが前提 |
-| `0 ≤ source < n`、`reachable ≤ n` | 範囲 |
+| If `status=ok`, `m`, `source`, `trial`, `times_ns.sssp` and `times_ns.end_to_end` must not be null | A successful measurement always has them |
+| `times_ns.end_to_end ≥ preprocess, sssp, tree` (when both have values) | The parts do not exceed the total |
+| If `correctness.ok=false`, then `status=error` | The time of an incorrect result is not put into statistics |
+| If `diagnostics_enabled=false`, `ops` and `counters` are null | In release the counters are compiled out. Writing 0 could not be told apart from "counted, and it was 0" |
+| If `isolated=false`, `peak_rss_bytes` is null | When several algorithms run in the same process, it is unclear which one a Peak RSS belongs to |
+| `mode` of a known algorithm is fixed. `baseline` is for the baseline algorithms only | Do not misclassify the comparison |
+| `dijkstra-radix` is `weight_type=uint64` only | The radix heap requires monotone integer keys |
+| `0 ≤ source < n`, `reachable ≤ n` | Range |
 
-## 4. 失敗レコード
+## 4. Failure records
 
-ランナーが時間切れ・メモリ不足・異常終了で何も書けなかったとき、`scripts/run_benchmarks.sh` が
-`python -m bench.schema failure ...` で 1 件追記する(`schema.make_failure_record`)。
+When the runner could not write anything because of a timeout, out of memory or abnormal termination, `scripts/run_benchmarks.sh` appends one record with
+`python -m bench.schema failure ...` (`schema.make_failure_record`).
 
-- `status` は `timeout` / `memory_limit` / `error`、`error` に理由(例 `timeout after 600 s (exit 142)`)。
-- 分からない値は null: `m`、`source`、`reachable`、`trial`、`times_ns.*`、`peak_rss_bytes`、`rss_after_graph_bytes`、
-  `ops`、`counters`、`fallback`。`correctness` は `{verified: false, ok: null, method: null}`。
-- 環境フィールドはそのジョブの `--env-json` から写す。
+- `status` is `timeout` / `memory_limit` / `error`, and `error` holds the reason (e.g. `timeout after 600 s (exit 142)`).
+- Unknown values are null: `m`, `source`, `reachable`, `trial`, `times_ns.*`, `peak_rss_bytes`, `rss_after_graph_bytes`,
+  `ops`, `counters`, `fallback`. `correctness` is `{verified: false, ok: null, method: null}`.
+- The environment fields are copied from that job's `--env-json`.
 
-## 5. 例(形式の説明用。数値は計測値ではない)
+## 5. Example (to illustrate the format; the numbers are not measured values)
 
 ```json
 {"schema_version": "1", "run_id": "EXAMPLE", "timestamp": "2026-11-27T10:00:00+09:00",
@@ -157,9 +159,9 @@ PYTHONPATH=scripts uv run python -m bench.schema validate results/raw/<run_id>.j
  "correctness": {"verified": true, "ok": true, "method": "reference:dijkstra-binary"}}
 ```
 
-(実際のファイルでは 1 レコードを 1 行に書く。)
+(In an actual file, one record is written on one line.)
 
-## 6. 変更の手順
+## 6. Procedure for changes
 
-スキーマを変えるときは `schema_version` を上げ、`scripts/bench/schema.py` と
-`tests/python/test_bench_schema.py` を先に(テストから)直す。古い版のレコードは検証で弾かれる。
+When changing the schema, raise `schema_version`, and fix `scripts/bench/schema.py` and
+`tests/python/test_bench_schema.py` first (starting from the tests). Records of an older version are rejected by validation.
