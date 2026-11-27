@@ -97,12 +97,12 @@ Last updated: 2026-11-27T11:15+0900
 <!-- AUTO:precompact -->
 ## Automatic snapshot (PreCompact)
 
-- Generated: 2026-11-27T12:08:08+09:00
+- Generated: 2026-11-27T12:27:10+09:00
 - trigger: auto
 
 ### Completed tasks
 
-- 67 tasks (last 10: P3-NORMALIZE, P3-OUTER-BASE, P3-OWNER-DECOMP, P3-PAPER-SSSP, P3-RADIAL-STATES, P3-SEARCH-SELECT, P3-SFM-BLOCKED, P3-SFM-DYADIC, P3-SFM-REF, P3-THRESHOLD-JOINS)
+- 72 tasks (last 10: P3-NORMALIZE, P3-OUTER-BASE, P3-OWNER-DECOMP, P3-PAPER-SSSP, P3-RADIAL-STATES, P3-SEARCH-SELECT, P3-SFM-BLOCKED, P3-SFM-DYADIC, P3-SFM-REF, P3-THRESHOLD-JOINS)
 
 ### Active tasks
 
@@ -118,7 +118,7 @@ Last updated: 2026-11-27T11:15+0900
 
 ### Last commit
 
-- f583fd8 docs(tdd): close P3-EVALUATE; the portioned evaluator moves to P3-EVAL-PORTIONED (3 minutes ago)
+- 80c0c1b docs(test-support): the Evaluate differential tests exist now (6 seconds ago)
 
 ### PAPER_MAPPING.md excerpt
 
