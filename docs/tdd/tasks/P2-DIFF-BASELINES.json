@@ -8,7 +8,7 @@
    "tests/differential/test_baselines_differential.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "GREEN",
@@ -26,5 +26,5 @@
    "output_tail": "230/230 Test #159: unit:constant weights all equal lo - double .............................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 230\n\nLabel Time Summary:\ndifferential    =   2.47 sec*proc (25 tests)\nintegration     =   0.80 sec*proc (6 tests)\nproperty        =   0.91 sec*proc (7 tests)\nregression      =   0.03 sec*proc (2 tests)\nunit            =  12.11 sec*proc (190 tests)\n\nTotal Test time (real) =   2.93 sec"
   }
  ],
- "commit": null
+ "commit": "2d1cd41"
 }

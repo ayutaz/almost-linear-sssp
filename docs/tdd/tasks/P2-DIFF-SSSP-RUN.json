@@ -10,7 +10,7 @@
    "tests/python/test_cross_language.py"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -34,5 +34,5 @@
    "output_tail": "230/230 Test #159: unit:constant weights all equal lo - double .............................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 230\n\nLabel Time Summary:\ndifferential    =   2.47 sec*proc (25 tests)\nintegration     =   0.80 sec*proc (6 tests)\nproperty        =   0.91 sec*proc (7 tests)\nregression      =   0.03 sec*proc (2 tests)\nunit            =  12.11 sec*proc (190 tests)\n\nTotal Test time (real) =   2.93 sec\n........................................................................ [ 33%]\n........................................................................ [ 67%]\n......................................................................   [100%]\n214 passed in 8.22s"
   }
  ],
- "commit": null
+ "commit": "0bfffc6"
 }
