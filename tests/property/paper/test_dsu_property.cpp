@@ -11,6 +11,8 @@
 
 using sssp::paper::DisjointSets;
 
+// The bound is checked on counted operations, which exist only with SSSP_DIAGNOSTICS=1.
+#if SSSP_DIAGNOSTICS
 namespace {
 
 std::uint64_t ceil_log2(std::uint64_t x) {
@@ -29,7 +31,6 @@ std::uint64_t band_bound(std::uint64_t k, std::uint64_t finds) {
 
 }  // namespace
 
-#if SSSP_DIAGNOSTICS
 TEST_CASE("dsu find traversals obey the Lemma 3.6 band bound on random op sequences",
           "[paper][dsu][property]") {
   for (const std::uint64_t seed : {11u, 12u, 13u, 14u, 15u, 16u, 17u, 18u}) {
