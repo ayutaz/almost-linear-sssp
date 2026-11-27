@@ -1,0 +1,44 @@
+{
+  "id": "P0-CI-OFFLOAD-TOOLS",
+  "spec": "Repository tools to offload the full gate to GitHub Actions: scripts/ci/offload.sh (non-forced push to wip/<name>, public-safety first, dispatch ci+sanitizer os=ubuntu), scripts/ci/wait.py (one gh run list per workflow every 90 s, match runs by SHA in the run title, ignore runs created before --since, exit 0 iff all success), scripts/ci/changed_tidy.sh (clang-tidy on changed src/ tools/ .cpp, Makefile tidy settings)",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      "scripts/ci/wait.py",
+      "scripts/ci/offload.sh",
+      "scripts/ci/changed_tidy.sh"
+    ],
+    "tests": [
+      "tests/python/test_ci_wait.py"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "uv run pytest tests/python/test_ci_wait.py -q",
+      "exit_code": 1,
+      "reason": "scripts/ci/wait.py does not exist yet: every test fails when loading it",
+      "timestamp": "2026-11-27T18:29:35+09:00",
+      "output_tail": "\n<frozen importlib._bootstrap_external>:953: FileNotFoundError\n=========================== short test summary info ============================\nFAILED tests/python/test_ci_wait.py::test_repo_comes_from_gh_repo_view_without_env\nERROR tests/python/test_ci_wait.py::test_run_is_matched_by_the_sha_in_its_title\nERROR tests/python/test_ci_wait.py::test_short_sha_matches_the_full_sha_in_the_title\nERROR tests/python/test_ci_wait.py::test_waits_until_a_run_with_the_sha_appears\nERROR tests/python/test_ci_wait.py::test_in_progress_run_is_waited_for - File...\nERROR tests/python/test_ci_wait.py::test_run_created_before_since_is_ignored\nERROR tests/python/test_ci_wait.py::test_only_old_runs_means_keep_waiting - F...\nERROR tests/python/test_ci_wait.py::test_since_accepts_an_utc_offset - FileNo...\nERROR tests/python/test_ci_wait.py::test_newest_matching_run_after_since_wins\nERROR tests/python/test_ci_wait.py::test_exit_code_is_non_zero_unless_every_run_succeeded[failure]\nERROR tests/python/test_ci_wait.py::test_exit_code_is_non_zero_unless_every_run_succeeded[cancelled]\nERROR tests/python/test_ci_wait.py::test_exit_code_is_non_zero_unless_every_run_succeeded[timed_out]\nERROR tests/python/test_ci_wait.py::test_exit_code_is_non_zero_unless_every_run_succeeded[skipped]\nERROR tests/python/test_ci_wait.py::test_exit_code_zero_when_all_shas_and_workflows_succeed\nERROR tests/python/test_ci_wait.py::test_timeout_exits_with_2 - FileNotFoundE...\nERROR tests/python/test_ci_wait.py::test_gh_error_is_retried_not_fatal - File...\nERROR tests/python/test_ci_wait.py::test_one_run_list_per_workflow_per_poll_for_all_shas"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "uv run pytest tests/python/test_ci_wait.py -q",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:30:02+09:00",
+      "output_tail": ".................                                                        [100%]"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "uv run pytest tests/python/test_ci_wait.py -q",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:31:40+09:00",
+      "output_tail": ".................                                                        [100%]"
+    }
+  ],
+  "commit": null
+}
