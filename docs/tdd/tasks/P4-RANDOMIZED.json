@@ -1,0 +1,32 @@
+{
+  "id": "P4-RANDOMIZED",
+  "kind": "test-only",
+  "test_only_reason": "Verification only: NameRoutes, Estimate and the Mode B entry already exist and were developed test-first (P3-NAME-ROUTES, P3-ESTIMATE, P5-EXP-NAMEROUTES); this task adds seed sweeps and statistical measurements of their existing behaviour and changes no implementation file",
+  "spec": "Las Vegas checks of Sec 6: NameRoutes (Alg 5) and Estimate (Alg 6) give valid certificates on every one of >= 1000 seeds per instance family (uint64 and dyadic double), in Mode A and under the Mode B deviations D-9, D-10 and D-17; the per-trial acceptance rate and the trial-count distribution are measured and tested against Lemma 6.8(2) with a stated false-positive bound",
+  "paper_ref": "Sec 6, Definition 6.1, Algorithm 5, Algorithm 6, Lemmas 6.5, 6.6, 6.7, 6.8",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/property/paper/randomized_support.hpp",
+      "tests/property/paper/test_randomized_las_vegas_property.cpp",
+      "tests/property/paper_experimental/test_randomized_mode_b_property.cpp"
+    ],
+    "covers": [
+      "src/paper/pivots/name_routes.cpp",
+      "src/paper/pivots/estimate.cpp",
+      "src/experimental/paper_experimental/name_routes.cpp"
+    ]
+  },
+  "phase": "GREEN",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "ctest --preset ci -R P4-RANDOMIZED -LE slow -j 4",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:25:03+09:00",
+      "output_tail": "      Start 1124: property:P4-RANDOMIZED Mode B D-9 + D-10 NameRoutes: cap hits with the paper's P\n 5/12 Test #1111: property:P4-RANDOMIZED Mode A Estimate: separation at one scale (Lemma 6.5) ...................   Passed   10.61 sec\n      Start 1125: property:P4-RANDOMIZED Mode B D-17 NameRoutes: certificates, measured acceptance, cap hits\n 6/12 Test #1124: property:P4-RANDOMIZED Mode B D-9 + D-10 NameRoutes: cap hits with the paper's P ..............   Passed    4.36 sec\n      Start 1126: property:P4-RANDOMIZED Mode B D-9 Estimate: Z >= d_S and the scan bound (Q-64)\n 7/12 Test #1106: property:P4-RANDOMIZED Mode A NameRoutes: certificates and acceptance, uint64 .................   Passed   16.44 sec\n      Start 1127: property:P4-RANDOMIZED Mode B D-9 Estimate: the P3-ESTIMATE scan bound configuration (Q-64)\n 8/12 Test #1126: property:P4-RANDOMIZED Mode B D-9 Estimate: Z >= d_S and the scan bound (Q-64) ................   Passed    3.28 sec\n      Start 1128: property:P4-RANDOMIZED Mode B D-9 Estimate: separation at one scale (Lemma 6.5, Q-64)\n 9/12 Test #1127: property:P4-RANDOMIZED Mode B D-9 Estimate: the P3-ESTIMATE scan bound configuration (Q-64) ...   Passed    1.57 sec\n10/12 Test #1123: property:P4-RANDOMIZED Mode B D-9 NameRoutes: certificates and acceptance .....................   Passed   13.10 sec\n11/12 Test #1128: property:P4-RANDOMIZED Mode B D-9 Estimate: separation at one scale (Lemma 6.5, Q-64) .........   Passed    5.15 sec\n12/12 Test #1125: property:P4-RANDOMIZED Mode B D-17 NameRoutes: certificates, measured acceptance, cap hits ....   Passed   18.56 sec\n\n100% tests passed, 0 tests failed out of 12\n\nLabel Time Summary:\nproperty    =  89.68 sec*proc (12 tests)\n\nTotal Test time (real) =  38.67 sec"
+    }
+  ],
+  "commit": null
+}
