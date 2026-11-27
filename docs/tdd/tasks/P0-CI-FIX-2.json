@@ -10,7 +10,7 @@
       "clang 22 ci-release build of benchmark and benchmark_main emits no -Wc2y-extensions diagnostic"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -37,5 +37,5 @@
       "output_tail": "benchmark/benchmark_main: no -Wc2y-extensions diagnostic\nbuild/clang22-ci-release: flag on 20 benchmark TUs, on none of 129 own TUs\nbuild/clang22-ci: flag on 20 benchmark TUs, on none of 129 own TUs\nci-release: all targets built\nregression      =   0.11 sec*proc (6 tests)\nunit            = 134.27 sec*proc (790 tests)\n\nTotal Test time (real) =  83.54 sec"
     }
   ],
-  "commit": null
+  "commit": "76f3930"
 }
