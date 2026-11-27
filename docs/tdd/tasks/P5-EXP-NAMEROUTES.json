@@ -18,7 +18,7 @@
       "src/experimental/paper_experimental/params.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -54,5 +54,5 @@
       "output_tail": "          Start 1089: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex\n1093/1100 Test #1097: unit:bench-driver:size limits of the registry are refusals, not results .................................................................................   Passed    0.08 sec\n1094/1100 Test #1088: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.05 sec\n1095/1100 Test #1006: differential:every baseline rejects an invalid source with std::out_of_range - double ...................................................................   Passed    0.13 sec\n1096/1100 Test #1099: unit:bench-driver:driver arguments are parsed and validated .............................................................................................   Passed    0.10 sec\n1097/1100 Test #1090: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.05 sec\n1098/1100 Test #1096: unit:bench-driver:check_case rejects wrong results instead of timing them ...............................................................................   Passed    0.07 sec\n1099/1100 Test #1089: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.05 sec\n1100/1100 Test #1035: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  120.88 sec\n\n100% tests passed, 0 tests failed out of 1100\n\nLabel Time Summary:\ndifferential    = 107.70 sec*proc (73 tests)\nintegration     =   1.88 sec*proc (7 tests)\nproperty        = 267.92 sec*proc (71 tests)\nregression      =   0.32 sec*proc (6 tests)\nunit            = 384.04 sec*proc (943 tests)\n\nTotal Test time (real) = 121.67 sec"
     }
   ],
-  "commit": null
+  "commit": "e69419f"
 }
