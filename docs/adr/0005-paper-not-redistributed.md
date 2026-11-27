@@ -1,4 +1,7 @@
 # 0005. The paper is not redistributed
+
+**English** | [日本語](0005-paper-not-redistributed.ja.md) | [简体中文](0005-paper-not-redistributed.zh-CN.md)
+
 - Status: Accepted
 - Date: 2026-11-27
 

@@ -1,4 +1,7 @@
 # 0004. Pinned dependencies
+
+**English** | [日本語](0004-pinned-dependencies.ja.md) | [简体中文](0004-pinned-dependencies.zh-CN.md)
+
 - Status: Accepted
 - Date: 2026-11-27
 

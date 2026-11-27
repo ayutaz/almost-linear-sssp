@@ -1,4 +1,7 @@
 # 0001. Common CSR graph representation for all algorithms
+
+**English** | [日本語](0001-common-csr-representation.ja.md) | [简体中文](0001-common-csr-representation.zh-CN.md)
+
 - Status: Accepted
 - Date: 2026-11-27
 

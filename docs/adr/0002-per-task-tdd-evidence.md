@@ -1,4 +1,7 @@
 # 0002. Per-task TDD evidence files
+
+**English** | [日本語](0002-per-task-tdd-evidence.ja.md) | [简体中文](0002-per-task-tdd-evidence.zh-CN.md)
+
 - Status: Accepted
 - Date: 2026-11-27
 

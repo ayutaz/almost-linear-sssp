@@ -1,4 +1,7 @@
 # 0003. Separate paper-faithful, paper-experimental and practical modes
+
+**English** | [日本語](0003-three-implementation-modes.ja.md) | [简体中文](0003-three-implementation-modes.zh-CN.md)
+
 - Status: Accepted
 - Date: 2026-11-27
 
