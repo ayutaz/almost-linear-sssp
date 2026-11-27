@@ -1,0 +1,29 @@
+{
+ "id": "P2-DIFF-REGULAR-SWITCH",
+ "spec": "random_regular(n, d, kSwitchToSimple) returns a simple, exactly d-regular graph for every n*d even, d < n (include/sssp/generators.hpp); regression 20261127-regular-switch-dead-end: (n, d, seed) = (3, 2, 20) starts from three self-loops and the switching loop can never leave that state.",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/graph/generators.cpp"
+  ],
+  "tests": [
+   "tests/regression/test_regular_switch_dead_end.cpp",
+   "tests/regression/cases/20261127-regular-switch-dead-end.json"
+  ]
+ },
+ "phase": "RED",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "regression:20261127-regular-switch-dead-end: *"
+   ],
+   "command": "ctest --preset debug -R 'regression:20261127-regular-switch'",
+   "exit_code": 8,
+   "reason": "random_regular throws 'switching did not converge' for n=3 d=2 seed=20 (the configuration model gives {0,0},{1,1},{2,2}; every swap of two self-loops proposes a double edge and is rejected). Recorded with the [!shouldfail] tag removed; the committed test carries [!shouldfail] until the generator is fixed, and the fix commit must remove it (Catch2 then requires the test to pass).",
+   "timestamp": "2026-11-27T10:45:59+09:00",
+   "output_tail": "  REQUIRE_NOTHROW( g = regular_switch(n, d, seed) )\ndue to unexpected exception with messages:\n  n=3 d=2 seed=20\n  random_regular: switching did not converge\n\n===============================================================================\ntest cases:   1 |   0 passed | 1 failed\nassertions: 139 | 138 passed | 1 failed\n\n\n\n0% tests passed, 2 tests failed out of 2\n\nLabel Time Summary:\nregression    =   0.03 sec*proc (2 tests)\n\nTotal Test time (real) =   1.51 sec\n\nThe following tests FAILED:\n\t229 - regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle (Failed) regression\n\t230 - regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 (Failed) regression\nErrors while running CTest"
+  }
+ ],
+ "commit": null
+}
