@@ -29,11 +29,14 @@ if(SSSP_BUILD_BENCHMARKS)
   FetchContent_MakeAvailable(benchmark)
   # v1.9.4 also adds -pedantic-errors unconditionally, and clang >= 22 diagnoses the
   # __COUNTER__ probe in benchmark.h as a C2y extension (-Wc2y-extensions, fixed upstream in
-  # v1.9.5 with a pragma). Keep that one diagnostic a warning in the dependency's own build.
+  # v1.9.5 with a pragma). Turn that one diagnostic off in the dependency's own build.
+  # -Wno-error=c2y-extensions is not enough: clang lets -Wno-error=X downgrade a
+  # -pedantic-errors diagnostic only from 22.1.4 on (llvm-project #184756), so apt clang
+  # 22.1.2 still fails. -Wno-X is a user mapping, which -pedantic-errors never upgrades.
   check_cxx_compiler_flag(-Wc2y-extensions SSSP_CXX_HAS_WC2Y_EXTENSIONS)
   if(SSSP_CXX_HAS_WC2Y_EXTENSIONS)
     foreach(_bm_target IN ITEMS benchmark benchmark_main)
-      target_compile_options(${_bm_target} PRIVATE -Wno-error=c2y-extensions)
+      target_compile_options(${_bm_target} PRIVATE -Wno-c2y-extensions)
     endforeach()
   endif()
   # Consumers see the dependency's headers as system headers (-isystem), so warnings inside
