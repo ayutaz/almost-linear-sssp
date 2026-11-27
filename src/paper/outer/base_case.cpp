@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "paper/primitives/dijkstra.hpp"
+#include "paper/primitives/edge_pairs.hpp"
 
 namespace sssp::paper::outer {
 
@@ -22,64 +23,17 @@ struct PairFilter {
   std::vector<EdgeId> input_edge;
 };
 
-/// Stable counting sort of `ids` by key(id) in [0, n), one pass per count, prefix sum and output
-/// write (Lemma 3.1 proof). Integer work on vertex ids only.
-template <class Key>
-std::vector<EdgeId> counting_sort(const std::vector<EdgeId>& ids, std::size_t n, Key key) {
-  std::vector<std::size_t> start(n + 1, 0);
-  for (const EdgeId id : ids) ++start[key(id) + 1];
-  for (std::size_t i = 0; i < n; ++i) start[i + 1] += start[i];
-  std::vector<EdgeId> out(ids.size());
-  for (const EdgeId id : ids) out[start[key(id)]++] = id;
-  return out;
-}
-
-/// Sec 2 (txt l.287): "a scan retaining a lightest edge per vertex pair". Two stable
-/// counting-sort passes (larger endpoint, then smaller endpoint) group the parallel edges of each
-/// pair in increasing id order; one comparison per further group member keeps the least weight,
-/// the earliest id on ties. O(m + N) word operations plus m comparisons of lengths.
+/// Sec 2 (txt l.287): "a scan retaining a lightest edge per vertex pair", by the shared
+/// primitive (edge_pairs.hpp: two stable counting-sort passes, Lemma 3.1, and one counted length
+/// comparison per further edge of a pair). O(m + N) word operations plus at most m comparisons.
 template <class W>
-PairFilter<W> lightest_edge_per_pair(const CsrGraph<W>& g,
-                                     [[maybe_unused]] OpCounters& ops) {  // unused if counts off
-  const std::size_t n = g.num_vertices();
-  const std::size_t m = g.num_edges();
-  auto lo = [&g](EdgeId id) {
-    const auto& e = g.edge(id);
-    return e.u < e.v ? e.u : e.v;
-  };
-  auto hi = [&g](EdgeId id) {
-    const auto& e = g.edge(id);
-    return e.u < e.v ? e.v : e.u;
-  };
-  std::vector<EdgeId> ids;
-  ids.reserve(m);
-  for (std::size_t i = 0; i < m; ++i) {
-    const auto id = static_cast<EdgeId>(i);
-    if (g.edge(id).u != g.edge(id).v) ids.push_back(id);  // loops are dropped
-  }
-  ids = counting_sort(counting_sort(ids, n, hi), n, lo);
-
-  std::vector<char> keep(m, 0);
-  for (std::size_t i = 0; i < ids.size();) {
-    EdgeId best = ids[i];
-    std::size_t j = i + 1;
-    for (; j < ids.size() && lo(ids[j]) == lo(best) && hi(ids[j]) == hi(best); ++j) {
-      SSSP_COUNT(++ops.comparisons);
-      // Strict: an equal weight keeps the earlier (smaller) id.
-      if (g.edge(ids[j]).weight < g.edge(best).weight) best = ids[j];
-    }
-    keep[best] = 1;
-    i = j;
-  }
-
+PairFilter<W> retain_lightest_pairs(const CsrGraph<W>& g, OpCounters& ops) {
   PairFilter<W> f;
+  f.input_edge = lightest_edge_per_pair<W>(g.num_vertices(), g.edges(), &ops);
   std::vector<Edge<W>> edges;
-  for (std::size_t i = 0; i < m; ++i) {
-    if (keep[i] == 0) continue;
-    edges.push_back(g.edge(static_cast<EdgeId>(i)));
-    f.input_edge.push_back(static_cast<EdgeId>(i));
-  }
-  f.graph = CsrGraph<W>::from_edges(n, std::move(edges));
+  edges.reserve(f.input_edge.size());
+  for (const EdgeId id : f.input_edge) edges.push_back(g.edge(id));
+  f.graph = CsrGraph<W>::from_edges(g.num_vertices(), std::move(edges));
   return f;
 }
 
@@ -100,7 +54,7 @@ SsspResult<W> base_case(const CsrGraph<W>& g, Vertex s, Search search) {
   r.diag.counters["outer_base_cases"] += 1;
 
   // Alg 8 l.5: retain a lightest edge per vertex pair.
-  const PairFilter<W> f = lightest_edge_per_pair(g, r.diag.ops);
+  const PairFilter<W> f = retain_lightest_pairs(g, r.diag.ops);
   r.diag.counters["outer_base_pair_edges_kept"] += f.graph.num_edges();
   r.diag.counters["outer_base_pair_edges_removed"] += g.num_edges() - f.graph.num_edges();
 

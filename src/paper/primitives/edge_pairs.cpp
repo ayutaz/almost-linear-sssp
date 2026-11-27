@@ -8,7 +8,8 @@
 namespace sssp::paper {
 
 template <class W>
-LightestEdgePairs lightest_edge_pairs(std::size_t n, std::span<const Edge<W>> edges) {
+LightestEdgePairs lightest_edge_pairs(std::size_t n, std::span<const Edge<W>> edges,
+                                      OpCounters* ops) {
   validate_edges<W>(n, edges);
   LightestEdgePairs out;
   out.representative.assign(edges.size(), kNoEdge);
@@ -43,6 +44,7 @@ LightestEdgePairs lightest_edge_pairs(std::size_t n, std::span<const Edge<W>> ed
     EdgeId best = ids[i];
     std::size_t j = i + 1;
     for (; j < ids.size() && lo(ids[j]) == lo(best) && hi(ids[j]) == hi(best); ++j) {
+      if (ops != nullptr) SSSP_COUNT(++ops->comparisons);
       if (edges[ids[j]].weight < edges[best].weight) best = ids[j];
     }
     for (std::size_t k = i; k < j; ++k) out.representative[ids[k]] = best;
@@ -56,16 +58,20 @@ LightestEdgePairs lightest_edge_pairs(std::size_t n, std::span<const Edge<W>> ed
 }
 
 template <class W>
-std::vector<EdgeId> lightest_edge_per_pair(std::size_t n, std::span<const Edge<W>> edges) {
-  return lightest_edge_pairs<W>(n, edges).kept;
+std::vector<EdgeId> lightest_edge_per_pair(std::size_t n, std::span<const Edge<W>> edges,
+                                           OpCounters* ops) {
+  return lightest_edge_pairs<W>(n, edges, ops).kept;
 }
 
 template LightestEdgePairs lightest_edge_pairs<std::uint64_t>(std::size_t,
-                                                              std::span<const Edge<std::uint64_t>>);
-template LightestEdgePairs lightest_edge_pairs<double>(std::size_t, std::span<const Edge<double>>);
+                                                              std::span<const Edge<std::uint64_t>>,
+                                                              OpCounters*);
+template LightestEdgePairs lightest_edge_pairs<double>(std::size_t, std::span<const Edge<double>>,
+                                                       OpCounters*);
 template std::vector<EdgeId> lightest_edge_per_pair<std::uint64_t>(
-    std::size_t, std::span<const Edge<std::uint64_t>>);
+    std::size_t, std::span<const Edge<std::uint64_t>>, OpCounters*);
 template std::vector<EdgeId> lightest_edge_per_pair<double>(std::size_t,
-                                                            std::span<const Edge<double>>);
+                                                            std::span<const Edge<double>>,
+                                                            OpCounters*);
 
 }  // namespace sssp::paper

@@ -14,6 +14,7 @@
 
 #include "paper/model/random.hpp"
 #include "paper/pivots/name_routes.hpp"
+#include "paper/primitives/edge_pairs.hpp"
 #include "sssp/graph.hpp"
 #include "support/floyd_warshall.hpp"
 #include "support/prng.hpp"
@@ -189,6 +190,48 @@ TEST_CASE("name_routes keeps the lightest parallel edge and coalesces ties", "[n
   const auto s = name_routes(h, rng);
   CHECK(s.dictionary == std::vector<W>({4, 9}));
   CHECK(s.name == std::vector<std::uint32_t>({0, 0, 1}));
+}
+
+TEST_CASE("name_routes names every edge through its lightest_edge_pairs representative (Alg 5 l.4)",
+          "[name_routes][edge_pairs]") {
+  // Loopless multigraphs with many parallel edges and equal weights. The representative of each
+  // endpoint pair is the survivor of the shared primitive (edge_pairs.hpp, (weight, id)-least);
+  // every parallel edge reuses its representative's certificate (Sec 6.1).
+  sssp::test::SplitMix64 rng(6801);
+  for (std::uint64_t seed = 1; seed <= 120; ++seed) {
+    const std::size_t t = 2 + rng.below(10);
+    const std::size_t m = seed % 3 == 0 ? rng.below(40 * t) : rng.below(3 * t);
+    const std::uint64_t max_w = seed % 2 == 0 ? 4 : 1000;
+    PivotRoutingInstance<W> g;
+    g.t = t;
+    for (std::size_t i = 0; i < m; ++i) {
+      const auto x = static_cast<Vertex>(rng.below(t));
+      const auto y = static_cast<Vertex>((x + 1 + rng.below(t - 1)) % t);  // y != x
+      g.edges.push_back({x, y, rng.between(1, max_w)});
+    }
+    const auto pairs = sssp::paper::lightest_edge_pairs<W>(t, g.edges);
+    for (int mode_b = 0; mode_b < 2; ++mode_b) {
+      NameRoutesParams p;
+      if (mode_b == 1) {  // Mode B factors so that the sampling loop runs on small instances
+        p.sample_factor = 1;
+        p.residual_factor = 2;
+      }
+      WordRng r(seed);
+      const auto out = name_routes(g, r, p);
+      INFO("seed " << seed << " t " << t << " m " << m << " mode_b " << mode_b);
+      REQUIRE(counter(out.diag, "name_routes.representatives") == pairs.kept.size());
+      for (std::size_t o = 0; o < m; ++o) {
+        REQUIRE(out.name[o] == out.name[pairs.representative[o]]);
+      }
+      if (counter(out.diag, "name_routes.trials") == 0) {
+        // Alg 5 l.15: without sampling each representative certifies its own (least) weight.
+        for (const auto k : pairs.kept) {
+          REQUIRE(out.dictionary[out.name[k]] == g.edges[k].weight);
+        }
+      }
+      REQUIRE(check_route_names(g, out, gp_dist(g)).empty());
+    }
+  }
 }
 
 TEST_CASE("name_routes samples with Mode A constants on a dense instance", "[name_routes]") {

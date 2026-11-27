@@ -320,7 +320,8 @@ Evaluate(D, H, Q):
    - Links are taken from the arcs of "a tree spanning the child quotient by arcs `≤ W`" (c₀ = 1).
    - Taking the physical graph to be the undirected multigraph of arcs (π(x), π(y), ℓ) makes (H1) hold.
    - To avoid length-0 cycles, use only positive lengths during generation.
-   - Also build variants whose heights are scaled by a factor such as `h(C) = 2W`, giving hierarchies where light arcs actually lie between children (validity per the definition is checked by "recomputing SCCs with arcs < h").
+   - ~~Also build variants whose heights are scaled by a factor such as `h(C) = 2W`, giving hierarchies where light arcs actually lie between children.~~
+     **Correction (2026-11-27).** The `h(C) = 2W` variant is not an ordered hierarchy: a node C is a strongly connected component of the arcs of length ≤ W(C), so with any height above W(C) every such arc between distinct children is light (length < h), the light quotient on the children is strongly connected, and H3 (Def 4.1, l.650) fails at every internal node. Heights are valid exactly when they are lowered instead: any heights with 0 < h'(child) ≤ h'(C) ≤ W(C) satisfy Def 4.1 with c₀ = the largest ⌈(longest link of C) / h'(C)⌉ over the nodes (halving every height gives c₀ = 2). Fixed by `tests/unit/paper/hierarchy/test_reference_hierarchy_heights.cpp`.
 2. **Differential tests**
    - (a) Base-case local hierarchy (Kruskal) + a single-vertex source: compare the per-physical-vertex minimum with Dijkstra.
    - (b) Arbitrary directed state graph + reference hierarchy: protected-state emissions = δ, all emissions ≥ δ (I1, I2).

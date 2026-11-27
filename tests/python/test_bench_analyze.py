@@ -12,6 +12,7 @@ import math
 import analyze_results
 import pandas as pd
 import pytest
+from bench import schema
 from bench_fixtures import synthetic_diag_record, synthetic_record, write_jsonl
 
 
@@ -228,3 +229,19 @@ def test_fixed_degree_rows_land_in_a_facet():
     cells = analyze_results.facet_cells(df)
     assert sorted(len(c) for c in cells.values()) == [1, 1]
     assert ("uniform_int / uint64", "fixed degree") in cells
+
+
+# Names in bench.schema that get no colour of their own: the Bellman-Ford oracle, and "paper",
+# which is reserved for the outer construction and not produced by any runner yet.
+_UNCOLOURED = {"bellman-ford", "paper"}
+
+
+def test_registered_algorithms_have_distinct_colours():
+    names = [a for a in schema.ALGORITHM_MODES if a not in _UNCOLOURED]
+    assert {"paper-faithful", "paper-faithful-d1"} <= set(names)
+    colours = {a: analyze_results.ALGO_COLORS.get(a, analyze_results.OTHER_COLOR) for a in names}
+    # nobody falls back to the "other" colour, and identity is never shared
+    assert analyze_results.OTHER_COLOR not in colours.values(), colours
+    assert len(set(colours.values())) == len(colours), colours
+    style = analyze_results._SeriesStyle([("paper-faithful", "{}"), ("paper-faithful-d1", "{}")])
+    assert style("paper-faithful", "{}")["color"] != style("paper-faithful-d1", "{}")["color"]

@@ -1,0 +1,48 @@
+{
+  "id": "P2-REPORT-PAPER-COLORS",
+  "spec": "analyze_results gives every algorithm the runner can emit (other than the bellman-ford oracle) or that is registered for a future mode its own palette colour; paper-faithful and paper-faithful-d1 no longer fall back to OTHER_COLOR and are distinguishable from each other and from the baselines",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      "scripts/analyze_results.py"
+    ],
+    "tests": [
+      "tests/python/test_bench_analyze.py"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "test_registered_algorithms_have_distinct_colours"
+      ],
+      "command": "uv run pytest tests/python/test_bench_analyze.py -q -k distinct_colours",
+      "exit_code": 1,
+      "reason": "ALGO_COLORS has no entry for paper-faithful or paper-faithful-d1 (the Mode A names the runner emits since P2-BENCH-PAPER-REGISTER), so both are drawn in OTHER_COLOR and cannot be told apart",
+      "timestamp": "2026-11-27T12:07:15+09:00",
+      "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_______________ test_registered_algorithms_have_distinct_colours _______________\n\n    def test_registered_algorithms_have_distinct_colours():\n        names = [a for a in schema.ALGORITHM_MODES if a not in _UNCOLOURED]\n        assert {\"paper-faithful\", \"paper-faithful-d1\"} <= set(names)\n        colours = {a: analyze_results.ALGO_COLORS.get(a, analyze_results.OTHER_COLOR) for a in names}\n        # nobody falls back to the \"other\" colour, and identity is never shared\n>       assert analyze_results.OTHER_COLOR not in colours.values(), colours\nE       AssertionError: {'dijkstra-binary': '#257de0', 'dijkstra-4ary': '#f47230', 'dijkstra-fibonacci': '#00b894', 'dijkstra-radix': '#f2a600', ...}\nE       assert '#ec4647' not in dict_values(['#257de0', '#f47230', '#00b894', '#f2a600', '#ec4647', '#ec4647', '#008a17', '#6a4ce2'])\nE        +  where '#ec4647' = analyze_results.OTHER_COLOR\nE        +  and   dict_values(['#257de0', '#f47230', '#00b894', '#f2a600', '#ec4647', '#ec4647', '#008a17', '#6a4ce2']) = <built-in method values of dict object at 0x10de7a100>()\nE        +    where <built-in method values of dict object at 0x10de7a100> = {'dijkstra-binary': '#257de0', 'dijkstra-4ary': '#f47230', 'dijkstra-fibonacci': '#00b894', 'dijkstra-radix': '#f2a600', ...}.values\n\ntests/python/test_bench_analyze.py:244: AssertionError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_analyze.py::test_registered_algorithms_have_distinct_colours"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "tests/python/test_bench_analyze.py"
+      ],
+      "command": "uv run pytest tests/python/test_bench_analyze.py -q",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:07:32+09:00",
+      "output_tail": "........                                                                 [100%]"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "tests/python/test_bench_analyze.py"
+      ],
+      "command": "uv run pytest tests/python/test_bench_analyze.py -q",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:07:49+09:00",
+      "output_tail": "........                                                                 [100%]"
+    }
+  ],
+  "commit": "98251f4"
+}
