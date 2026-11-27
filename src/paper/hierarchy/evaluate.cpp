@@ -1,9 +1,18 @@
-// Evaluate (Alg 3) and Scan (Alg 2), Sec 4.3 of arXiv 2611.34911 v1. See evaluate.hpp for the
-// overview and the interpretations (Q-27, Q-28, Q-29, Q-16).
+// Evaluate (Alg 3) and Scan (Alg 2), Sec 4.3 of arXiv 2611.34911 v1, and the cell-by-cell
+// visit of Lemma 7.7 (Sec 7.4, PortionedEvaluator). See evaluate.hpp for the overview and the
+// interpretations (Q-27, Q-28, Q-29, Q-16).
 //
 // Implementation notes
+//   * One state machine (Evaluator) serves both entry points. evaluate() runs Alg 3's root
+//     loop (evaluate_root); PortionedEvaluator runs the cell procedure of Sec 7.4 l.1835-1841
+//     (visit_root_cell). Below the root both use the same Scan frames, child slot advance /
+//     resumption (start_child_slot, after_child_slot) and retirement, so a clipped slot is
+//     resumed by exactly the code that the bulk run would use for an unclipped one.
 //   * Scan recursion is driven by an explicit stack of frames (one frame per active
 //     Scan(X, I, c) call) so that the depth of the hierarchy does not bound the call stack.
+//   * Layout positions are absolute positions of the split-findmin structure: [0, n) for an
+//     own structure, [base, base + n) of a shared one (Alg 7 l.8); layout_ is indexed by
+//     position - base.
 //   * Every list piece of every opened node is an interval of the leaf layout, and the
 //     split-findmin intervals are exactly the current pieces (plus unopened registered children,
 //     which keep their own interval until visited, l.940-941). A run's minimum is therefore
@@ -12,7 +21,7 @@
 //       eval_calls, eval_states, eval_arcs, eval_initial_offers (Q), eval_offered_states
 //       eval_roots_skipped (Alg 3 l.5), eval_root_leaf_emissions (l.6-7)
 //       eval_opens, eval_origin_second_rule, eval_origin_steps (successive subtractions),
-//       eval_origin_rounding_fallbacks (double only, proposed D-16; see open())
+//       eval_origin_rounding_fallbacks (double only, D-19; see open())
 //       eval_scans (all Scan calls), eval_root_slots (Alg 3 l.10), eval_child_slot_visits
 //       (Alg 2 l.10), eval_clipped_slot_visits (slot not inside the portion),
 //       eval_resumed_slot_visits (portion starting after the slot start)
@@ -23,12 +32,17 @@
 //       eval_emissions, eval_relaxations, eval_relax_decreases, eval_rejected_offers (offer at a
 //       settled or retired state), eval_supplemental_offers, eval_supplemental_decreases
 //       eval_completed_nodes, eval_expired_nodes, eval_retire_piece_visits, eval_retired_leaves
-//       eval_sfm_* (SplitFindminCounters of the evaluator's structure)
+//       eval_sfm_* (SplitFindminCounters of the evaluator's own structure)
+//     PortionedEvaluator only: eval_portioned_calls, eval_cells (Lemma 7.7's C),
+//       eval_external_offers (E), eval_external_decreases, eval_root_resumed_slot_visits,
+//       eval_root_clipped_slot_visits, eval_root_empty_cells; eval_root_slots counts the first
+//       portion of each root slot and eval_initial_offers each initial_offer() call.
 
 #include "paper/hierarchy/evaluate.hpp"
 
 #include <cstddef>
 #include <limits>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -47,6 +61,15 @@ namespace {
 constexpr std::uint32_t kNil = std::numeric_limits<std::uint32_t>::max();
 
 enum class Status : std::uint8_t { kUnopened, kLive, kDone };
+
+/// The LCA / level-ancestor structure of a normalised hierarchy (Lemma 3.9).
+template <class W>
+const ForestQueries& queries_of(const NormalizedHierarchy<W>& nh) {
+  if (!nh.queries.has_value()) {
+    throw std::invalid_argument("evaluate: hierarchy is not normalised (Sec 4.1)");
+  }
+  return *nh.queries;
+}
 
 /// One element of an opened node's list (Sec 4.3 l.811-818): a registered child, or a maximal
 /// run of unregistered children given by a rank range [r0, r1) of the owner's children.
@@ -73,18 +96,29 @@ struct Frame {
 template <class W>
 class Evaluator {
  public:
+  /// `shared` == nullptr: an own split-findmin structure over the layout [0, n). Otherwise the
+  /// layout occupies [base, base + n) of `shared` (PortionedEvaluator, Alg 7 l.8).
   Evaluator(const NormalizedHierarchy<W>& nh, const EvalOptions<W>& opt, Diagnostics* diag,
-            EvalResult<W>& out)
+            EvalResult<W>& out, SplitFindmin<W>* shared = nullptr, std::uint32_t base = 0)
       : nh_(nh),
         f_(nh.forest),
-        qs_(*nh.queries),
+        qs_(queries_of(nh)),
         opt_(opt),
         hooks_(opt.hooks),
         diag_(diag),
         ops_(diag != nullptr ? &diag->ops : nullptr),
         out_(out),
         n_(nh.forest.num_states()),
-        sf_(n_ == 0 ? 1 : n_) {}
+        base_(base) {
+    if (shared == nullptr) {
+      sf_ = &own_sf_.emplace(n_ == 0 ? 1 : n_);
+    } else {
+      if (std::size_t{base} + n_ > shared->size()) {
+        throw std::out_of_range("PortionedEvaluator: layout does not fit the shared structure");
+      }
+      sf_ = shared;
+    }
+  }
 
   void run(std::span<const StateOffer<W>> offers) {
     bump("eval_calls");
@@ -95,26 +129,14 @@ class Evaluator {
     // Lemma 4.7: an input scan keeps the minimum initial offer at each state.
     std::vector<W> best(n_, inf());
     for (const auto& o : offers) {
-      if (o.state >= n_) throw std::out_of_range("evaluate: initial offer at a non-existent state");
-      if (!WeightTraits<W>::is_valid_weight(o.value) || o.value == inf()) {
-        throw std::invalid_argument("evaluate: initial offers must be finite and nonnegative");
-      }
+      check_offer(o.state, o.value);
       if (less(o.value, best[o.state])) best[o.state] = o.value;
     }
     if (n_ == 0) {
       if (hooks_ != nullptr) hooks_->on_finish();
       return;
     }
-    build_layout();
-    build_out_arcs();
-    settled_.assign(n_, 0);
-    retired_.assign(n_, 0);
-    const std::size_t nn = nh_.num_nodes();
-    status_.assign(nn, Status::kUnopened);
-    slot_lo_.assign(nn, W{});
-    slot_hi_.assign(nn, W{});
-    expiry_.assign(nn, W{});
-    head_.assign(nn, kNil);
+    init_structures();
 
     // Alg 3 l.3: split the layout at every root boundary, post the least initial offers.
     for (const NodeId r : nh_.root_order) split(lo_[r]);
@@ -122,14 +144,14 @@ class Evaluator {
       if (best[x] == inf()) continue;
       bump("eval_offered_states");
       if (hooks_ != nullptr) hooks_->on_initial_offer(x, best[x]);
-      sf_.decrease(pos_[x], best[x]);
+      sf_->decrease(pos_[x], best[x]);
     }
 
     // Alg 3 l.4: roots in topological order of the root quotient.
     for (const NodeId r : nh_.root_order) {
       if (f_.is_leaf(r)) {
         const StateId x = f_.nodes[r].state;
-        const W key = sf_.key(pos_[x]);
+        const W key = sf_->key(pos_[x]);
         if (key == inf()) {  // l.5
           bump("eval_roots_skipped");
           continue;
@@ -139,7 +161,7 @@ class Evaluator {
         status_[r] = Status::kDone;
         continue;
       }
-      const SfmMin<W> m = sf_.query(lo_[r]);
+      const SfmMin<W> m = sf_->query(lo_[r]);
       if (m.key == inf()) {  // l.5
         bump("eval_roots_skipped");
         continue;
@@ -147,10 +169,130 @@ class Evaluator {
       evaluate_root(r, m.key);
     }
     if (hooks_ != nullptr) hooks_->on_finish();
-    SSSP_COUNT(if (diag_ != nullptr) sf_.counters().add_to(diag_->counters, "eval_sfm_"));
+    SSSP_COUNT(if (diag_ != nullptr) sf_->counters().add_to(diag_->counters, "eval_sfm_"));
+  }
+
+  // ------------------------------------------------------------ Lemma 7.7 (PortionedEvaluator)
+
+  /// Sets up an evaluation driven cell by cell (Sec 7.4 l.1835-1841). One root (Lemma 7.7).
+  void portioned_init() {
+    bump("eval_portioned_calls");
+    bump("eval_states", n_);
+    bump("eval_arcs", f_.graph.arcs.size());
+    out_.value.assign(n_, inf());
+    if (n_ == 0) {
+      finished_ = true;
+      return;
+    }
+    if (nh_.root_order.size() != 1) {
+      throw std::invalid_argument("PortionedEvaluator: Lemma 7.7 needs exactly one root");
+    }
+    root_ = nh_.root_order.front();
+    init_structures();
+  }
+
+  [[nodiscard]] std::size_t num_states() const noexcept { return n_; }
+  [[nodiscard]] std::uint32_t position(StateId x) const {
+    if (x >= n_) throw std::out_of_range("PortionedEvaluator: non-existent state");
+    return pos_[x];
+  }
+  [[nodiscard]] bool root_opened() const noexcept { return root_opened_; }
+  [[nodiscard]] bool finished() const noexcept { return finished_; }
+
+  /// Alg 7 l.9 (Lemma 7.7's Q initial offers), before the first cell.
+  void initial_offer(StateId x, W v) {
+    not_in_visit();
+    if (visited_) {
+      throw std::logic_error("PortionedEvaluator: initial offers precede the first cell");
+    }
+    check_offer(x, v);
+    bump("eval_initial_offers");
+    if (hooks_ != nullptr) hooks_->on_initial_offer(x, v);
+    const std::uint32_t q = pos_[x];
+    if (less(v, sf_->key(q))) sf_->decrease(q, v);
+  }
+
+  /// Lemma 7.7's E external offers, under its arrival hypothesis (evaluate.hpp).
+  bool external_offer(StateId x, W v) {
+    not_in_visit();
+    check_offer(x, v);
+    bump("eval_external_offers");
+    if (hooks_ != nullptr) hooks_->on_external_offer(x, v);
+    if (settled_[x] != 0 || retired_[x] != 0) {  // Lemma 7.8: "ignores later proposals"
+      bump("eval_rejected_offers");
+      return false;
+    }
+    const std::uint32_t q = pos_[x];
+    if (!less(v, sf_->key(q))) return false;
+    if (visited_ && less(v, last_hi_)) {
+      throw std::invalid_argument(
+          "PortionedEvaluator: external offer below a visited cell (Lemma 7.7 arrival "
+          "hypothesis)");
+    }
+    sf_->decrease(q, v);
+    bump("eval_external_decreases");
+    return true;
+  }
+
+  /// Sec 7.4 l.1825, l.1837-1838: the atom's lasting inclusive deadline.
+  void set_deadline(W c) {
+    not_in_visit();
+    if (!T::is_valid_weight(c) && c != inf()) {
+      throw std::invalid_argument("PortionedEvaluator: deadline must be nonnegative");
+    }
+    if (root_opened_) {
+      throw std::logic_error("PortionedEvaluator: the deadline is fixed once the root opened");
+    }
+    deadline_ = min(deadline_, c);
+  }
+
+  /// One external cell [lo, hi); returns the index of its first emission in out_.emissions.
+  std::size_t visit_cell(W lo, W hi) {
+    not_in_visit();
+    if (!T::is_valid_weight(lo) || (!T::is_valid_weight(hi) && hi != inf()) || !less(lo, hi)) {
+      throw std::invalid_argument("PortionedEvaluator: a cell is [lo, hi) with finite lo < hi");
+    }
+    if (visited_ && less(lo, last_hi_)) {
+      throw std::invalid_argument("PortionedEvaluator: cells overlap or go back in time");
+    }
+    if (visited_ && root_opened_ && !finished_ && less(last_hi_, lo)) {
+      throw std::invalid_argument(
+          "PortionedEvaluator: an open root needs consecutive cells (Lemma 7.7)");
+    }
+    const std::size_t first = out_.emissions.size();
+    bump("eval_cells");
+    if (!finished_) {
+      in_visit_ = true;
+      const VisitGuard guard{in_visit_};
+      if (!visited_) {
+        // Isolate the atom's interval (Alg 7 l.12, "splitting the family's live runs"): no-ops
+        // for an own structure or for an atom the family already split off.
+        split(base_);
+        split(static_cast<std::uint32_t>(base_ + n_));
+      }
+      visit_root_cell(lo, hi);
+    }
+    visited_ = true;
+    last_hi_ = hi;
+    return first;
+  }
+
+  void finish_portioned() {
+    if (hooks_ != nullptr) hooks_->on_finish();
+    SSSP_COUNT(if (diag_ != nullptr && own_sf_.has_value()) sf_->counters().add_to(diag_->counters,
+                                                                                   "eval_sfm_"));
   }
 
  private:
+  /// Clears the reentrancy flag when a visit ends, also by an exception.
+  struct VisitGuard {
+    bool& flag;
+    explicit VisitGuard(bool& f) : flag(f) {}
+    VisitGuard(const VisitGuard&) = delete;
+    VisitGuard& operator=(const VisitGuard&) = delete;
+    ~VisitGuard() { flag = false; }
+  };
+
   using T = WeightTraits<W>;
   using L = model::Len<W>;
 
@@ -165,7 +307,7 @@ class Evaluator {
   }
   [[nodiscard]] W min(W a, W b) const { return less(b, a) ? b : a; }
   [[nodiscard]] W max(W a, W b) const { return less(a, b) ? b : a; }
-  /// One subtraction of the origin rule ([Deviation candidate, proposed D-16], evaluate.hpp).
+  /// One subtraction of the origin rule ([Deviation D-19], evaluate.hpp).
   [[nodiscard]] W sub(W a, W b) const {
     SSSP_COUNT(if (ops_.counters() != nullptr)++ ops_.counters()->additions);
     return a - b;
@@ -179,6 +321,31 @@ class Evaluator {
     SSSP_COUNT(if (diag_ != nullptr) diag_->counters[name] += k);
   }
 
+  void check_offer(StateId x, W v) const {
+    if (x >= n_) throw std::out_of_range("evaluate: initial offer at a non-existent state");
+    if (!T::is_valid_weight(v) || v == inf()) {
+      throw std::invalid_argument("evaluate: initial offers must be finite and nonnegative");
+    }
+  }
+
+  /// Layout, outgoing arcs and the per-state and per-node arrays (Alg 3 l.2-3).
+  void init_structures() {
+    build_layout();
+    build_out_arcs();
+    settled_.assign(n_, 0);
+    retired_.assign(n_, 0);
+    const std::size_t nn = nh_.num_nodes();
+    status_.assign(nn, Status::kUnopened);
+    slot_lo_.assign(nn, W{});
+    slot_hi_.assign(nn, W{});
+    expiry_.assign(nn, W{});
+    head_.assign(nn, kNil);
+  }
+
+  void not_in_visit() const {
+    if (in_visit_) throw std::logic_error("PortionedEvaluator: not reentrant (called from a hook)");
+  }
+
   // ------------------------------------------------------------ layout (Alg 3 l.2)
 
   /// DFS order of the leaves with children in rank order and roots in root_order; every node
@@ -190,7 +357,7 @@ class Evaluator {
     hi_.assign(nn, 0);
     pos_.assign(n_, 0);
     layout_.assign(n_, kNoState);
-    std::uint32_t next = 0;
+    std::uint32_t next = base_;
     std::vector<std::pair<NodeId, std::size_t>> stack;
     for (const NodeId r : nh_.root_order) {
       stack.emplace_back(r, 0);
@@ -200,7 +367,7 @@ class Evaluator {
         const auto& nd = f_.nodes[v];
         if (nd.children.empty()) {
           pos_[nd.state] = next;
-          layout_[next] = nd.state;
+          layout_[next - base_] = nd.state;
           ++next;
           hi_[v] = next;
           stack.pop_back();
@@ -216,7 +383,9 @@ class Evaluator {
         }
       }
     }
-    if (next != n_) throw std::invalid_argument("evaluate: forest leaves are not the states");
+    if (next != base_ + n_) {
+      throw std::invalid_argument("evaluate: forest leaves are not the states");
+    }
   }
 
   /// Outgoing arcs per state in arc order; state self-arcs are discarded (Sec 4.1 l.719).
@@ -235,11 +404,11 @@ class Evaluator {
   }
 
   [[nodiscard]] std::span<const StateId> states_of(NodeId v) const {
-    return {layout_.data() + lo_[v], layout_.data() + hi_[v]};
+    return {layout_.data() + (lo_[v] - base_), layout_.data() + (hi_[v] - base_)};
   }
 
   void split(std::uint32_t pos) {
-    if (sf_.split(pos)) bump("eval_interval_splits");
+    if (sf_->split(pos)) bump("eval_interval_splits");
   }
 
   // ------------------------------------------------------------ lists
@@ -300,8 +469,8 @@ class Evaluator {
       return false;
     }
     const std::uint32_t q = pos_[y];
-    if (!less(v, sf_.key(q))) return false;
-    sf_.decrease(q, v);
+    if (!less(v, sf_->key(q))) return false;
+    sf_->decrease(q, v);
     return true;
   }
 
@@ -357,7 +526,7 @@ class Evaluator {
       if (!left_slot) {
         origin = t;
       } else if constexpr (std::is_floating_point_v<W>) {
-        // [Deviation candidate, proposed D-16] Exact arithmetic cannot get here (l.798-800);
+        // [Deviation D-19] Exact arithmetic cannot get here (l.798-800);
         // rounded subtractions can (an exact tie D0 = b - j nu computed as D0 + 1 ulp). Start at
         // D0 as in the first rule: the grid is then not aligned to b, which costs at most a
         // clipped slot and is safe under the slot-resumption rule (Q-27).
@@ -410,7 +579,7 @@ class Evaluator {
   }
   void mark_retired(std::uint32_t lo, std::uint32_t hi) {
     for (std::uint32_t q = lo; q < hi; ++q) {
-      const StateId y = layout_[q];
+      const StateId y = layout_[q - base_];
       if (settled_[y] == 0 && retired_[y] == 0) {
         retired_[y] = 1;
         bump("eval_retired_leaves");
@@ -439,6 +608,96 @@ class Evaluator {
       status_[r] = Status::kDone;
     } else {
       retire(r);
+    }
+  }
+
+  // ------------------------------------------------------------ Sec 7.4, Lemma 7.7
+
+  /// Due in the cell [lo, hi) under the inclusive cap c.
+  [[nodiscard]] bool due_in(W z, W lo, W hi, W c) const {
+    return z != inf() && !less(z, lo) && less(z, hi) && !less(c, z);
+  }
+
+  /// Lemma 7.7: "The first cell starts at or before every finite initial timestamp", and
+  /// external offers are "never inserted below the current cell's left endpoint".
+  void check_not_below(W z, W lo) const {
+    if (z != inf() && less(z, lo) && !less(deadline_, z)) {
+      throw std::logic_error(
+          "PortionedEvaluator: a pending key lies below the cell (Lemma 7.7 hypotheses)");
+    }
+  }
+
+  /// "Visiting an active atom" (Sec 7.4 l.1835-1841) in the cell [lo, hi).
+  void visit_root_cell(W lo, W hi) {
+    const NodeId r = root_;
+    // The cap is covered once the cell ends after it ("including equality"); after a last
+    // cell [lo, +inf) nothing is left for later.
+    const auto covered = [&](W c) { return less(c, hi) || hi == inf(); };
+    if (f_.is_leaf(r)) {
+      // l.1835: "At a singleton root, emit the due minimum once ... and retire the leaf".
+      const StateId x = f_.nodes[r].state;
+      const W key = sf_->key(pos_[x]);
+      check_not_below(key, lo);
+      if (due_in(key, lo, hi, deadline_)) {
+        bump("eval_root_leaf_emissions");
+        root_opened_ = true;
+        status_[r] = Status::kDone;
+        emit(x, key);
+        finished_ = true;
+      } else if (covered(deadline_)) {
+        retire(r);
+        finished_ = true;
+      }
+      return;
+    }
+    if (status_[r] == Status::kUnopened) {
+      // l.1836-1837: "open on the first due key D0 and anchor its clock at D0"; Lemma 7.7: "an
+      // empty cell leaves an unopened root unopened".
+      const SfmMin<W> m = sf_->query(lo_[r]);
+      check_not_below(m.key, lo);
+      if (!due_in(m.key, lo, hi, deadline_)) {
+        bump("eval_root_empty_cells");
+        if (covered(deadline_)) {
+          retire(r);
+          finished_ = true;
+        }
+        return;
+      }
+      open(r, m.key, /*root=*/true, W{}, W{});
+      root_opened_ = true;
+      // l.1837-1838: "the smaller of the atom deadline and the root expiry D0 + S(root)".
+      cap_ = min(deadline_, expiry_[r]);
+    }
+    // l.1838-1839: the successive nominal root slots whose intersections with the cell contain
+    // times at or below c, each by Scan(root, J n [lo, hi), c) with the nominal slot J.
+    const W nu = nh_.unit[r];
+    for (;;) {
+      const W jl = slot_lo_[r];
+      const W jh = slot_hi_[r];
+      if (!less(lo, jh)) throw std::logic_error("PortionedEvaluator: root slot behind the cell");
+      const W plo = max(jl, lo);
+      if (!less(jl, hi) || less(cap_, plo)) break;
+      if (less(jl, lo)) {
+        bump("eval_root_resumed_slot_visits");  // l.1840: resumed at the first live piece
+      } else {
+        bump("eval_root_slots");
+      }
+      if (less(hi, jh)) bump("eval_root_clipped_slot_visits");
+      push_scan(r, plo, min(jh, hi), jl, jh, cap_);
+      drive();
+      // [Interpretation, Q-27] a slot clipped at hi stays current for the next cell.
+      if (completed(r) || less(hi, jh)) break;
+      slot_lo_[r] = jh;
+      slot_hi_[r] = add(jh, nu);
+    }
+    // l.1841: "Stop once all children finish or the cap has been covered, including equality".
+    if (completed(r)) {
+      bump("eval_completed_nodes");
+      status_[r] = Status::kDone;
+      finished_ = true;
+    } else if (covered(cap_)) {
+      retire(r);
+      finished_ = true;
     }
   }
 
@@ -485,14 +744,14 @@ class Evaluator {
     const std::uint32_t r0 = pieces_[p].r0;
     const std::uint32_t r1 = pieces_[p].r1;
     const auto& ch = f_.nodes[F.x].children;
-    const SfmMin<W> m = sf_.query(lo_[ch[r0]]);  // l.4, Lemma 3.11
-    if (!due(m.key, F)) {                        // passed for this portion (l.821)
+    const SfmMin<W> m = sf_->query(lo_[ch[r0]]);  // l.4, Lemma 3.11
+    if (!due(m.key, F)) {                         // passed for this portion (l.821)
       bump("eval_failed_run_visits");
       frames_[fi].p = pieces_[p].next;
       return;
     }
     // l.5: the child of X containing the minimising leaf, by a level-ancestor query (l.817).
-    const NodeId leaf = f_.leaf_of_state[layout_[m.index]];
+    const NodeId leaf = f_.leaf_of_state[layout_[m.index - base_]];
     const NodeId i = qs_.level_ancestor(leaf, qs_.depth(F.x) + 1);
     const std::uint32_t r = nh_.rank[i];
     if (r < r0 || r >= r1 || ch[r] != i)
@@ -531,7 +790,7 @@ class Evaluator {
     const std::uint32_t p = frames_[fi].p;
     const std::uint32_t next = pieces_[p].next;
     const StateId x = f_.nodes[i].state;
-    const W key = sf_.key(pos_[x]);
+    const W key = sf_->key(pos_[x]);
     if (settled_[x] == 0 && retired_[x] == 0 && due(key, frames_[fi])) {
       unlink(frames_[fi].x, p);
       status_[i] = Status::kDone;
@@ -547,7 +806,7 @@ class Evaluator {
   void visit_internal(std::size_t fi, NodeId i) {
     const Frame<W> F = frames_[fi];
     if (status_[i] == Status::kUnopened) {
-      const SfmMin<W> m = sf_.query(lo_[i]);
+      const SfmMin<W> m = sf_->query(lo_[i]);
       if (!due(m.key, F)) {
         bump("eval_unopened_not_due");
         frames_[fi].p = pieces_[F.p].next;
@@ -620,7 +879,9 @@ class Evaluator {
   model::LenOps<W> ops_;
   EvalResult<W>& out_;
   std::size_t n_;
-  SplitFindmin<W> sf_;
+  std::uint32_t base_;  ///< first layout position in *sf_
+  std::optional<SplitFindmin<W>> own_sf_;
+  SplitFindmin<W>* sf_ = nullptr;
 
   std::vector<std::uint32_t> lo_, hi_, pos_;
   std::vector<StateId> layout_;
@@ -632,6 +893,16 @@ class Evaluator {
   std::vector<std::uint32_t> head_;
   std::vector<Piece> pieces_;
   std::vector<Frame<W>> frames_;
+
+  // PortionedEvaluator state (Lemma 7.7).
+  NodeId root_ = kNoNode;
+  W deadline_ = inf();  ///< the atom's inclusive deadline (Sec 7.4 l.1825)
+  W cap_ = inf();       ///< min(deadline, D0 + S(root)) once the root opened (l.1837-1838)
+  W last_hi_{};         ///< end of the last visited cell
+  bool visited_ = false;
+  bool in_visit_ = false;
+  bool root_opened_ = false;
+  bool finished_ = false;
 };
 
 }  // namespace
@@ -679,5 +950,118 @@ template EvalResult<std::uint64_t> evaluate_normalized<std::uint64_t>(
 template EvalResult<double> evaluate_normalized<double>(const NormalizedHierarchy<double>&,
                                                         std::span<const StateOffer<double>>,
                                                         const EvalOptions<double>&, Diagnostics*);
+
+// ------------------------------------------------------------------ PortionedEvaluator
+
+template <class W>
+class PortionedEvaluator<W>::Impl {
+ public:
+  Impl(const NormalizedHierarchy<W>& nh, SplitFindmin<W>* shared, std::uint32_t base,
+       const EvalOptions<W>& options, Diagnostics* diag)
+      : options_(options),
+        ev_(nh, options_, diag != nullptr ? diag : &out_.diag, out_, shared, base) {
+    ev_.portioned_init();
+  }
+
+  Evaluator<W>& ev() {
+    if (taken_) throw std::logic_error("PortionedEvaluator: result already taken");
+    return ev_;
+  }
+  [[nodiscard]] const Evaluator<W>& state() const noexcept { return ev_; }
+  [[nodiscard]] const EvalResult<W>& out() const noexcept { return out_; }
+
+  EvalResult<W> take() {
+    ev().finish_portioned();
+    taken_ = true;
+    return std::move(out_);
+  }
+
+ private:
+  EvalOptions<W> options_;
+  EvalResult<W> out_;
+  Evaluator<W> ev_;  // after options_ and out_, which it references
+  bool taken_ = false;
+};
+
+namespace {
+
+/// The hierarchy, once checked to be normalised and ordered (before Evaluator reads it).
+template <class W>
+const NormalizedHierarchy<W>* checked_for_portions(const NormalizedHierarchy<W>* nh) {
+  if (!nh->children_ordered || !nh->queries.has_value()) {
+    throw std::invalid_argument(
+        "PortionedEvaluator: hierarchy is not normalised and ordered (Sec 4.1-4.2)");
+  }
+  return nh;
+}
+
+}  // namespace
+
+template <class W>
+PortionedEvaluator<W>::PortionedEvaluator(const NormalizedHierarchy<W>& nh,
+                                          const EvalOptions<W>& options, Diagnostics* diag)
+    : impl_(std::make_unique<Impl>(*checked_for_portions(&nh), nullptr, 0, options, diag)) {}
+
+template <class W>
+PortionedEvaluator<W>::PortionedEvaluator(const NormalizedHierarchy<W>& nh, SplitFindmin<W>& shared,
+                                          std::uint32_t base, const EvalOptions<W>& options,
+                                          Diagnostics* diag)
+    : impl_(std::make_unique<Impl>(*checked_for_portions(&nh), &shared, base, options, diag)) {}
+
+template <class W>
+PortionedEvaluator<W>::PortionedEvaluator(PortionedEvaluator&&) noexcept = default;
+template <class W>
+PortionedEvaluator<W>& PortionedEvaluator<W>::operator=(PortionedEvaluator&&) noexcept = default;
+template <class W>
+PortionedEvaluator<W>::~PortionedEvaluator() = default;
+
+template <class W>
+std::size_t PortionedEvaluator<W>::num_states() const noexcept {
+  return impl_->state().num_states();
+}
+template <class W>
+std::uint32_t PortionedEvaluator<W>::position(StateId x) const {
+  return impl_->state().position(x);
+}
+template <class W>
+void PortionedEvaluator<W>::initial_offer(StateId x, W value) {
+  impl_->ev().initial_offer(x, value);
+}
+template <class W>
+bool PortionedEvaluator<W>::external_offer(StateId x, W value) {
+  return impl_->ev().external_offer(x, value);
+}
+template <class W>
+void PortionedEvaluator<W>::set_deadline(W deadline) {
+  impl_->ev().set_deadline(deadline);
+}
+template <class W>
+std::span<const std::pair<StateId, W>> PortionedEvaluator<W>::visit_cell(W lo, W hi) {
+  const std::size_t first = impl_->ev().visit_cell(lo, hi);
+  return std::span<const std::pair<StateId, W>>(impl_->out().emissions).subspan(first);
+}
+template <class W>
+bool PortionedEvaluator<W>::opened() const noexcept {
+  return impl_->state().root_opened();
+}
+template <class W>
+bool PortionedEvaluator<W>::finished() const noexcept {
+  return impl_->state().finished();
+}
+template <class W>
+const std::vector<W>& PortionedEvaluator<W>::value() const noexcept {
+  return impl_->out().value;
+}
+template <class W>
+const std::vector<std::pair<StateId, W>>& PortionedEvaluator<W>::emissions() const noexcept {
+  return impl_->out().emissions;
+}
+template <class W>
+EvalResult<W> PortionedEvaluator<W>::take_result() {
+  return impl_->take();
+}
+
+template class PortionedEvaluator<std::uint64_t>;
+template class PortionedEvaluator<double>;
 
 }  // namespace sssp::paper

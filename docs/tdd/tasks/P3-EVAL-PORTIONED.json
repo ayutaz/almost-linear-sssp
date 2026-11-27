@@ -1,0 +1,46 @@
+{
+  "id": "P3-EVAL-PORTIONED",
+  "spec": "PortionedEvaluator visits a one-root normalised ordered hierarchy in consecutive cells (Lemma 7.7): it emits exactly the (state, value) pairs of the bulk evaluate in cell-stable order, resumes clipped slots from the first live piece, accepts initial and external offers under the arrival hypothesis, honours an inclusive atom deadline, can share one split-findmin layout, and scans every local nominal slot at most twice on a grid of cells no narrower than the largest unit",
+  "paper_ref": "Sec 7.4 l.1835-1841 (visiting an active atom), Lemma 7.7 (l.1871-1909) and Figure 2; Sec 4.3 Alg 2-3; Q-27",
+  "files": {
+    "impl": [
+      "src/paper/hierarchy/evaluate.hpp",
+      "src/paper/hierarchy/evaluate.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/hierarchy/test_portioned_evaluate.cpp",
+      "tests/differential/paper/test_portioned_vs_evaluate.cpp",
+      "tests/property/paper/test_portioned_evaluate_property.cpp",
+      "tests/differential/paper/portioned_cases.hpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"portioned|Lemma 7.7\"'",
+      "exit_code": 1,
+      "reason": "PortionedEvaluator (Lemma 7.7 cell-by-cell API) does not exist yet: the new unit, differential and property tests fail to compile with 'no member named PortionedEvaluator in namespace sssp::paper'",
+      "timestamp": "2026-11-27T12:21:37+09:00",
+      "output_tail": "fatal error: too many errors emitted, stopping now [-ferror-limit=]\n20 errors generated.\n[196/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_reference_hierarchy.cpp.o\n[197/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_eval_oracle.cpp.o\n[198/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_eval_invariants.cpp.o\n[199/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_child_order.cpp.o\n[200/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_hierarchy_zero_cycles.cpp.o\n[201/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_ilog.cpp.o\n[202/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_local_hierarchy.cpp.o\n[203/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_reference_hierarchy_heights.cpp.o\n[204/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_ordered_hierarchy_validate.cpp.o\n[205/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_normalize.cpp.o\n[206/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_length.cpp.o\n[207/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_owner_decomposition.cpp.o\n[208/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_local_base_case.cpp.o\n[209/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_threshold_joins.cpp.o\n[210/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_evaluate.cpp.o\n[211/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_radial_states.cpp.o\n[212/269] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_seeded_instances.cpp.o\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:32:25+09:00",
+      "output_tail": "        Start 893: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n886/893 Test #781: integration:file round-trip feeds an identical CSR graph - std::uint64_t ................................................................................   Passed    0.46 sec\n887/893 Test #889: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.45 sec\n888/893 Test #891: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.45 sec\n889/893 Test #782: integration:file round-trip feeds an identical CSR graph - double .......................................................................................   Passed    0.55 sec\n890/893 Test #890: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.48 sec\n891/893 Test #892: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.25 sec\n892/893 Test #893: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.25 sec\n893/893 Test #780: integration:DIMACS format round-trips every generated graph with reverse-pair merging - double ..........................................................   Passed    1.18 sec\n\n100% tests passed, 0 tests failed out of 893\n\nLabel Time Summary:\ndifferential    =  31.28 sec*proc (62 tests)\nintegration     =   3.04 sec*proc (6 tests)\nproperty        =  40.89 sec*proc (43 tests)\nregression      =   2.21 sec*proc (6 tests)\nunit            = 190.08 sec*proc (776 tests)\n\nTotal Test time (real) =  33.98 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T13:02:57+09:00",
+      "output_tail": "        Start  14: unit:indexed d-ary heap rejects invalid operations - Dary4\n886/893 Test #338: unit:portioned: a singleton root emits its due minimum once or retires at its deadline ..................................................................   Passed    0.02 sec\n887/893 Test #266: unit:Q-21: a zero-length 2-cycle below one node violates H3 there, at any height - std::uint64_t ........................................................   Passed    0.04 sec\n888/893 Test   #4: unit:binary heap does not reallocate within reserved capacity ...........................................................................................   Passed    0.02 sec\n889/893 Test #760: unit:verify accepts a correct shortest-path tree - double ...............................................................................................   Passed    0.03 sec\n890/893 Test #175: unit:edge-list format keeps self-loops, multi-edges and isolated vertices ...............................................................................   Passed    0.03 sec\n891/893 Test #181: unit:negative zero is accepted and normalised to +0 .....................................................................................................   Passed    0.03 sec\n892/893 Test  #14: unit:indexed d-ary heap rejects invalid operations - Dary4 ..............................................................................................   Passed    0.03 sec\n893/893 Test #276: unit:Q-21: zero-length arcs on no cycle and zero-length self-arcs are accepted - std::uint64_t ..........................................................   Passed    0.04 sec\n\n100% tests passed, 0 tests failed out of 893\n\nLabel Time Summary:\ndifferential    =  19.58 sec*proc (62 tests)\nintegration     =   0.66 sec*proc (6 tests)\nproperty        =  25.10 sec*proc (43 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 114.89 sec*proc (776 tests)\n\nTotal Test time (real) =  21.50 sec"
+    }
+  ],
+  "commit": "64699de"
+}
