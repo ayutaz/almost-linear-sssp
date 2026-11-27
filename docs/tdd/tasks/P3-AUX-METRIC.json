@@ -1,0 +1,51 @@
+{
+  "id": "P3-AUX-METRIC",
+  "spec": "Sec 7.1-7.2: projected interowner edges A_e = R_x + w + R_y feed NameRoutes; d_e = P lambda_e per name by doubling; interowner edges are radial iff 2 d_e <= w, intraowner reduced edges radial with d_e = 0; G' identifies the pivots into a root with radial edges of length w + d_e (pivot loops discarded) and T' = owner spokes; Lemma 7.1 (cut corridor edges macro, lambda/(2h+1) <= w < 2 P lambda) and Lemma 7.2 (r <= J <= R <= h r, |J_x - J_y| <= 3w/2, T' an MST of G') hold",
+  "paper_ref": "Sec 7.1 l.1642-1660, Lemma 7.1 l.1653, Sec 7.2 l.1662-1690, Lemma 7.2 l.1668, Alg 8 l.9-10",
+  "files": {
+    "impl": [
+      "src/paper/owner/aux_metric.hpp",
+      "src/paper/owner/aux_metric.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/owner/test_aux_metric.cpp",
+      "tests/property/paper/test_aux_metric_property.cpp"
+    ],
+    "covers": [
+      "src/paper/local/owner_decomposition.hpp",
+      "src/paper/pivots/name_routes.hpp",
+      "src/paper/primitives/dijkstra.hpp",
+      "tests/unit/paper/local/local_test_support.hpp",
+      "tests/support/floyd_warshall.hpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"aux|Lemmas 7|outer separator\"'",
+      "exit_code": 1,
+      "reason": "missing header paper/owner/aux_metric.hpp: the Sec 7.1-7.2 API (projected_interowner_edges, classify_outer_edges, build_aux_graph, owner_coordinates_ref, check_aux_metric) does not exist yet",
+      "timestamp": "2026-11-27T12:02:26+09:00",
+      "output_tail": "      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[213/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_level_ancestor.cpp.o\n[214/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_lca.cpp.o\n[215/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_base_case.cpp.o\n[216/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_dsu.cpp.o\n[217/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_edge_pairs.cpp.o\n[218/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_fib_heap.cpp.o\n[219/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/pivots/test_estimate.cpp.o\n[220/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_contract_restore.cpp.o\n[221/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_growth_pass.cpp.o\n[222/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_search.cpp.o\n[223/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/pivots/test_name_routes.cpp.o\n[224/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_mst.cpp.o\n[225/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_merge_events.cpp.o\n[226/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_paper_dijkstra.cpp.o\n[227/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_select.cpp.o\n[228/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_sort.cpp.o\n[229/264] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_split_findmin.cpp.o\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:10:31+09:00",
+      "output_tail": "        Start 868: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n861/868 Test #867: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.01 sec\n862/868 Test #868: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.05 sec\n863/868 Test #849: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    1.22 sec\n864/868 Test #850: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    1.23 sec\n865/868 Test #860: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.87 sec\n866/868 Test #856: property:name_routes: Mode A certificates against Bellman-Ford, measured acceptance .....................................................................   Passed    1.23 sec\n867/868 Test #861: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.52 sec\n868/868 Test #830: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed   76.93 sec\n\n100% tests passed, 0 tests failed out of 868\n\nLabel Time Summary:\ndifferential    =   3.45 sec*proc (44 tests)\nintegration     =   0.61 sec*proc (6 tests)\nproperty        = 119.41 sec*proc (40 tests)\nregression      =   0.09 sec*proc (6 tests)\nunit            = 157.30 sec*proc (772 tests)\n\nTotal Test time (real) =  76.95 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:19:04+09:00",
+      "output_tail": "        Start 866: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf\n861/868 Test #788: differential:paper_sssp rejects an invalid source .......................................................................................................   Passed    0.02 sec\n862/868 Test #865: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.01 sec\n863/868 Test #810: differential:every generator family is covered by the differential test .................................................................................   Passed    0.03 sec\n864/868 Test #867: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.01 sec\n865/868 Test #786: differential:paper_sssp: all-zero graph contracts to one vertex - std::uint64_t .........................................................................   Passed    0.03 sec\n866/868 Test #863: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.01 sec\n867/868 Test #866: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.02 sec\n868/868 Test #830: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed   62.79 sec\n\n100% tests passed, 0 tests failed out of 868\n\nLabel Time Summary:\ndifferential    =   3.43 sec*proc (44 tests)\nintegration     =   0.61 sec*proc (6 tests)\nproperty        =  96.12 sec*proc (40 tests)\nregression      =   0.12 sec*proc (6 tests)\nunit            = 104.88 sec*proc (772 tests)\n\nTotal Test time (real) =  63.26 sec"
+    }
+  ],
+  "commit": null
+}
