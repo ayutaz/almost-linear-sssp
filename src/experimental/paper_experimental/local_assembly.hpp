@@ -44,8 +44,9 @@
 //
 // Relation to Mode A (task P5-LOCAL-UNIFY, Q-59): there is one implementation of the steps,
 // the shared core src/paper/local/assembly_core.hpp. Mode A passes it the paper's constants
-// (c = 10, N^16); this file passes the same for kPaper, the Lambda formulas for kLambda, and
-// sets the core's exact-height switch for kExactHeight. With (kPaper, kGrid) the result is
+// (c = 10, N^16); this file passes the same for kPaper and the Lambda formulas for kLambda.
+// kExactHeight is not a step of the paper: its merges are implemented in local_assembly.cpp
+// and share only the core's ClassMerger and link_and_order. With (kPaper, kGrid) the result is
 // therefore paper::assemble_local_hierarchy's, counters included. The outputs of all three
 // variants are pinned by hashes recorded before the unification
 // (tests/property/paper_experimental/test_local_mode_b_property.cpp). The Mode B entry point

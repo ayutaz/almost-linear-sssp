@@ -131,7 +131,6 @@ TEMPLATE_TEST_CASE("Rule::paper carries c = 10 and N^16 (Sec 5.4 l.1206, l.1216)
   using W = TestType;
   for (const std::size_t n : {32U, 41U, 100U}) {
     const auto rule = core::Rule::paper(n);
-    CHECK_FALSE(rule.exact_height);
     for (const W x : {W{1}, W{5}, W{123456}}) {
       CHECK(rule.align.apply(x) == sat::mul_int_pow(x, n, 10));
       CHECK(rule.support_end.apply(x) == sat::mul_int_pow(x, n, 16));
@@ -470,36 +469,4 @@ TEST_CASE("assemble(): injected constants decide the alignment and the support e
     CHECK(report.ok());
   }
   CHECK(flipped > 0);
-}
-
-TEST_CASE("assemble(): the exact-height switch (deviation D-11) merges at the join weights") {
-  using W = std::uint64_t;
-  const auto g = CsrGraph<W>::from_edges(
-      36, lt::make_graph<W>(lt::Family::kGrid, lt::Weights::kUniform, 36, 9));
-  const auto in = build(g, 3);
-  core::Rule rule = core::Rule::paper(36);
-  rule.exact_height = true;
-  Diagnostics diag;
-  const auto a = core::assemble(in.od, in.rs, in.joins, rule, &diag);
-  const auto& h = a.result.hierarchy;
-  CHECK(h.c0 == 1);
-  CHECK(a.blocks.empty());
-  CHECK(a.grid.empty());
-  CHECK(a.supports.empty());
-  std::vector<W> weights;
-  for (const auto& j : in.joins.joins) weights.push_back(j.weight);
-  for (std::size_t v = 0; v < h.nodes.size(); ++v) {
-    if (h.is_leaf(static_cast<NodeId>(v))) continue;
-    CHECK(std::find(weights.begin(), weights.end(), h.nodes[v].height) != weights.end());
-    CHECK(a.node_upper[v] == h.nodes[v].height);
-    CHECK(a.node_upper_inclusive[v] == 1);
-    for (const auto& l : h.nodes[v].links) CHECK(l.length <= h.nodes[v].height);
-  }
-  const auto report = sssp::paper::validate_ordered_hierarchy(h, g);
-  INFO(report.summary());
-  CHECK(report.ok());
-#if SSSP_DIAGNOSTICS
-  CHECK(diag.counters.count("local_assemble_exact_classes") == 1);
-  CHECK(diag.counters.count("local_assemble_grid_points") == 0);
-#endif
 }
