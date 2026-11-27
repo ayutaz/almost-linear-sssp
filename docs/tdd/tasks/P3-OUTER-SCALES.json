@@ -18,7 +18,7 @@
       "src/paper/local/atom_replacement.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -72,5 +72,5 @@
       "output_tail": "[10/11] Linking CXX executable tests/sssp_property_tests\nAll tests passed (45356 assertions in 51 test cases)\n\nAll tests passed (4888 assertions in 11 test cases)\n\nAll tests passed (90038646 assertions in 9 test cases)"
     }
   ],
-  "commit": null
+  "commit": "7798571"
 }
