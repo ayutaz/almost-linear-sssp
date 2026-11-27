@@ -12,7 +12,7 @@
       "tests/differential/paper/test_contract_restore_differential.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -65,5 +65,5 @@
       "output_tail": "        Start 278: regression:Counted<double> graphs reject negative and NaN weights\n271/278 Test #250: unit:verify compares against a reference when given - double ............................................   Passed    0.02 sec\n272/278 Test #123: unit:negative zero is accepted and normalised to +0 .....................................................   Passed    0.01 sec\n273/278 Test #182: unit:mul_pow2 on integers is exact and detects overflow .................................................   Passed    0.01 sec\n274/278 Test #254: unit:verify is exact for integer weights regardless of tolerance ........................................   Passed    0.01 sec\n275/278 Test #278: regression:Counted<double> graphs reject negative and NaN weights .......................................   Passed    0.01 sec\n276/278 Test #151: unit:small graph builders take sizes and weights ........................................................   Passed    0.01 sec\n277/278 Test #108: unit:EdgeList -> CSR -> EdgeList preserves vertices and edge order ......................................   Passed    0.01 sec\n278/278 Test #206: unit:uniform_below rejects outcomes at least h instead of reducing modulo h .............................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 278\n\nLabel Time Summary:\ndifferential    =   1.59 sec*proc (6 tests)\nintegration     =   0.55 sec*proc (6 tests)\nproperty        =   0.72 sec*proc (7 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =   9.71 sec*proc (258 tests)\n\nTotal Test time (real) =   3.09 sec"
     }
   ],
-  "commit": null
+  "commit": "890cf66"
 }
