@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 
+#include "paper/local/saturating.hpp"
 #include "paper/model/length.hpp"
 #include "paper/primitives/search.hpp"
 
@@ -21,6 +22,13 @@ class Arith {
   explicit Arith(Diagnostics* diag) : ops_(diag != nullptr ? &diag->ops : nullptr) {}
 
   [[nodiscard]] W add(W a, W b) const { return ops_.add(L::finite(a), L::finite(b)).value(); }
+  /// [Deviation D-23] a + b, or +infinity if an operand is +infinity or the sum does not fit
+  /// (sat::add, the D-13 helper). One counted addition if both operands are finite.
+  [[nodiscard]] W sadd(W a, W b) const {
+    if (a == kInf || b == kInf) return kInf;
+    SSSP_COUNT(if (ops_.counters() != nullptr)++ ops_.counters()->additions);
+    return sat::add(a, b);
+  }
   [[nodiscard]] bool less(W a, W b) const { return ops_.less(L::finite(a), L::finite(b)); }
   [[nodiscard]] bool equal(W a, W b) const { return ops_.equal(L::finite(a), L::finite(b)); }
 
@@ -34,8 +42,9 @@ class Arith {
     }
   }
 
-  /// 4a >= b, with an unrepresentable 4a counting as larger than b.
+  /// 4a >= b, with an unrepresentable 4a (including a saturated a) counting as larger than b.
   [[nodiscard]] bool four_times_at_least(W a, W b) const {
+    if (a == kInf) return true;
     const auto a2 = twice(a);
     if (!a2) return true;
     const auto a4 = twice(*a2);
@@ -45,6 +54,7 @@ class Arith {
 
  private:
   using L = model::Len<W>;
+  static constexpr W kInf = WeightTraits<W>::infinity();
   model::LenOps<W> ops_;
 };
 
@@ -84,7 +94,10 @@ NormalizedHierarchy<W> normalize(const OrderedHierarchy<W>& h, Diagnostics* diag
   const auto internal = [&](NodeId v) { return !h.nodes[v].children.empty(); };
 
   // Step 1 (l.686-688): masses bottom-up. S(C) = h(C) + its links + S of internal children.
+  // [Deviation D-23] A mass that does not fit W saturates at +infinity: S(C) is only an upper
+  // bound (on the physical diameter of C, Lemma 4.3), and +infinity is still one.
   std::vector<W> mass(n, W{0});
+  std::uint64_t saturated = 0;
   for (auto it = order.rbegin(); it != order.rend(); ++it) {
     const NodeId v = *it;
     if (!internal(v)) continue;
@@ -94,10 +107,11 @@ NormalizedHierarchy<W> normalize(const OrderedHierarchy<W>& h, Diagnostics* diag
                                   " has a non-positive height (Def 4.1 H2)");
     }
     W s = nd.height;
-    for (const auto& lk : nd.links) s = ar.add(s, lk.length);
+    for (const auto& lk : nd.links) s = ar.sadd(s, lk.length);
     for (const NodeId c : nd.children) {
-      if (internal(c)) s = ar.add(s, mass[c]);
+      if (internal(c)) s = ar.sadd(s, mass[c]);
     }
+    if (s == WeightTraits<W>::infinity()) ++saturated;
     mass[v] = s;
   }
 
@@ -298,6 +312,7 @@ NormalizedHierarchy<W> normalize(const OrderedHierarchy<W>& h, Diagnostics* diag
   bump(diag, "normalize_self_arcs", self_arcs);
   bump(diag, "normalize_light_arcs", out.light_arcs.size());
   bump(diag, "normalize_root_arcs", out.root_arcs.size());
+  bump(diag, "normalize_saturated_masses", saturated);
   return out;
 }
 

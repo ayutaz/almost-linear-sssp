@@ -1,0 +1,62 @@
+{
+  "id": "20261127-evaluate-relax-overflow",
+  "summary": "Evaluate (Alg 2 l.11) throws std::overflow_error('integer length overflow') when the relaxation value emitted(tail) + l of a NON-shortest walk reaches the uint64 sentinel while the head has no offer yet: edges 0 -1- 1, 1 -(2^64 - 2)- 2, 1 -1- 3, 3 -1- 2, source 0. Vertex 1 emits at 1 and the arc 1 -> 2 gives 2^64 - 1; vertex 2 later gets 3 via vertex 3. Every distance fits.",
+  "algorithm": {
+    "name": "sssp::paper::local_hierarchy + sssp::paper::evaluate",
+    "version": "git 0830f0d (library version 0.1.0)",
+    "params": {
+      "variant": "Mode A (kPaperLocalParams)",
+      "thresholds": {
+        "L_N": 3,
+        "branch": "base case (k <= 2*L_k^4)"
+      }
+    }
+  },
+  "weight_type": "uint64",
+  "graph": {
+    "n": 4,
+    "edges": [
+      [
+        0,
+        1,
+        "1"
+      ],
+      [
+        1,
+        2,
+        "18446744073709551614"
+      ],
+      [
+        1,
+        3,
+        "1"
+      ],
+      [
+        3,
+        2,
+        "1"
+      ]
+    ]
+  },
+  "source": 0,
+  "found_by": {
+    "test": "review of the overflow class of 20261127-evaluate-mass-overflow (P3-EVAL-ARITH-FIX), no random search",
+    "generator": null,
+    "seed": null,
+    "params": {}
+  },
+  "minimised": true,
+  "failure": {
+    "kind": "exception",
+    "message": "integer length overflow"
+  },
+  "expected_dist": [
+    "0",
+    "1",
+    "3",
+    "2"
+  ],
+  "expected": "the exact distances: an overflowing relaxation is skipped (Bellman-Ford rule of docs/design/numerics.md §6); std::overflow_error only if a state that received such an offer never emits",
+  "tolerance": null,
+  "fixed_by": null
+}

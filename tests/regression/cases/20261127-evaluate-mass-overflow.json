@@ -1,0 +1,48 @@
+{
+  "id": "20261127-evaluate-mass-overflow",
+  "summary": "Evaluate (Alg 3) throws std::overflow_error('integer length overflow') on a valid uint64 hierarchy from Algorithm 4 whose distances all fit: one edge of length 2^63. Suspected cause: the Sec 4.1 mass S(C) = h(C) + link lengths (+ S of internal children) = 2^64, or the expiry D0 + S(X) of Alg 3 l.9; these are bookkeeping bounds, not distances. At the paper's size the same failure appears on lt::clustered(209953, 107) (MST total about 2^70).",
+  "algorithm": {
+    "name": "sssp::paper::local_hierarchy + sssp::paper::evaluate",
+    "version": "git 2e01f43 (library version 0.1.0)",
+    "params": {
+      "variant": "Mode A (kPaperLocalParams)",
+      "thresholds": {
+        "L_N": 2,
+        "branch": "base case (k <= 2*L_k^4)"
+      }
+    }
+  },
+  "weight_type": "uint64",
+  "graph": {
+    "n": 2,
+    "edges": [
+      [
+        0,
+        1,
+        "9223372036854775808"
+      ]
+    ]
+  },
+  "source": 0,
+  "found_by": {
+    "test": "differential:Alg 4 Mode A + Evaluate at k = 209953: clustered, heavy uint64 bridges",
+    "generator": "sssp::test::local::clustered (tests/unit/paper/local/clustered_graphs.hpp)",
+    "seed": 107,
+    "params": {
+      "n": 209953,
+      "source": 0
+    }
+  },
+  "minimised": true,
+  "failure": {
+    "kind": "exception",
+    "message": "integer length overflow"
+  },
+  "expected_dist": [
+    "0",
+    "9223372036854775808"
+  ],
+  "tolerance": null,
+  "fixed_by": null,
+  "expected": "the exact distances; the mass S(C), the expiry D0 + S(C) and the slot ends saturate at the infinity sentinel (D-13 extended to Sec 4, candidate D-23)"
+}

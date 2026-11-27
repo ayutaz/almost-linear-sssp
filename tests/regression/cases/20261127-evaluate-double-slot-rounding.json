@@ -1,0 +1,59 @@
+{
+  "id": "20261127-evaluate-double-slot-rounding",
+  "summary": "Evaluate (Alg 3) throws std::logic_error('evaluate: child slot behind the portion') on a valid double hierarchy from Algorithm 4: the path 0 -(2^53)- 1 -(1)- 2. The child {1, 2} (unit 1) opens at D0 = 2^53 where D0 + 1 rounds to D0, so its first slot is empty and no longer reaches into the parent's portion (start_child_slot, Alg 2 l.9-10, Interpretation Q-27). Also fails for weights (2^52, 0.5); passes for (2^52, 1) and (2^53, 2). At the paper's size the same exception appears on light clusters joined by bridges of 2^200 .. 2^202 (k = 209953, source 0). expected_dist holds the exact rational distances from exact_sssp.py; 2^53 + 1 is not a double, hence the tolerance.",
+  "algorithm": {
+    "name": "sssp::paper::local_hierarchy + sssp::paper::evaluate",
+    "version": "git 2e01f43 (library version 0.1.0)",
+    "params": {
+      "variant": "Mode A (kPaperLocalParams)",
+      "thresholds": {
+        "L_N": 3,
+        "branch": "base case (k <= 2*L_k^4)"
+      }
+    }
+  },
+  "weight_type": "double",
+  "graph": {
+    "n": 3,
+    "edges": [
+      [
+        0,
+        1,
+        "9007199254740992"
+      ],
+      [
+        1,
+        2,
+        "1"
+      ]
+    ]
+  },
+  "source": 0,
+  "found_by": {
+    "test": "differential:Alg 4 Mode A + Evaluate at k = 209953: double clusters with 2^200 bridges (unaligned blocks)",
+    "generator": "heavy_clusters<double>(n, seed, 200) in tests/differential/paper/test_local_hierarchy_large_vs_dijkstra.cpp",
+    "seed": 112,
+    "params": {
+      "n": 209953,
+      "light": "1..3",
+      "bridges": "2^200, 2^201, 2^202",
+      "source": 0
+    }
+  },
+  "minimised": true,
+  "failure": {
+    "kind": "exception",
+    "message": "evaluate: child slot behind the portion"
+  },
+  "expected_dist": [
+    "0",
+    "9007199254740992",
+    "9007199254740993"
+  ],
+  "tolerance": {
+    "rel": "k * 2^-53 with k the hop count of the exact path (0, 1, 2)",
+    "abs": "0"
+  },
+  "fixed_by": null,
+  "expected": "std::domain_error('... rounds back to its start ...') from Evaluate (option (ii) of P3-EVAL-ARITH-FIX): a slot of positive width nu whose end D0 + nu rounds back to D0 cannot be stepped through by Alg 2 / Alg 3; the input is outside the double scope of Q-06 / Q-55. The same path from source 2 (no empty slot) is evaluated within the k * 2^-53 tolerance."
+}
