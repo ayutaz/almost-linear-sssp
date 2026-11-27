@@ -1,0 +1,33 @@
+{
+  "id": "P3-HIERARCHY-TYPES-GAPS",
+  "kind": "test-only",
+  "test_only_reason": "Closes acceptance gaps of P3-HIERARCHY-TYPES: the Def 4.1 checker and the reference hierarchy already exist; these tests pin Q-21 (zero-length cycles) and height changes of the reference hierarchy without changing the implementation",
+  "spec": "A zero-length directed cycle through >= 2 states is reported as H3 at the lowest node containing it (or H4 if it spans several trees) for every forest; zero-length self-arcs and acyclic zero arcs are accepted; raising a reference-hierarchy height above its merge threshold (incl. the 2W variant) violates H3 at that node, while monotone heights at most the thresholds stay valid with c0 = ceil(max link / h)",
+  "paper_ref": "Def 4.1 (Sec 4, l.646-658), Sec 4.1 l.719-720, Sec 5.1 l.961-962; Q-21",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/unit/paper/hierarchy/test_hierarchy_zero_cycles.cpp",
+      "tests/unit/paper/hierarchy/test_reference_hierarchy_heights.cpp"
+    ],
+    "covers": [
+      "src/paper/hierarchy/ordered_hierarchy.cpp",
+      "src/paper/hierarchy/reference_hierarchy.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [
+        "Q-21",
+        "reference heights"
+      ],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"Q-21|reference heights\" && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:47:20+09:00",
+      "output_tail": "        Start 502: unit:lightest_edge_per_pair keeps the (length, index)-least edge per pair - double\n727/734 Test   #1: unit:binary heap pops entries in non-decreasing key order ...............................................................................................   Passed    0.03 sec\n728/734 Test  #50: unit:4-ary-heap Dijkstra: invalid source and integer overflow ...........................................................................................   Passed    0.03 sec\n729/734 Test #573: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::DyadicSplitFindmin<std::uint64_t> ...................................   Passed    0.02 sec\n730/734 Test  #57: unit:binary-heap Dijkstra: invalid source and integer overflow ..........................................................................................   Passed    0.04 sec\n731/734 Test #149: unit:AdjacencyList built from EdgeList matches the CSR arc order ........................................................................................   Passed    0.03 sec\n732/734 Test #220: unit:eval invariants: I5 detects a due key left in the scanned portion ..................................................................................   Passed    0.03 sec\n733/734 Test #492: unit:mst_three_pass validates edges - double ............................................................................................................   Passed    0.03 sec\n734/734 Test #502: unit:lightest_edge_per_pair keeps the (length, index)-least edge per pair - double ......................................................................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 734\n\nLabel Time Summary:\ndifferential    =   2.46 sec*proc (27 tests)\nintegration     =   0.74 sec*proc (6 tests)\nproperty        =  21.37 sec*proc (30 tests)\nregression      =   0.14 sec*proc (5 tests)\nunit            = 127.71 sec*proc (666 tests)\n\nTotal Test time (real) =  19.13 sec"
+    }
+  ],
+  "commit": "ae1a041"
+}

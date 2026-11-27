@@ -1,0 +1,42 @@
+{
+  "id": "P3-INTERVAL-MIN-GAPS",
+  "kind": "test-only",
+  "test_only_reason": "Closes acceptance gaps of P3-INTERVAL-MIN: the four split-findmin implementations already exist; these tests pin the Q-14 interval-id contract used by Evaluate and the Q-16 key-increase rule without changing the implementation",
+  "spec": "After a successful split both sides get fresh ids (2s-1, 2s), the old id is never returned again, other intervals keep their ids, decreases/queries/rejected splits change no id, and a stored (sample, id) handle is current iff its interval was not split since; decrease to an equal key is a no-op, decrease to a larger key aborts with assertions and leaves the structure unchanged under NDEBUG",
+  "paper_ref": "Sec 3.5 l.577-639; Sec 4.3 l.841-842, l.859-862; proof of Lemma 4.7 l.939-947; Q-14, Q-16",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/unit/paper/primitives/test_split_findmin_contract.cpp"
+    ],
+    "covers": [
+      "src/paper/primitives/split_findmin.hpp",
+      "src/paper/primitives/split_findmin.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [
+        "Q-14",
+        "Q-16"
+      ],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"Q-14|Q-16\" && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:47:55+09:00",
+      "output_tail": "        Start 220: unit:eval invariants: I5 detects a due key left in the scanned portion\n727/734 Test #492: unit:mst_three_pass validates edges - double ............................................................................................................   Passed    0.18 sec\n728/734 Test #149: unit:AdjacencyList built from EdgeList matches the CSR arc order ........................................................................................   Passed    0.12 sec\n729/734 Test  #74: unit:bench cli: defaults follow the CLI table ...........................................................................................................   Passed    0.10 sec\n730/734 Test   #1: unit:binary heap pops entries in non-decreasing key order ...............................................................................................   Passed    0.20 sec\n731/734 Test  #50: unit:4-ary-heap Dijkstra: invalid source and integer overflow ...........................................................................................   Passed    0.20 sec\n732/734 Test #573: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::DyadicSplitFindmin<std::uint64_t> ...................................   Passed    0.08 sec\n733/734 Test #502: unit:lightest_edge_per_pair keeps the (length, index)-least edge per pair - double ......................................................................   Passed    0.11 sec\n734/734 Test #220: unit:eval invariants: I5 detects a due key left in the scanned portion ..................................................................................   Passed    0.04 sec\n\n100% tests passed, 0 tests failed out of 734\n\nLabel Time Summary:\ndifferential    =   2.52 sec*proc (27 tests)\nintegration     =   0.98 sec*proc (6 tests)\nproperty        =  24.05 sec*proc (30 tests)\nregression      =   0.14 sec*proc (5 tests)\nunit            = 161.56 sec*proc (666 tests)\n\nTotal Test time (real) =  23.73 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "Q-16 (NDEBUG)"
+      ],
+      "command": "bash -c 'cmake --build --preset sanitizer && ctest --preset sanitizer -R \"Q-14|Q-16\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:48:06+09:00",
+      "output_tail": "      Start 633: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindmin<double>\n23/32 Test #632: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::OneLevelBlockedSplitFindmin<double> ..................   Passed    0.07 sec\n24/32 Test #629: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ..........................   Passed    0.06 sec\n      Start 627: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::DyadicSplitFindmin<std::uint64_t>\n      Start 628: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t>\n25/32 Test #631: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::DyadicSplitFindmin<double> ...........................   Passed    0.07 sec\n26/32 Test #630: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindminRef<double> ..............................   Passed    0.06 sec\n27/32 Test #635: unit:Q-16: raising a key asserts with assertions and is a no-op without them - sssp::paper::DyadicSplitFindmin<std::uint64_t> ................   Passed    0.34 sec\n28/32 Test #626: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindminRef<std::uint64_t> .......................   Passed    0.06 sec\n29/32 Test #636: unit:Q-16: raising a key asserts with assertions and is a no-op without them - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t> .......   Passed    0.34 sec\n30/32 Test #633: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindmin<double> .................................   Passed    0.08 sec\n31/32 Test #627: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::DyadicSplitFindmin<std::uint64_t> ....................   Passed    0.07 sec\n32/32 Test #628: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t> ...........   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 32\n\nLabel Time Summary:\nunit    =  28.39 sec*proc (32 tests)\n\nTotal Test time (real) =   3.61 sec"
+    }
+  ],
+  "commit": "ae1a041"
+}
