@@ -11,6 +11,7 @@
 #include <string_view>
 #include <vector>
 
+#include "experimental/practical/local_sssp.hpp"
 #include "sssp/baseline.hpp"
 #include "sssp/bench_runner.hpp"
 #include "sssp/graph.hpp"
@@ -130,6 +131,42 @@ TEST_CASE("bench registry: baselines with schema names and modes", "[bench]") {
   CHECK(sssp::bench::schema_mode("paper-experimental") == "paper-experimental");
   CHECK(sssp::bench::schema_mode("paper-optimized") == "practical-optimized");
   CHECK_FALSE(sssp::bench::schema_mode("nope").has_value());
+}
+
+TEST_CASE("bench registry: practical-local is a uint64-only Mode C entry", "[bench]") {
+  // P5-PRACTICAL-LOCAL-BENCH. General doubles can make the tree restoration of Lemma 8.5 throw
+  // (local_sssp.hpp, "Numerics"), so no double solver is registered: exit 3, never a fallback.
+  const auto* e = sssp::bench::find_algorithm("practical-local");
+  REQUIRE(e != nullptr);
+  CHECK(e->mode == "practical-optimized");
+  CHECK(sssp::bench::schema_mode("practical-local") == "practical-optimized");
+  CHECK(e->solve_u64 != nullptr);
+  CHECK(e->solve_f64 == nullptr);
+  CHECK_FALSE(e->takes_params);
+  CHECK_FALSE(e->exact_relaxation);
+  CHECK(e->max_work == 0);
+  CHECK(e->max_vertices == 0);
+  CHECK(sssp::bench::algorithm_registry().size() == 8);
+}
+
+TEST_CASE("bench registry: practical-local records its fallback per record", "[bench]") {
+  const auto* e = sssp::bench::find_algorithm("practical-local");
+  REQUIRE(e != nullptr);
+  const auto g = small_graph<std::uint64_t>();
+  const auto oracle = sssp::baseline::bellman_ford(g, 0);
+  PhaseTimer timer;
+  const auto r = e->solve_u64(g, 0, Json::object(), timer);
+  CHECK(r.dist == oracle.dist);
+  REQUIRE(timer.ns(PhaseTimer::Phase::kSssp).has_value());
+  // Vertex 4 is isolated: the contracted source component has N = 4 <= 16 vertices, so the
+  // direct search runs and is recorded with the contracted N and m' (4 vertices, 4 edges).
+  REQUIRE(r.diag.fallbacks.size() == 1);
+  CHECK(r.diag.fallbacks[0].reason ==
+        sssp::practical::direct_search_reason(
+            sssp::practical::PracticalOptions{}.direct_search_max_vertices));
+  CHECK(r.diag.fallbacks[0].reason.find("<= 16") != std::string::npos);
+  CHECK(r.diag.fallbacks[0].vertices == 4);
+  CHECK(r.diag.fallbacks[0].edges == 4);
 }
 
 TEST_CASE("bench registry: Mode A entry under the names of sssp/paper.hpp", "[bench]") {

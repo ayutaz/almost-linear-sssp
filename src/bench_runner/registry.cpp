@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "experimental/practical/local_sssp.hpp"
 #include "sssp/baseline.hpp"
 #include "sssp/bench_runner.hpp"
 #include "sssp/generators.hpp"
@@ -56,6 +57,20 @@ SsspResult<W> run_paper(const CsrGraph<W>& g, Vertex source, const Json& /*param
                     [&] { return paper::paper_sssp(g, source, paper::PaperOptions{V}); });
 }
 
+// Mode C entry (src/experimental/practical/local_sssp.hpp, task P5-PRACTICAL-LOCAL).
+// Paper-inspired: one local hierarchy on the whole contracted component, no outer construction (Sec
+// 6-8), so the bound of Theorem 1 is not claimed. Like run_paper it is one call (contraction,
+// hierarchy, Evaluate and the tree restoration are not separable from outside): the whole call is
+// the sssp phase, preprocess / tree stay null. The FallbackRecord of the direct search (contracted
+// N <= 16, or N = 1) is returned in result.diag and written to the record's fallback block
+// unchanged. Registered for uint64 only: for general doubles the tree restoration (Lemma 8.5) may
+// throw.
+template <class W>
+SsspResult<W> run_practical_local(const CsrGraph<W>& g, Vertex source, const Json& /*params*/,
+                                  PhaseTimer& timer) {
+  return timer.time(PhaseTimer::Phase::kSssp, [&] { return practical::local_sssp(g, source); });
+}
+
 using U64 = std::uint64_t;
 using paper::PaperVariant;
 
@@ -63,7 +78,7 @@ using paper::PaperVariant;
 // double distances are bit-identical to Dijkstra's (numerics.md §2); a non-baseline result is
 // compared with a relaxation reference under Tolerance::for_path_hops(2(n-1)) (numerics.md §3.2,
 // §3.4). Integer weights are compared exactly regardless (runner.cpp).
-constexpr std::array<AlgorithmEntry, 7> kRegistry{{
+constexpr std::array<AlgorithmEntry, 8> kRegistry{{
     {"bellman-ford", "baseline", &run_baseline<U64, &baseline::bellman_ford<U64>>,
      &run_baseline<double, &baseline::bellman_ford<double>>, true, false, kBellmanFordMaxWork},
     {"dijkstra-binary", "baseline", &run_baseline<U64, &baseline::dijkstra_binary_heap<U64>>,
@@ -81,10 +96,13 @@ constexpr std::array<AlgorithmEntry, 7> kRegistry{{
     {paper::algorithm_name(PaperVariant::kFaithfulD1), "paper-faithful",
      &run_paper<U64, PaperVariant::kFaithfulD1>, &run_paper<double, PaperVariant::kFaithfulD1>,
      false, false, 0, 0},
+    // No double solver (nullptr -> exit 3 for double weights, never a substitute algorithm).
+    {practical::kLocalSsspName, practical::kLocalSsspMode, &run_practical_local<U64>, nullptr,
+     false, false, 0, 0},
 }};
 
 // bench.schema.ALGORITHM_MODES (docs/design/benchmark_schema.md §2.2).
-constexpr std::array<std::pair<std::string_view, std::string_view>, 10> kSchemaModes{{
+constexpr std::array<std::pair<std::string_view, std::string_view>, 11> kSchemaModes{{
     {"dijkstra-binary", "baseline"},
     {"dijkstra-4ary", "baseline"},
     {"dijkstra-fibonacci", "baseline"},
@@ -95,6 +113,7 @@ constexpr std::array<std::pair<std::string_view, std::string_view>, 10> kSchemaM
     {paper::algorithm_name(PaperVariant::kFaithfulD1), "paper-faithful"},
     {"paper-experimental", "paper-experimental"},
     {"paper-optimized", "practical-optimized"},
+    {practical::kLocalSsspName, practical::kLocalSsspMode},
 }};
 
 }  // namespace

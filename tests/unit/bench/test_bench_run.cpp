@@ -437,8 +437,9 @@ TEST_CASE("bench run: --list and --version", "[bench]") {
   for (const auto& a : algos) {
     const std::string name = a.find("name")->as_string();
     CHECK(a.find("mode")->as_string() == *sssp::bench::schema_mode(name));
-    CHECK(a.find("weight_types")->dump() ==
-          (name == "dijkstra-radix" ? R"(["uint64"])" : R"(["uint64","double"])"));
+    CHECK(a.find("weight_types")->dump() == ((name == "dijkstra-radix" || name == "practical-local")
+                                                 ? R"(["uint64"])"
+                                                 : R"(["uint64","double"])"));
     // Size limits (exit 3 above them); null when the algorithm has none.
     const auto* e = sssp::bench::find_algorithm(name);
     REQUIRE(e != nullptr);
@@ -451,6 +452,7 @@ TEST_CASE("bench run: --list and --version", "[bench]") {
   for (const auto& a : algos) names.insert(a.find("name")->as_string());
   CHECK(names.count("paper-faithful") == 1);
   CHECK(names.count("paper-faithful-d1") == 1);
+  CHECK(names.count("practical-local") == 1);
 
   const auto v = run({"--version"});
   CHECK(v.code == 0);

@@ -308,3 +308,46 @@ def test_list_matches_schema_names():
     res = _runner("--version")
     assert res.returncode == 0
     assert schema.PAPER_VERSION in res.stdout
+
+
+def test_practical_local_records_fallback_and_refuses_double(env_json, tmp_path):
+    """practical-local: uint64 only; the record carries the per-record fallback (Q-69)."""
+    common = ("--env-json", env_json, "--run-id", "SYNTHETIC-TEST-DATA-run")
+    out = tmp_path / "SYNTHETIC-TEST-DATA.jsonl"
+    res = _runner(
+        "--type", "er", "--n", "150", "--weights", "uniform_int", "--algorithms", "practical-local",
+        "--trials", "1", "--warmup", "0", "--out", out, *common,
+    )  # fmt: skip
+    assert res.returncode == 0, res.stderr
+    assert _validate(out).returncode == 0
+    (rec,) = _records(out)
+    assert rec["algorithm"] == "practical-local"
+    assert rec["mode"] == "practical-optimized"
+    assert rec["status"] == "ok"
+    assert rec["correctness"]["ok"] is True
+    fb = rec["fallback"]
+    assert fb is not None
+    # Per reason: vertices / N and edges / m (never summed across reasons).
+    assert fb["count"] == len(fb["records"]) <= 1
+    for f in fb["records"]:
+        assert f["reason"].startswith("practical-local: ")
+        assert f["vertices"] <= rec["n"] and f["edges"] <= rec["m"]
+    # A tiny component is solved by the direct search (threshold 16) and recorded as such.
+    out2 = tmp_path / "SYNTHETIC-TEST-DATA-tiny.jsonl"
+    res = _runner(
+        "--type", "er", "--n", "12", "--weights", "uniform_int", "--algorithms", "practical-local",
+        "--trials", "1", "--warmup", "0", "--out", out2, *common,
+    )  # fmt: skip
+    assert res.returncode == 0, res.stderr
+    (rec,) = _records(out2)
+    (f,) = rec["fallback"]["records"]
+    assert "<= 16" in f["reason"] or "N = 1" in f["reason"]
+    assert 1 <= f["vertices"] <= 12
+    out3 = tmp_path / "SYNTHETIC-TEST-DATA-double.jsonl"
+    res = _runner(
+        "--type", "er", "--n", "50", "--weights", "uniform_real", "--weight-type", "double",
+        "--algorithms", "practical-local", "--out", out3, *common,
+    )  # fmt: skip
+    assert res.returncode == 3
+    assert "practical-local" in res.stderr and "double" in res.stderr
+    assert not out3.exists()

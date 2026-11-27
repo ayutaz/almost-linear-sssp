@@ -42,9 +42,11 @@ ALGORITHM_MODES: dict[str, str] = {
     "paper-faithful-d1": "paper-faithful",
     "paper-experimental": "paper-experimental",
     "paper-optimized": "practical-optimized",
+    # Mode C, paper-inspired (src/experimental/practical/local_sssp.hpp); uint64 only.
+    "practical-local": "practical-optimized",
 }
 BASELINE_ALGORITHMS = tuple(a for a, m in ALGORITHM_MODES.items() if m == "baseline")
-INTEGER_ONLY_ALGORITHMS = ("dijkstra-radix",)
+INTEGER_ONLY_ALGORITHMS = ("dijkstra-radix", "practical-local")
 
 TIME_KEYS = ("graph_gen", "preprocess", "sssp", "tree", "end_to_end", "verify")
 OPS_KEYS = (

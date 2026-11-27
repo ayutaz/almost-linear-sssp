@@ -1,0 +1,51 @@
+{
+  "id": "P5-PRACTICAL-LOCAL-BENCH",
+  "spec": "sssp_bench_runner accepts practical-local (uint64 only, mode practical-optimized), refuses double with exit 3, and the record carries the per-record fallback block",
+  "paper_ref": "none (Mode C, paper-inspired; no Theorem 1 claim)",
+  "files": {
+    "impl": [
+      "docs/design/benchmark_*.md"
+    ],
+    "tests": [
+      "tests/python/test_bench_*.py"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"bench\" ; uv run pytest -q tests/python/test_bench_schema.py tests/python/test_bench_runner_integration.py'",
+      "exit_code": 1,
+      "reason": "practical-local is not registered: find_algorithm returns nullptr, exit 0 expected for uint64 but exit 3, schema ALGORITHM_MODES lacks the name",
+      "timestamp": "2026-11-27T17:44:00+09:00",
+      "output_tail": "Error: ./build/debug is not a directory\n........................................................................ [ 69%]\n.......F..........sssssssssssss                                          [100%]\n=================================== FAILURES ===================================\n___________ test_practical_local_is_known_practical_and_integer_only ___________\n\n    def test_practical_local_is_known_practical_and_integer_only():\n>       assert schema.ALGORITHM_MODES[\"practical-local\"] == \"practical-optimized\"\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: 'practical-local'\n\ntests/python/test_bench_schema.py:186: KeyError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_schema.py::test_practical_local_is_known_practical_and_integer_only"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R bench'",
+      "exit_code": 8,
+      "reason": "practical-local not registered: find_algorithm returns nullptr; CLI exit 0 expected got 3; schema ALGORITHM_MODES lacks the name",
+      "timestamp": "2026-11-27T17:45:27+09:00",
+      "output_tail": "47/51 Test  #113: unit:bench run: exit codes and nothing written on refusal ...................................   Passed    0.06 sec\n48/51 Test #1362: unit:bench-driver:every case agrees with binary-heap Dijkstra on small inputs ...............   Passed    0.13 sec\n49/51 Test  #112: unit:bench run: the scan base case is refused above its vertex limit ........................   Passed    0.24 sec\n50/51 Test #1367: integration:sssp_bench verify-only ..........................................................   Passed    0.42 sec\n51/51 Test #1365: unit:bench-driver:registered benchmarks cover the registry and run once without error .......   Passed    1.03 sec\n\n92% tests passed, 4 tests failed out of 51\n\nLabel Time Summary:\nintegration    =   0.42 sec*proc (1 test)\nunit           =   2.89 sec*proc (50 tests)\n\nTotal Test time (real) =   6.31 sec\n\nThe following tests FAILED:\n\t 81 - unit:bench cli: unsupported combinations exit with code 3 (Failed) unit\n\t 89 - unit:bench registry: practical-local is a uint64-only Mode C entry (Failed) unit\n\t 90 - unit:bench registry: practical-local records its fallback per record (Failed) unit\n\t115 - unit:bench run: --list and --version (Failed)     unit\nErrors while running CTest"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"bench|practical\" -j4 && uv run pytest -q tests/python'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T17:58:14+09:00",
+      "output_tail": "71/73 Test #1282: property:practical-local on rounding doubles: a valid result or a refusal, never a wrong one ...............   Passed    1.28 sec\n72/73 Test #1161: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - std::uint64_t ...   Passed  156.96 sec\n73/73 Test #1162: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - double ..........   Passed  157.44 sec\n\n100% tests passed, 0 tests failed out of 73\n\nLabel Time Summary:\ndifferential         =  44.99 sec*proc (6 tests)\ndifferential-slow    = 314.40 sec*proc (2 tests)\nintegration          =   1.44 sec*proc (1 test)\nproperty             =   1.32 sec*proc (2 tests)\nunit                 =   4.16 sec*proc (62 tests)\n\nTotal Test time (real) = 162.65 sec\n........................................................................ [ 16%]\n........................................................................ [ 33%]\n........................................................................ [ 50%]\n........................................................................ [ 67%]\n........................................................................ [ 83%]\n.....................................................................    [100%]"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R bench -j4 && uv run pytest -q tests/python'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T17:59:46+09:00",
+      "output_tail": "47/51 Test   #84: unit:bench json: whitespace and unicode escapes .............................................   Passed    0.02 sec\n      Start 1360: unit:bench-driver:every registered algorithm gets a case for each weight type it supports\n48/51 Test #1361: unit:bench-driver:all algorithms of one input share the same graph object and sources .......   Passed    0.01 sec\n49/51 Test #1363: unit:bench-driver:check_case rejects wrong results instead of timing them ...................   Passed    0.01 sec\n50/51 Test #1360: unit:bench-driver:every registered algorithm gets a case for each weight type it supports ...   Passed    0.01 sec\n51/51 Test #1365: unit:bench-driver:registered benchmarks cover the registry and run once without error .......   Passed    1.07 sec\n\n100% tests passed, 0 tests failed out of 51\n\nLabel Time Summary:\nintegration    =   0.75 sec*proc (1 test)\nunit           =   3.24 sec*proc (50 tests)\n\nTotal Test time (real) =   4.27 sec\n........................................................................ [ 16%]\n........................................................................ [ 33%]\n........................................................................ [ 50%]\n........................................................................ [ 67%]\n........................................................................ [ 83%]\n.....................................................................    [100%]"
+    }
+  ],
+  "commit": "9a122d0"
+}
