@@ -74,11 +74,11 @@ void validate_edges(std::size_t n, std::span<const Edge<W>> edges) {
     if (e.u >= n || e.v >= n) {
       throw std::out_of_range("edge " + std::to_string(i) + " has an endpoint out of range");
     }
-    if constexpr (std::is_signed_v<W> || std::is_floating_point_v<W>) {
-      if (!WeightTraits<W>::is_valid_weight(e.weight)) {
-        throw std::invalid_argument("edge " + std::to_string(i) +
-                                    " has a negative, NaN or infinite weight");
-      }
+    // Always delegate to the weight traits so that wrapper types (e.g. Counted<W>) are
+    // validated too; unsigned integer traits accept every value.
+    if (!WeightTraits<W>::is_valid_weight(e.weight)) {
+      throw std::invalid_argument("edge " + std::to_string(i) +
+                                  " has a negative, NaN or infinite weight");
     }
   }
 }

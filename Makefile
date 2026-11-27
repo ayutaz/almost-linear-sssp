@@ -3,6 +3,8 @@ SHELL := /bin/bash
 LLVM_BIN ?= $(shell if [ -d /opt/homebrew/opt/llvm/bin ]; then echo /opt/homebrew/opt/llvm/bin; elif [ -d /usr/local/opt/llvm/bin ]; then echo /usr/local/opt/llvm/bin; fi)
 CLANG_FORMAT ?= $(if $(LLVM_BIN),$(LLVM_BIN)/clang-format,clang-format)
 CLANG_TIDY ?= $(if $(LLVM_BIN),$(LLVM_BIN)/clang-tidy,clang-tidy)
+# Homebrew clang-tidy does not know the macOS SDK; pass it explicitly on Darwin.
+TIDY_EXTRA ?= $(shell if [ "$$(uname -s)" = Darwin ]; then echo "--extra-arg=-isysroot$$(xcrun --show-sdk-path)"; fi)
 JOBS ?= $(shell sysctl -n hw.ncpu 2>/dev/null || nproc)
 PRESET ?= debug
 CXX_SOURCES = $(shell git ls-files --cached --others --exclude-standard -- '*.cpp' '*.hpp' '*.h')
@@ -60,7 +62,7 @@ lint: format-check
 
 tidy: configure
 	@files="$$(git ls-files --cached --others --exclude-standard -- 'src/*.cpp' 'tools/*.cpp')"; \
-	if [ -n "$$files" ]; then $(CLANG_TIDY) -p build/$(PRESET) --quiet $$files; fi
+	if [ -n "$$files" ]; then $(CLANG_TIDY) -p build/$(PRESET) --quiet $(TIDY_EXTRA) $$files; fi
 
 sanitizer:
 	cmake --preset sanitizer && cmake --build --preset sanitizer -j $(JOBS) && ctest --preset sanitizer

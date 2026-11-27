@@ -1,0 +1,38 @@
+{
+ "id": "P2-FIX-COUNTED-VALIDATION",
+ "spec": "validate_edges must reject negative/NaN/infinite weights for every weight type with WeightTraits, including wrappers such as Counted<double>",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "include/sssp/graph.hpp"
+  ],
+  "tests": [
+   "tests/regression/test_counted_weight_validation.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "Counted<double> graphs reject negative and NaN weights"
+   ],
+   "command": "ctest --test-dir build/debug -R \"Counted<double> graphs reject\"",
+   "exit_code": 8,
+   "reason": "from_edges did not throw for Counted<double>(-1.0): validate_edges only checked signed/floating-point W",
+   "timestamp": "2026-11-27T10:39:37+0900",
+   "output_tail": "0% tests passed, 1 tests failed out of 1"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all"
+   ],
+   "command": "cmake --build build/debug && ctest --test-dir build/debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:39:37+0900",
+   "output_tail": "100% tests passed, 0 tests failed out of 208"
+  }
+ ],
+ "commit": null
+}

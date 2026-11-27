@@ -1,0 +1,38 @@
+{
+ "id": "P0-FIX-TIDY-SDK",
+ "spec": "make tidy passes the macOS SDK sysroot to Homebrew clang-tidy so standard headers resolve",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "Makefile"
+  ],
+  "tests": [
+   "clang-tidy on src/core/version.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "clang-tidy src/core/version.cpp"
+   ],
+   "command": "clang-tidy -p build/debug --quiet src/core/version.cpp",
+   "exit_code": 1,
+   "reason": "'string_view' file not found: Homebrew clang-tidy lacks the macOS SDK sysroot",
+   "timestamp": "2026-11-27T10:39:37+0900",
+   "output_tail": "3 | #include <string_view>"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "clang-tidy src/core/version.cpp"
+   ],
+   "command": "clang-tidy -p build/debug --quiet --extra-arg=-isysroot<sdk> src/core/version.cpp",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:39:37+0900",
+   "output_tail": ""
+  }
+ ],
+ "commit": null
+}
