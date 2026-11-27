@@ -49,7 +49,9 @@
 #include <string>
 #include <vector>
 
+#include "paper/hierarchy/child_order.hpp"
 #include "paper/hierarchy/evaluate.hpp"
+#include "paper/hierarchy/normalize.hpp"
 #include "paper/hierarchy/ordered_hierarchy.hpp"
 #include "paper/hierarchy/reference_hierarchy.hpp"
 #include "sssp/graph.hpp"
@@ -469,4 +471,132 @@ TEST_CASE("evaluate: invalid initial offers are rejected", "[evaluate]") {
   CHECK_THROWS_AS(evaluate<double>(g.s), std::invalid_argument);
   g.s.offers = {{0, std::numeric_limits<double>::infinity()}};
   CHECK_THROWS_AS(evaluate<double>(g.s), std::invalid_argument);
+}
+
+namespace {
+
+/// The align example with every length scaled by u and the source offer moved to t0: the hand
+/// trace of align_trace with every time t replaced by t0 + t u and every sum that does not fit
+/// W replaced by +infinity (see the tests below).
+template <class W>
+std::vector<EvalEvent<W>> shifted_align_trace(W t0, W u) {
+  constexpr W kInf = WeightTraits<W>::infinity();
+  const auto t = [&](int k) { return t0 + (static_cast<W>(k) * u); };
+  return {
+      ev_initial<W>(2, t0),
+      ev_open<W>(0, kR, t0, t0, 6 * u, 22 * u),
+      ev_scan_begin<W>(0, kR, t0, t(6), t0, t(6), kInf),  // c = t0 + 22u does not fit
+      ev_supplemental<W>(0, t(11)),
+      ev_emit<W>(2, t0),
+      ev_relax<W>(3, t(8)),
+      ev_scan_end<W>(0, kR),
+      ev_scan_begin<W>(0, kR, t(6), kInf, t(6), kInf, kInf),  // b = t0 + 12u does not fit
+      ev_open<W>(0, kP, t(8), t(6), 3 * u, 6 * u),            // b - 2 nu = t0 + 6u
+      ev_scan_begin<W>(0, kP, t(6), t(9), t(6), t(9), kInf),  // P's expiry t0 + 14u: +inf
+      ev_supplemental<W>(0, t(11)),
+      ev_emit<W>(1, t(8)),
+      ev_relax<W>(1, t(11)),
+      ev_relax<W>(2, kInf),  // t0 + 16u does not fit; c is settled
+      ev_scan_end<W>(0, kP),
+      ev_scan_begin<W>(0, kP, t(9), kInf, t(9), kInf, kInf),
+      ev_emit<W>(0, t(11)),
+      ev_relax<W>(0, kInf),  // t0 + 14u does not fit; b is settled
+      ev_scan_end<W>(0, kP),
+      ev_retire<W>(0, kP),
+      ev_scan_end<W>(0, kR),
+      ev_finish<W>(),
+  };
+}
+
+template <class W>
+Fixture<W> shifted_align(W t0, W u) {
+  auto f = path_fixture<W>(3 * u, 8 * u, 2, 2);
+  f.s.sources = {{2, t0}};
+  f.s.offers = {{2, t0}};
+  return f;
+}
+
+}  // namespace
+
+TEST_CASE("evaluate: bookkeeping sums beyond the range saturate (uint64, D-13 / D-23)",
+          "[evaluate][alg2][alg3]") {
+  // align with the offer at t0 = 2^64 - 13: the emissions t0, t0 + 8, t0 + 11 fit (the largest
+  // is 2^64 - 2), but the expiries t0 + 22 and t0 + 14, the slot ends t0 + 12 and the
+  // relaxations t0 + 14, t0 + 16 do not. Each is an upper bound or a window end, so +infinity
+  // takes its place; the root's slot [t0 + 6, inf) is its last one. The origin of P is still
+  // the paper's b - j nu (Sec 4.3 l.794-796) with the true b = t0 + 12: t0 + 6, as in the
+  // unshifted trace.
+  constexpr U t0 = WeightTraits<U>::infinity() - 12;
+  const auto f = shifted_align<U>(t0, 1);
+  REQUIRE(sssp::paper::validate_seeded_ordered_hierarchy(f.s, f.phys).ok());
+  Recorded<U> r;
+  REQUIRE_NOTHROW(r = record<U>(f.s));
+  require_trace<U>(r.events, shifted_align_trace<U>(t0, 1));
+  CHECK(r.result.value == std::vector<U>{t0 + 11, t0 + 8, t0});
+}
+
+TEST_CASE("evaluate: bookkeeping sums beyond the range saturate (double, D-13 / D-23)",
+          "[evaluate][alg2][alg3]") {
+  // The same with u = 2^1019 and t0 = 20u: t0 + 11u = 31u < 2^1024 is finite, t0 + 12u = 2^1024
+  // rounds to +inf. Every value is a small multiple of u, so all arithmetic is exact.
+  constexpr double u = 0x1p1019;
+  const auto f = shifted_align<double>(20 * u, u);
+  Recorded<double> r;
+  REQUIRE_NOTHROW(r = record<double>(f.s));
+  require_trace<double>(r.events, shifted_align_trace<double>(20 * u, u));
+  CHECK(r.result.value == std::vector<double>{31 * u, 28 * u, 20 * u});
+}
+
+TEST_CASE("evaluate: PortionedEvaluator saturates the same sums (Lemma 7.7, uint64)",
+          "[evaluate][portioned]") {
+  constexpr U t0 = WeightTraits<U>::infinity() - 12;
+  const auto f = shifted_align<U>(t0, 1);
+  auto nh = sssp::paper::normalize<U>(f.s.hierarchy);
+  sssp::paper::order_children<U>(nh);
+  for (const U cut : {t0 + 1, t0 + 7, t0 + 10}) {
+    INFO("cells [t0, t0 + " << cut - t0 << "), [t0 + " << cut - t0 << ", inf)");
+    sssp::paper::PortionedEvaluator<U> pe(nh);
+    pe.initial_offer(2, t0);
+    REQUIRE_NOTHROW(pe.visit_cell(t0, cut));
+    REQUIRE_NOTHROW(pe.visit_cell(cut, WeightTraits<U>::infinity()));
+    CHECK(pe.finished());
+    CHECK(pe.value() == std::vector<U>{t0 + 11, t0 + 8, t0});
+  }
+}
+
+TEST_CASE("evaluate: a relaxation beyond the range at a state that never emits throws",
+          "[evaluate]") {
+  // Two states a, b under one node of height 2 (link (a, b, 2)) and one arc a -> b of length 2.
+  // With the offer a = t0 = 2^64 - 3, b's only offer t0 + 2 = 2^64 - 1 is the sentinel: b's
+  // exact key is not a finite uint64, so Evaluate must not report b as unreached but throw
+  // std::overflow_error (the Bellman-Ford rule of docs/design/numerics.md §6).
+  constexpr U t0 = WeightTraits<U>::infinity() - 2;
+  StateGraph<U> d;
+  d.num_states = 2;
+  d.arcs = {{0, 1, 2}};
+  auto h = sssp::paper::make_leaf_forest<U>(d, {0, 1});
+  sssp::paper::add_internal_node<U>(h, U{2}, {0, 1}, {{0, 1, U{2}}});
+  sssp::paper::collect_roots(h);
+  SeededOrderedHierarchy<U> s;
+  s.hierarchy = std::move(h);
+  s.sources = {{0, t0}};
+  s.offers = {{0, t0}};
+  CHECK_THROWS_AS(evaluate<U>(s), std::overflow_error);
+  // The same arc from t0 - 1: b's key 2^64 - 2 fits and b emits it.
+  s.sources = {{0, t0 - 1}};
+  s.offers = {{0, t0 - 1}};
+  sssp::paper::EvalResult<U> r;
+  REQUIRE_NOTHROW(r = evaluate<U>(s));
+  CHECK(r.value == std::vector<U>{t0 - 1, t0 + 1});
+}
+
+TEST_CASE("evaluate: a double slot whose end rounds back to its start is rejected", "[evaluate]") {
+  // align with the offer at 2^60 (double): the root's unit 6 is below half the spacing of
+  // doubles at 2^60 (256), so its first slot [2^60, 2^60 + 6) rounds to [2^60, 2^60), which
+  // Alg 3 l.10 cannot step through: std::domain_error, not an internal error or a hang.
+  const auto f = shifted_align<double>(0x1p60, 1.0);
+  CHECK_THROWS_AS(evaluate<double>(f.s), std::domain_error);
+  // At 2^50 the spacing is 1/4 and the example is exact: the shifted hand values.
+  const auto g = shifted_align<double>(0x1p50, 1.0);
+  CHECK(evaluate<double>(g.s).value == std::vector<double>{0x1p50 + 11, 0x1p50 + 8, 0x1p50});
 }

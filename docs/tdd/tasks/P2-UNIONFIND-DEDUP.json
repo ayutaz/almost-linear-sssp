@@ -1,0 +1,49 @@
+{
+  "id": "P2-UNIONFIND-DEDUP",
+  "spec": "One internal union-find (sssp::detail::UnionFind in src/graph/union_find.hpp) replaces VertexSets in edge_list.cpp and UnionFind in generators.cpp; generator output and connected_components labels stay bit-identical",
+  "paper_ref": "none",
+  "files": {
+    "impl": [
+      "src/graph/union_find.hpp",
+      "src/graph/edge_list.cpp",
+      "src/graph/generators.cpp"
+    ],
+    "tests": [
+      "tests/unit/graph/test_union_find.cpp",
+      "tests/regression/test_generator_output_pinned.cpp"
+    ],
+    "covers": [
+      "include/sssp/edge_list.hpp",
+      "include/sssp/generators.hpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"union_find|UnionFind|pinned\"'",
+      "exit_code": 1,
+      "reason": "tests/unit/graph/test_union_find.cpp does not compile: 'graph/union_find.hpp' file not found (the shared sssp::detail::UnionFind does not exist yet). The pinned-output regression test passes on the pre-change code by design (characterisation of 44482b2).",
+      "timestamp": "2026-11-27T15:27:24+09:00",
+      "output_tail": "[0/2] Re-checking globbed directories...\n[1/3] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_union_find.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_union_find.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_union_find.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_union_find.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_union_find.cpp.o -c ./tests/unit/graph/test_union_find.cpp\n./tests/unit/graph/test_union_find.cpp:11:10: fatal error: 'graph/union_find.hpp' file not found\n   11 | #include \"graph/union_find.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --test-dir build/debug -j4 --output-on-failure -R \"graph|generator|edge|UnionFind|pinned|component\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:33:12+09:00",
+      "output_tail": "        Start  239: unit:UnionFind matches a brute-force partition on random unions - sssp::Vertex\n269/273 Test  #237: unit:UnionFind unites by size: the root of the larger set stays the root - sssp::Vertex ..............................................   Passed    0.03 sec\n        Start  240: unit:UnionFind matches a brute-force partition on random unions - std::size_t\n270/273 Test  #238: unit:UnionFind unites by size: the root of the larger set stays the root - std::size_t ...............................................   Passed    0.04 sec\n271/273 Test  #239: unit:UnionFind matches a brute-force partition on random unions - sssp::Vertex .......................................................   Passed    0.07 sec\n272/273 Test  #240: unit:UnionFind matches a brute-force partition on random unions - std::size_t ........................................................   Passed    0.07 sec\n273/273 Test #1068: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t .................................................................   Passed   77.33 sec\n\n100% tests passed, 0 tests failed out of 273\n\nLabel Time Summary:\ndifferential         =   5.01 sec*proc (31 tests)\ndifferential-slow    = 104.76 sec*proc (2 tests)\nintegration          =   0.85 sec*proc (6 tests)\nproperty             = 103.71 sec*proc (25 tests)\nproperty-slow        =  45.61 sec*proc (3 tests)\nregression           =   0.07 sec*proc (2 tests)\nunit                 =  14.78 sec*proc (204 tests)\n\nTotal Test time (real) =  77.34 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --test-dir build/debug -j4 --output-on-failure -R \"graph|generator|edge|UnionFind|pinned|component\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:35:51+09:00",
+      "output_tail": "        Start 1133: regression:Counted<double> graphs reject negative and NaN weights\n269/273 Test  #989: differential:paper_sssp: all-zero graph contracts to one vertex - double .............................................................   Passed    0.02 sec\n        Start 1141: unit:bench-driver:all algorithms of one input share the same graph object and sources\n270/273 Test #1133: regression:Counted<double> graphs reject negative and NaN weights ....................................................................   Passed    0.01 sec\n271/273 Test  #988: differential:paper_sssp: all-zero graph contracts to one vertex - std::uint64_t ......................................................   Passed    0.02 sec\n272/273 Test #1141: unit:bench-driver:all algorithms of one input share the same graph object and sources ................................................   Passed    0.01 sec\n273/273 Test #1068: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t .................................................................   Passed  114.37 sec\n\n100% tests passed, 0 tests failed out of 273\n\nLabel Time Summary:\ndifferential         =   4.60 sec*proc (31 tests)\ndifferential-slow    = 185.56 sec*proc (2 tests)\nintegration          =   0.71 sec*proc (6 tests)\nproperty             = 144.26 sec*proc (25 tests)\nproperty-slow        =  82.04 sec*proc (3 tests)\nregression           =   0.06 sec*proc (2 tests)\nunit                 =  13.68 sec*proc (204 tests)\n\nTotal Test time (real) = 123.61 sec"
+    }
+  ],
+  "commit": "bc62911"
+}

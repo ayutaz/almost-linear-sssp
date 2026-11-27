@@ -22,6 +22,10 @@
 //       eval_roots_skipped (Alg 3 l.5), eval_root_leaf_emissions (l.6-7)
 //       eval_opens, eval_origin_second_rule, eval_origin_steps (successive subtractions),
 //       eval_origin_rounding_fallbacks (double only, D-19; see open())
+//       eval_saturated_sums (bookkeeping sums replaced by +infinity, D-23), eval_saturated_origins
+//       (second origin rule with a parent slot end beyond the range), eval_saturated_relaxations
+//       (relaxation values beyond the range), eval_overflowed_states (states whose only offers
+//       were beyond the range; see check_overflowed())
 //       eval_scans (all Scan calls), eval_root_slots (Alg 3 l.10), eval_child_slot_visits
 //       (Alg 2 l.10), eval_clipped_slot_visits (slot not inside the portion),
 //       eval_resumed_slot_visits (portion starting after the slot start)
@@ -51,6 +55,7 @@
 #include <vector>
 
 #include "paper/hierarchy/child_order.hpp"
+#include "paper/local/saturating.hpp"
 #include "paper/model/length.hpp"
 #include "paper/primitives/split_findmin.hpp"
 
@@ -168,6 +173,7 @@ class Evaluator {
       }
       evaluate_root(r, m.key);
     }
+    check_overflowed();
     if (hooks_ != nullptr) hooks_->on_finish();
     SSSP_COUNT(if (diag_ != nullptr) sf_->counters().add_to(diag_->counters, "eval_sfm_"));
   }
@@ -278,6 +284,7 @@ class Evaluator {
   }
 
   void finish_portioned() {
+    if (n_ != 0) check_overflowed();
     if (hooks_ != nullptr) hooks_->on_finish();
     SSSP_COUNT(if (diag_ != nullptr && own_sf_.has_value()) sf_->counters().add_to(diag_->counters,
                                                                                    "eval_sfm_"));
@@ -300,7 +307,6 @@ class Evaluator {
 
   // ------------------------------------------------------------ lengths (Sec 2 model)
 
-  [[nodiscard]] W add(W a, W b) const { return ops_.add(L::finite(a), L::finite(b)).value(); }
   [[nodiscard]] bool less(W a, W b) const {
     SSSP_COUNT(if (ops_.counters() != nullptr)++ ops_.counters()->comparisons);
     return a < b;
@@ -311,6 +317,49 @@ class Evaluator {
   [[nodiscard]] W sub(W a, W b) const {
     SSSP_COUNT(if (ops_.counters() != nullptr)++ ops_.counters()->additions);
     return a - b;
+  }
+  /// [Deviation D-23] a + b for the bookkeeping sums of Sec 4.3 (expiry D0 + S, slot ends,
+  /// supplemental and relaxation offers): +infinity if an operand is +infinity or the sum does
+  /// not fit (sat::add, the D-13 helper). Each of these values is an upper bound or the end of a
+  /// window, and every comparison it takes part in has a finite other side, so +infinity decides
+  /// it as the true value would (Sec 4.3 l.789-797). One counted addition if both are finite.
+  W sadd(W a, W b) {
+    if (a == inf() || b == inf()) return inf();
+    SSSP_COUNT(if (ops_.counters() != nullptr)++ ops_.counters()->additions);
+    const W s = sat::add(a, b);
+    if (s == inf()) bump("eval_saturated_sums");
+    return s;
+  }
+  /// End of the slot [s, s + nu) of a node with unit nu (Alg 3 l.10, Alg 2 l.10), saturated.
+  /// [Deviation D-24] For double, s + nu rounds back to s once nu is at most half the spacing of
+  /// doubles at s: the slot is empty and so is every later one, so Alg 2 / Alg 3 cannot step
+  /// through the node's slots. Widening the slot is not an option: a heavy arc (length >= nu)
+  /// could then land at an earlier rank inside the same portion, which case 1 of Lemma 4.6 rules
+  /// out ("the crossing costs less than v - u <= nu(C)"). The input is outside the supported
+  /// double range (Q-06, Q-55 option A): std::domain_error. Integer units are >= 1 (H2).
+  W slot_end(W s, W nu) {
+    const W e = sadd(s, nu);
+    if constexpr (std::is_floating_point_v<W>) {
+      if (!less(s, e)) {
+        throw std::domain_error(
+            "evaluate: a slot [s, s + nu) rounds back to its start in double (the unit is at most "
+            "half the spacing of doubles at s; such inputs are not supported, see evaluate.hpp)");
+      }
+    }
+    return e;
+  }
+  /// t - nu in a successive-subtraction loop of the origin rule; std::domain_error for double if
+  /// the subtraction does not move t (the D-24 situation of slot_end, here at the origin).
+  [[nodiscard]] W origin_step(W t, W nu) const {
+    const W next = sub(t, nu);
+    if constexpr (std::is_floating_point_v<W>) {
+      if (!less(next, t)) {
+        throw std::domain_error(
+            "evaluate: an origin step t - nu rounds back to t in double (the unit is at most half "
+            "the spacing of doubles at t; such inputs are not supported, see evaluate.hpp)");
+      }
+    }
+    return next;
   }
   /// Due in the window of frame F: a' <= z < b' and z <= c (Sec 4.3 l.786-789).
   [[nodiscard]] bool due(W z, const Frame<W>& F) const {
@@ -334,6 +383,7 @@ class Evaluator {
     build_out_arcs();
     settled_.assign(n_, 0);
     retired_.assign(n_, 0);
+    overflowed_.assign(n_, 0);
     const std::size_t nn = nh_.num_nodes();
     status_.assign(nn, Status::kUnopened);
     slot_lo_.assign(nn, W{});
@@ -471,7 +521,39 @@ class Evaluator {
     const std::uint32_t q = pos_[y];
     if (!less(v, sf_->key(q))) return false;
     sf_->decrease(q, v);
+    overflowed_[y] = 0;  // a finite key now; the dropped value was larger (D-23)
     return true;
+  }
+
+  /// [Deviation D-23] A relaxation value emitted + l that does not fit W. In exact arithmetic
+  /// it would become the key of y if y is live and has no finite key yet; it is not stored (the
+  /// key stays +infinity, "never due"), and y is marked so that check_overflowed() can tell an
+  /// unreached state from one whose only offers exceed the range.
+  void post_beyond_range(StateId y) {
+    bump("eval_saturated_relaxations");
+    if (settled_[y] != 0 || retired_[y] != 0) {
+      bump("eval_rejected_offers");
+      return;
+    }
+    if (sf_->key(pos_[y]) == inf() && overflowed_[y] == 0) {
+      overflowed_[y] = 1;
+      bump("eval_overflowed_states");
+    }
+  }
+
+  /// [Deviation D-23] End of an evaluation: a state that only received offers beyond the range
+  /// and never emitted may be a protected state whose delta does not fit W (Lemma 4.6 would emit
+  /// it). Reporting it as unreached would be a silent wrong result, so this throws
+  /// std::overflow_error (the Bellman-Ford rule of docs/design/numerics.md §6). Conservative: an
+  /// unprotected state in this situation also throws.
+  void check_overflowed() const {
+    for (StateId y = 0; y < n_; ++y) {
+      if (overflowed_[y] != 0 && settled_[y] == 0) {
+        throw std::overflow_error(
+            "evaluate: state " + std::to_string(y) +
+            " received only offers beyond the range of the length type and never emitted");
+      }
+    }
   }
 
   /// Emits state x at value v once and relaxes its outgoing arcs (Alg 2 l.11, Alg 3 l.7).
@@ -484,10 +566,14 @@ class Evaluator {
     const auto& arcs = f_.graph.arcs;
     for (std::size_t k = out_begin_[x]; k < out_begin_[x + 1]; ++k) {
       const ArcId a = out_arc_[k];
-      const W nv = add(v, arcs[a].length);
+      const W nv = sadd(v, arcs[a].length);
       bump("eval_relaxations");
       if (hooks_ != nullptr) hooks_->on_relax_offer(a, nv);
-      if (post(arcs[a].head, nv)) bump("eval_relax_decreases");
+      if (nv == inf()) {
+        post_beyond_range(arcs[a].head);
+      } else if (post(arcs[a].head, nv)) {
+        bump("eval_relax_decreases");
+      }
     }
   }
 
@@ -506,22 +592,42 @@ class Evaluator {
   void open(NodeId x, W d0, bool root, W a, W b) {
     const W nu = nh_.unit[x];
     const W s = nh_.mass[x];
-    const W expiry = add(d0, s);
+    const W expiry = sadd(d0, s);  // [D-23] +infinity if D0 + S(x) does not fit
     W origin = d0;
+    // [D-23] With a saturated expiry the true D0 + S(x) exceeds every finite b, as +infinity
+    // does, so the choice of the rule is the paper's.
     if (!root && !less(expiry, b)) {
       bump("eval_origin_second_rule");
       // Sec 4.3 l.798-800: the origin lies inside the parent's slot, so no subtraction may go
       // below a (t - nu >= a, i.e. t >= a + nu).
-      const W floor = add(a, nu);
       W t = b;
       bool left_slot = false;
-      while (less(d0, t)) {
-        if (less(t, floor)) {
-          left_slot = true;
-          break;
+      if (b != inf()) {
+        const W floor = sadd(a, nu);
+        while (less(d0, t)) {
+          if (less(t, floor)) {
+            left_slot = true;
+            break;
+          }
+          t = origin_step(t, nu);
+          bump("eval_origin_steps");
         }
-        t = sub(t, nu);
-        bump("eval_origin_steps");
+      } else {
+        // [D-23] The parent's nominal slot end b = a + nu(parent) does not fit (Alg 2 slots
+        // are [a, a + nu(parent))). b - j nu = a + (nu(parent) - j nu): the same successive
+        // subtractions on r = nu(parent) - j nu, with r >= nu before each one keeping the
+        // origin at or above a. Exact for integer W, so the origin is the paper's.
+        bump("eval_saturated_origins");
+        W r = nh_.unit[f_.nodes[x].parent];
+        while (less(d0, sadd(a, r))) {
+          if (less(r, nu)) {
+            left_slot = true;
+            break;
+          }
+          r = origin_step(r, nu);
+          bump("eval_origin_steps");
+        }
+        t = sadd(a, r);
       }
       if (!left_slot) {
         origin = t;
@@ -538,7 +644,7 @@ class Evaluator {
     }
     status_[x] = Status::kLive;
     slot_lo_[x] = origin;
-    slot_hi_[x] = add(origin, nu);
+    slot_hi_[x] = slot_end(origin, nu);
     expiry_[x] = expiry;
     // "On first opening X, its whole child list is one run" (l.818-819).
     const auto d = static_cast<std::uint32_t>(f_.nodes[x].children.size());
@@ -594,13 +700,16 @@ class Evaluator {
     const W c = expiry_[r];  // l.9: c = D0 + S(X)
     // l.10: successive width-nu slots beginning at D0 through the slot containing c.
     for (W s = d0; !less(c, s);) {
-      const W e = add(s, nh_.unit[r]);
+      const W e = slot_end(s, nh_.unit[r]);
       bump("eval_root_slots");
       slot_lo_[r] = s;
       slot_hi_[r] = e;
       push_scan(r, s, e, s, e, c);
       drive();
       if (completed(r)) break;  // l.11
+      // [D-23] A slot ending beyond the range contains every later finite time (and c, if c
+      // fits): it is the last one.
+      if (e == inf()) break;
       s = e;
     }
     if (completed(r)) {
@@ -686,9 +795,10 @@ class Evaluator {
       push_scan(r, plo, min(jh, hi), jl, jh, cap_);
       drive();
       // [Interpretation, Q-27] a slot clipped at hi stays current for the next cell.
-      if (completed(r) || less(hi, jh)) break;
+      // [D-23] A slot ending beyond the range has no successor.
+      if (completed(r) || less(hi, jh) || jh == inf()) break;
       slot_lo_[r] = jh;
-      slot_hi_[r] = add(jh, nu);
+      slot_hi_[r] = slot_end(jh, nu);
     }
     // l.1841: "Stop once all children finish or the cap has been covered, including equality".
     if (completed(r)) {
@@ -771,14 +881,16 @@ class Evaluator {
     // l.6: u = max{b, z + S(i) + g(i, j)} at x_j for the child j of each new subrun next to i,
     // padded with the NOMINAL slot end b (Q-28, Lemma 7.7 l.1890).
     if (opt_.supplemental_offers && (left != kNil || right != kNil)) {
-      const W zs = add(m.key, nh_.mass[i]);
+      // [D-23] An offer beyond the range saturates to +infinity and is then not posted (an
+      // upper bound that is never due; Lemma 4.6 does not use these offers, D-14).
+      const W zs = sadd(m.key, nh_.mass[i]);
       if (left != kNil) {
         const NodeId j = ch[r - 1];
-        supplemental(nh_.rep[j], max(F.b, add(zs, nh_.gap_next[j])));  // g(j, i) = g(i, j)
+        supplemental(nh_.rep[j], max(F.b, sadd(zs, nh_.gap_next[j])));  // g(j, i) = g(i, j)
       }
       if (right != kNil) {
         const NodeId j = ch[r + 1];
-        supplemental(nh_.rep[j], max(F.b, add(zs, nh_.gap_next[i])));
+        supplemental(nh_.rep[j], max(F.b, sadd(zs, nh_.gap_next[i])));
       }
     }
     // l.7: resume at the first piece just created.
@@ -840,10 +952,11 @@ class Evaluator {
   /// Back in frame fi after Scan(i, J n I, c_i) returned.
   void after_child_slot(std::size_t fi) {
     const NodeId i = frames_[fi].child;
-    if (!completed(i) && !less(frames_[fi].hi, slot_hi_[i])) {
+    // [D-23] A slot ending beyond the range has no successor (it contains every later time).
+    if (!completed(i) && slot_hi_[i] != inf() && !less(frames_[fi].hi, slot_hi_[i])) {
       // J ended inside I: advance to the next slot (the clock persists, l.861).
       slot_lo_[i] = slot_hi_[i];
-      slot_hi_[i] = add(slot_lo_[i], nh_.unit[i]);
+      slot_hi_[i] = slot_end(slot_lo_[i], nh_.unit[i]);
       if (start_child_slot(fi)) return;
     }
     // Completed, or J is clipped at b' (it stays current for the next portion), or no further
@@ -888,6 +1001,7 @@ class Evaluator {
   std::vector<std::size_t> out_begin_;
   std::vector<ArcId> out_arc_;
   std::vector<std::uint8_t> settled_, retired_;
+  std::vector<std::uint8_t> overflowed_;  ///< only offers beyond the range so far (D-23)
   std::vector<Status> status_;
   std::vector<W> slot_lo_, slot_hi_, expiry_;
   std::vector<std::uint32_t> head_;

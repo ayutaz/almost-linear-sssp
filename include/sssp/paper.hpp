@@ -56,6 +56,20 @@ constexpr std::optional<PaperVariant> parse_algorithm_name(std::string_view name
 /// FallbackRecord{reason of the variant (ADR 0008), N, m'} where N and m' are the vertex and edge
 /// counts of the contracted source component. Throws std::out_of_range if s is not a vertex and,
 /// for integer weights, std::overflow_error if a distance would reach the infinity sentinel.
+///
+/// Overflow rule (lead's reading, 2026-11-27), for this function and every component on its path:
+///   * MAY throw std::overflow_error: a tentative path length d[u] + w of a reachable u reaches
+///     the infinity sentinel, even if every true distance is representable (as the baselines
+///     Bellman-Ford and Dijkstra do; e.g. the triangle 0-1:1, 1-2:1, 0-2:2^64 - 1).
+///   * MUST NOT throw: only an auxiliary quantity that is not a path length reaches the sentinel,
+///     such as the mass S(C) of Sec 4.1, upper bounds like the expiry D0 + S(C), slot ends or
+///     other grid values. These saturate at infinity (deviation candidate D-23,
+///     src/paper/hierarchy/evaluate.hpp); e.g. one edge of weight 2^63, where S(C) = 2^64.
+/// Evaluate (Sec 4.3) is stricter than the first point: it skips a relaxation value beyond the
+/// range and throws only if a state that received nothing else never emits. For double weights
+/// Evaluate rejects a slot that rounds back to its start with std::domain_error (D-24). Neither
+/// is on this function's path yet (base case only). Sec 4.2 order_children can still overflow on
+/// sums of forest path lengths, an auxiliary quantity (open finding of P3-EVAL-ARITH-FIX).
 template <class W>
 SsspResult<W> paper_sssp(const CsrGraph<W>& g, Vertex s, PaperOptions options = {});
 
