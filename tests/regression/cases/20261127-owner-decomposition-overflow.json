@@ -1,0 +1,46 @@
+{
+  "id": "20261127-owner-decomposition-overflow",
+  "summary": "Sec 5.1 owner_decomposition throws std::overflow_error('integer distance overflow') on a valid uint64 path whose distances from the source and tentative lengths d[u] + w all fit: 0 - 1 - 2 - 3 with lengths 2^63 - 1, 2^62, 2^62, source 1 (largest tentative length 2^64 - 2). The reduced-graph test w <= D_T(u, v) (l.965-966, Lemma 3.9) uses the distances of the MST from its root (vertex 0); they were accumulated with WeightTraits::checked_add, and D_T(0, 3) = 2^64 - 1 is the infinity sentinel. Root distances are auxiliary quantities, not tentative path lengths from the source. With b = 5 (single pivot at vertex 0) the same holds for R_3 = D_T(3, p(3)). Reported on the path of four edges of 2^62 with b = 2 (four edges of 2^61 pass). Three vertices cannot reproduce it on a valid input: a + c >= 2^64 - 1 forces a tentative length (2a, 2c or a + c) to reach the sentinel as well.",
+  "algorithm": {
+    "name": "sssp::paper::owner_decomposition",
+    "version": "git 3b23422 (library version 0.1.0)",
+    "params": {
+      "variant": "Sec 5.1 component (Mode A code; separator size passed directly as Mode B does)",
+      "b": 2
+    }
+  },
+  "weight_type": "uint64",
+  "graph": {
+    "n": 4,
+    "edges": [
+      [0, 1, "9223372036854775807"],
+      [1, 2, "4611686018427387904"],
+      [2, 3, "4611686018427387904"]
+    ]
+  },
+  "source": 1,
+  "found_by": {
+    "test": "review of the overflow rule after P3-CHILDORDER-OVERFLOW (no random search): owner_decomposition(g, 2) on the path 0-1-2-3-4 with four edges of 2^62",
+    "generator": null,
+    "seed": null,
+    "params": {
+      "n": 5,
+      "edge_weight": "4611686018427387904",
+      "b": 2
+    }
+  },
+  "minimised": true,
+  "failure": {
+    "kind": "exception",
+    "message": "integer distance overflow"
+  },
+  "expected_dist": [
+    "9223372036854775807",
+    "0",
+    "4611686018427387904",
+    "9223372036854775808"
+  ],
+  "tolerance": null,
+  "fixed_by": "fix(owner-decomposition): exact 128-bit root distances and saturating R_v in Sec 5.1 [P3-OWNERDECOMP-OVERFLOW]",
+  "expected": "the decomposition is returned (b = 2: pivots 0 and 2, edge 0 cut, every edge in the reduced graph, R = 0, 2^62, 0, 2^62); root distances are formed in a 128-bit integer, and an R_v that is not below the sentinel is returned as the infinity sentinel"
+}
