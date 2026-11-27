@@ -7,9 +7,11 @@
 //   PL-7   zero edges, unreachable vertices, loops, parallel edges
 //   PL-8   seed independence where NameRoutes samples (D-17 parameters)
 //   PL-10  double weights: dyadic exact; non-dyadic within the tolerance or an exception
-//   PL-11  unaligned blocks end to end (SC-7 exact); weights above 2^62 (Q-79): the 2^62 path
-//          exact (D-20 for b >= 2); SC-8 exact except where a state copy lies beyond the
-//          range, which Evaluate still rejects (pinned, condition derived independently)
+//   PL-11  unaligned blocks end to end (SC-7 exact); weights above 2^62 (Q-79): every run of
+//          SC-8, the 2^62 path, extreme_ratio (PL-7) and the minimal D-20 case must give the
+//          outcome predict_range derives from the input (exact distances, the D-20 rejection,
+//          or Evaluate's rejection of a state copy beyond the range), never "either"; each
+//          throw is also judged against the overflow rule of include/sssp/paper.hpp
 //   PL-12  the cases without [slow] are the reduced-size inputs for the sanitizer build
 // PL-1 is in tests/differential/paper/test_paper_sssp_differential.cpp, PL-2, PL-3 and PL-9 in
 // tests/unit/paper/outer/test_shortest_paths.cpp and tests/unit/paper_experimental/.
@@ -265,19 +267,6 @@ inline void verified_or_throws(const CsrGraph<double>& g, Vertex s, const pe::Pa
   ++out.thrown[key];
 }
 
-/// For std::uint64_t inputs beyond a documented range limit: the run returns the exact result
-/// or throws std::overflow_error. Returns true iff a result was returned.
-inline bool exact_or_overflow(const CsrGraph<std::uint64_t>& g, Vertex s,
-                              const pe::PaperParams& params, std::uint64_t seed) {
-  try {
-    const auto r = pe::paper_sssp(g, s, params, seed);
-    require_exact(g, s, r);
-    return true;
-  } catch (const std::overflow_error&) {
-    return false;
-  }
-}
-
 /// Runs the forced outer branch on `g` from s for every separator and checks it exactly. The
 /// oracles are computed once per (g, s): Bellman-Ford alone takes about a minute on
 /// adversarial_decrease_key at N = 2000 from s = N - 1 in the debug build.
@@ -430,6 +419,140 @@ void require_stage_invariants(const Staged<W>& st, bool route_names) {
 }
 
 }  // namespace
+
+// ------------------------------------------------------- range of std::uint64_t (Q-79, D-20)
+
+using Wide = unsigned __int128;
+
+/// What a forced run on a std::uint64_t input must do, derived here from the input and from the
+/// stages before Evaluate (each checked by its own tests), never from the run's result:
+///   * kCalendars: an owner distance R of the Sec 5.1 decomposition is >= 2^55, so the top of
+///     the Sec 7.3 grid, 2^9 R, does not fit (D-20); the run throws std::overflow_error
+///     "calendars:". For 2^54 <= R < 2^55 the outcome also depends on the doublings from the
+///     grid origin (measured: one edge of 2^54 runs, a path 2^54, 1 is rejected), so inputs in
+///     that band are refused here (REQUIRE) instead of being predicted. Below 2^54 the
+///     calendars accept the input.
+///   * kEvaluate: some copy of a vertex in the outer state graph lies only on state walks of
+///     length >= 2^64 - 1 (exact 128-bit Dijkstra from the native inward copy of s); Evaluate
+///     throws "evaluate: state X received only offers beyond the range" for such a copy X.
+///   * kExact: neither; the run returns the exact distances.
+/// `tentative` is the overflow rule of include/sssp/paper.hpp: some reachable u has
+/// d[u] + w >= 2^64 - 1 (exact distances in 128 bits). Only then MAY a run throw.
+struct RangeCase {
+  enum class Kind : std::uint8_t { kExact, kCalendars, kEvaluate };
+  Kind kind = Kind::kExact;
+  bool tentative = false;
+  Wide max_owner_distance = 0;
+  std::vector<to::Exact> dist;       ///< exact distances from s (to::kExactInf: unreachable)
+  std::vector<std::uint8_t> beyond;  ///< per state of the substituted hierarchy (kEvaluate)
+};
+
+inline constexpr Wide kD20Accepted = Wide{1} << 54;  // R below this: accepted
+inline constexpr Wide kD20Rejected = Wide{1} << 55;  // R at or above this: rejected
+inline constexpr Wide kSentinel = Wide{WeightTraits<std::uint64_t>::infinity()};
+
+/// `h` is the graph the outer construction sees (connected, positive), `b` the constant
+/// separator of `params`, `seed` the NameRoutes seed of the run.
+inline RangeCase predict_range(const CsrGraph<std::uint64_t>& h, Vertex s, std::uint64_t b,
+                               const pe::PaperParams& params, std::uint64_t seed) {
+  using W = std::uint64_t;
+  RangeCase rc;
+  const std::vector<Edge<W>> edges(h.edges().begin(), h.edges().end());
+  rc.dist = to::physical_distances(h.num_vertices(), edges, s);
+  for (const auto& e : edges) {
+    for (const Vertex u : {e.u, e.v}) {
+      if (rc.dist[u] != to::kExactInf && rc.dist[u] + Wide{e.weight} >= kSentinel) {
+        rc.tentative = true;
+      }
+    }
+  }
+  const auto od = sssp::paper::owner_decomposition(h, static_cast<std::size_t>(b));
+  for (const W r : od.owner_distance) {
+    rc.max_owner_distance =
+        std::max(rc.max_owner_distance, r == WeightTraits<W>::infinity() ? to::kExactInf : Wide{r});
+  }
+  INFO("max owner distance >= 2^54: " << (rc.max_owner_distance >= kD20Accepted));
+  REQUIRE((rc.max_owner_distance < kD20Accepted || rc.max_owner_distance >= kD20Rejected));
+  if (rc.max_owner_distance >= kD20Rejected) {
+    rc.kind = RangeCase::Kind::kCalendars;
+    return rc;
+  }
+  // Alg 8 l.8-13 as run_outer_construction runs them.
+  const auto p = pe::outer_construction_params(params, h.num_vertices());
+  sssp::paper::model::WordRng rng(seed);
+  const auto cls = sssp::paper::owner::classify_interowner_edges(h, od, rng, p.name_routes);
+  const auto aux = sssp::paper::owner::build_aux_graph(h, od, cls);
+  sssp::paper::owner::OwnerDistancesOptions odo;
+  odo.local = p.local;
+  const auto jr = sssp::paper::owner::owner_distances(aux, nullptr, odo);
+  const auto os = po::build_outer_states(h, od, cls, aux, jr.scaled_distance);
+  const auto factor =
+      po::outer_scale_factor_power_separator(cls.p_log2, b, 1, po::kOuterShellRatioLog2);
+  const auto sc = po::build_outer_scales(h, od, cls, aux, jr.calendars, os, factor);
+  const auto part = po::build_outer_partition(os, sc);
+  const auto sub = sssp::paper::substitute_atoms(part.hierarchy, nullptr, p.local);
+  std::vector<to::XArc> arcs;
+  arcs.reserve(os.states.graph.arcs.size());
+  for (const auto& a : os.states.graph.arcs) arcs.push_back({a.tail, a.head, Wide{a.length}});
+  const auto sd = to::state_distances(os.states.num_states(), arcs,
+                                      static_cast<std::uint32_t>(os.states.native_inward[s]));
+  // Lemma 8.1 with the seed of l.14: the least copy of v realizes d(s, v).
+  std::vector<Wide> least(h.num_vertices(), to::kExactInf);
+  for (StateId x = 0; x < os.states.num_states(); ++x) {
+    const Vertex v = os.states.projection[x];
+    least[v] = std::min(least[v], sd[x]);
+  }
+  REQUIRE(least == rc.dist);
+  rc.beyond.assign(sub.hierarchy.num_states(), 0);
+  for (StateId x = 0; x < sub.hierarchy.num_states(); ++x) {
+    const Wide d = sd[sub.old_state[x]];
+    if (d != to::kExactInf && d >= kSentinel) {
+      rc.beyond[x] = 1;
+      rc.kind = RangeCase::Kind::kEvaluate;
+    }
+  }
+  return rc;
+}
+
+/// Runs `run` (which returns distances indexed like `oracle`) and requires the outcome that
+/// `rc` predicts: the exact distances, or exactly the predicted std::overflow_error. A throw is
+/// counted in `violations` when the overflow rule does not allow it (rc.tentative false).
+template <class Run>
+void require_predicted(const RangeCase& rc, const std::vector<to::Exact>& oracle, Run run,
+                       std::size_t& violations) {
+  std::string message;
+  try {
+    const std::vector<std::uint64_t> dist = run();
+    REQUIRE(dist.size() == oracle.size());
+    for (Vertex v = 0; v < dist.size(); ++v) {
+      INFO("vertex " << v);
+      const Wide d =
+          dist[v] == WeightTraits<std::uint64_t>::infinity() ? to::kExactInf : Wide{dist[v]};
+      REQUIRE(d == oracle[v]);
+    }
+  } catch (const std::overflow_error& e) {
+    message = e.what();
+  }
+  INFO("outcome: " << (message.empty() ? std::string("returned") : message));
+  switch (rc.kind) {
+    case RangeCase::Kind::kExact:
+      REQUIRE(message.empty());
+      return;
+    case RangeCase::Kind::kCalendars:
+      REQUIRE(message.rfind("calendars:", 0) == 0);
+      break;
+    case RangeCase::Kind::kEvaluate: {
+      const std::string prefix = "evaluate: state ";
+      REQUIRE(message.rfind(prefix, 0) == 0);
+      REQUIRE(message.find("received only offers beyond the range") != std::string::npos);
+      const auto x = static_cast<std::size_t>(std::stoul(message.substr(prefix.size())));
+      REQUIRE(x < rc.beyond.size());
+      REQUIRE(rc.beyond[x] == 1);
+      break;
+    }
+  }
+  if (!rc.tentative) ++violations;
+}
 
 // ------------------------------------------------------------------------------------ PL-4
 
@@ -597,7 +720,8 @@ TEMPLATE_TEST_CASE("PL-7: zero edges, unreachable vertices, loops and parallel e
                    "[differential][paper_experimental][outer][pipeline]", std::uint64_t, double) {
   using W = TestType;
   std::size_t runs = 0;
-  std::size_t range_failures = 0;
+  std::size_t range_runs = 0;
+  std::size_t range_violations = 0;
   // The mandatory catalogue (single vertex, no edges, zero cycles, loops, multi-edges,
   // disconnected parts, ...), every source.
   for (const auto& gc : sssp::test::required_graphs<W>()) {
@@ -614,11 +738,18 @@ TEMPLATE_TEST_CASE("PL-7: zero edges, unreachable vertices, loops and parallel e
       INFO(gc.name);
       if (gc.name == "extreme_ratio") {
         if constexpr (WeightTraits<W>::is_exact) {
-          // Weights of 2^60: the Sec 7.3 calendars need 2^10 max R < 2^64 (D-20). A run is
-          // exact or throws std::overflow_error; it never returns anything else.
+          // Weights of 2^60: each run must give the outcome predict_range derives (exact, or
+          // the D-20 rejection of the Sec 7.3 calendars).
+          const auto c = po::contract_zero_edges(g, s);
+          const std::vector<Edge<W>> edges(g.edges().begin(), g.edges().end());
+          const auto oracle = to::physical_distances(n, edges, s);
           for (const std::uint64_t b : kSeparators) {
             INFO("b=" << b << " s=" << s);
-            (exact_or_overflow(g, s, forced(b), 11) ? runs : range_failures) += 1;
+            const auto rc = predict_range(c.graph, c.source, b, forced(b), 11);
+            require_predicted(
+                rc, oracle, [&] { return pe::paper_sssp(g, s, forced(b), 11).dist; },
+                range_violations);
+            ++range_runs;
           }
         } else {
           // 2^60 + 1 is not a double: sums round, outside the guarantee (Q-55 plan A).
@@ -647,7 +778,14 @@ TEMPLATE_TEST_CASE("PL-7: zero edges, unreachable vertices, loops and parallel e
   }
   CHECK(runs > 0);
   CHECK(contracted_away > 0);
-  if (range_failures > 0) WARN("PL-7 extreme_ratio: " << range_failures << " runs threw (D-20)");
+  if constexpr (WeightTraits<W>::is_exact) {
+    CHECK(range_runs == 5 * std::size(kSeparators));
+    // No tentative length reaches 2^64 - 1 on extreme_ratio, so every D-20 rejection there is
+    // outside the overflow rule of include/sssp/paper.hpp (reported; covered by D-20 only).
+    WARN("PL-7 extreme_ratio: " << range_violations << " of " << range_runs
+                                << " runs rejected by D-20 where the overflow rule does not "
+                                   "allow a throw");
+  }
 }
 
 // ------------------------------------------------------------------------------------ PL-8
@@ -813,7 +951,6 @@ TEST_CASE("PL-11: unaligned block with an atom end to end (SC-8 input, weights a
   // Exact oracle in 128 bits (Floyd-Warshall written here): every true distance fits 64 bits,
   // but tentative sums such as d(0, 5) + w(2 - 5) do not, so the baselines may throw (the
   // overflow rule of include/sssp/paper.hpp) and cannot serve as the oracle.
-  using Wide = unsigned __int128;
   const Wide wide_inf = ~Wide{0} / 4;
   std::vector<std::vector<Wide>> d(6, std::vector<Wide>(6, wide_inf));
   for (std::size_t v = 0; v < 6; ++v) d[v][v] = 0;
@@ -829,138 +966,106 @@ TEST_CASE("PL-11: unaligned block with an atom end to end (SC-8 input, weights a
   REQUIRE(d[0][5] == Wide{corridor} + 3);  // by hand: 0 - 3 - 4 - 5
   REQUIRE(d[2][5] == Wide{corridor} + 1);  // by hand: the edge 2 - 5
 
-  // Weights above 2^62 (Q-79), after the Sec 4.2 (P3-CHILDORDER-OVERFLOW), Sec 5.1
-  // (P3-OWNERDECOMP-OVERFLOW) and Evaluate (D-23) fixes. Every vertex distance fits the type,
-  // but a single copy of a vertex can lie only on state walks longer than 2^64 - 1 (its
-  // vertex is reached through another copy). Evaluate rejects such a state ("received only
-  // offers beyond the range ... never emitted") instead of leaving it at infinity, so the
-  // run throws exactly from the sources for which such a copy exists. The condition is
-  // derived here independently (128-bit Dijkstra on the outer state graph); the sources where
-  // it is absent must return d[s][.] exactly. Remaining open finding of Q-79: when Evaluate
-  // leaves those states unemitted, every source must return d[s][.] and this expectation
-  // changes with it.
-  const auto params = pe::outer_construction_params(p1_only(3), g.num_vertices());
-  // Alg 8 l.8-13 do not depend on s.
-  sssp::paper::model::WordRng rng(3);
-  const auto od = sssp::paper::owner_decomposition(g, std::size_t{3});
-  const auto cls = sssp::paper::owner::classify_interowner_edges(g, od, rng, params.name_routes);
-  const auto aux = sssp::paper::owner::build_aux_graph(g, od, cls);
-  sssp::paper::owner::OwnerDistancesOptions odo;
-  odo.local = params.local;
-  const auto jr = sssp::paper::owner::owner_distances(aux, nullptr, odo);
-  const auto os = po::build_outer_states(g, od, cls, aux, jr.scaled_distance);
-  const auto factor =
-      po::outer_scale_factor_power_separator(cls.p_log2, 3, 1, po::kOuterShellRatioLog2);
-  CHECK(factor.log2 == 31);
-  const auto sc = po::build_outer_scales(g, od, cls, aux, jr.calendars, os, factor);
-  CHECK(tp::count_blocks(sc, po::OuterBlockKind::kUnaligned) == 2);
-  CHECK(sc.atoms.size() == 3);
-  const auto part = po::build_outer_partition(os, sc);
-  const auto sub = sssp::paper::substitute_atoms(part.hierarchy, nullptr, params.local);
-  std::vector<to::XArc> arcs;
-  arcs.reserve(os.states.graph.arcs.size());
-  for (const auto& a : os.states.graph.arcs) arcs.push_back({a.tail, a.head, Wide{a.length}});
-  const Wide sentinel = Wide{WeightTraits<W>::infinity()};
-
+  // Weights above 2^62 (Q-79), with the Sec 4.2 (P3-CHILDORDER-OVERFLOW), Sec 5.1
+  // (P3-OWNERDECOMP-OVERFLOW) and Evaluate (D-23) fixes on main. Every vertex distance fits,
+  // but from s = 0 and s = 3 one copy of a vertex lies only on state walks longer than
+  // 2^64 - 1 (its vertex is reached through another copy). Evaluate rejects such a copy
+  // instead of leaving it at infinity. The overflow rule allows that throw there: from s = 0,
+  // d(5) + w(5 - 2) = 2^64 + 6; from s = 3, d(0) + w(0 - 3) = 2^64 + 2. predict_range derives
+  // the outcome per source; it must be exact from s = 1, 2, 4, 5.
   std::size_t exact_sources = 0;
   std::size_t rejected_sources = 0;
+  std::size_t violations = 0;
   for (Vertex s = 0; s < 6; ++s) {
     INFO("s=" << s);
-    const auto sd = to::state_distances(os.states.num_states(), arcs,
-                                        static_cast<std::uint32_t>(os.states.native_inward[s]));
-    // Lemma 8.1 with the seed of l.14: the least copy realizes d(s, v), which fits.
-    std::vector<Wide> least(6, to::kExactInf);
-    std::vector<std::uint8_t> beyond(os.states.num_states(), 0);
-    for (StateId x = 0; x < os.states.num_states(); ++x) {
-      const Vertex v = os.states.projection[x];
-      least[v] = std::min(least[v], sd[x]);
-      beyond[x] = (sd[x] != to::kExactInf && sd[x] >= sentinel) ? 1 : 0;
-    }
-    for (Vertex v = 0; v < 6; ++v) REQUIRE(least[v] == d[s][v]);
-    const bool has_beyond = std::ranges::find(beyond, 1) != beyond.end();
-
-    std::string message;
-    try {
-      const auto r = direct(g, s, p1_only(3));
-      for (Vertex v = 0; v < 6; ++v) {
-        INFO("vertex " << v);
-        REQUIRE(Wide{r.dist[v]} == d[s][v]);
-      }
-    } catch (const std::overflow_error& e) {
-      message = e.what();
-    }
-    if (!has_beyond) {
-      REQUIRE(message.empty());
-      ++exact_sources;
-      continue;
-    }
-    // The rejected state is one of the copies beyond the range.
-    INFO(message);
-    const std::string prefix = "evaluate: state ";
-    REQUIRE(message.rfind(prefix, 0) == 0);
-    REQUIRE(message.find("received only offers beyond the range") != std::string::npos);
-    const auto x = static_cast<StateId>(std::stoul(message.substr(prefix.size())));
-    REQUIRE(x < sub.hierarchy.num_states());
-    REQUIRE(beyond[sub.old_state[x]] == 1);
-    ++rejected_sources;
+    const auto rc = predict_range(g, s, 3, p1_only(3), 3);
+    for (Vertex v = 0; v < 6; ++v) REQUIRE(rc.dist[v] == d[s][v]);
+    REQUIRE(rc.kind != RangeCase::Kind::kCalendars);
+    require_predicted(
+        rc, rc.dist,
+        [&] {
+          const auto r = direct(g, s, p1_only(3));
+          CHECK(r.factor.log2 == 31);
+          CHECK(tp::count_blocks(r.sc, po::OuterBlockKind::kUnaligned) == 2);
+          CHECK(r.sc.atoms.size() == 3);
+          return r.dist;
+        },
+        violations);
+    (rc.kind == RangeCase::Kind::kExact ? exact_sources : rejected_sources) += 1;
+    if (rc.kind == RangeCase::Kind::kEvaluate) CHECK(rc.tentative);
   }
-  // Both kinds occur on this input (sources 0 and 3 have a copy beyond the range).
   CHECK(exact_sources == 4);
   CHECK(rejected_sources == 2);
+  CHECK(violations == 0);  // both rejections are allowed by the overflow rule
 }
 
 TEST_CASE("PL-11 / Q-79: a path of four edges of 2^62 (Sec 5.1 root distances)",
           "[differential][paper_experimental][outer][pipeline]") {
   using W = std::uint64_t;
   // The reproduction of P3-OWNERDECOMP-OVERFLOW (docs/TASKS.md) through the outer
-  // construction. Exact oracle in 128 bits (|i - j| * 2^62); from s = 1, 2, 3 every distance
-  // fits below the sentinel 2^64 - 1, from s = 0 and s = 4 the far end is at 2^64 and does not.
+  // construction. From s = 1, 2, 3 every distance fits below 2^64 - 1. By hand:
+  // d(s, v) = |s - v| 2^62.
   const W q = W{1} << 62;
-  const auto g = CsrGraph<W>::from_edges(5, {{0, 1, q}, {1, 2, q}, {2, 3, q}, {3, 4, q}});
-  using Wide = unsigned __int128;
-  const auto oracle = [&](Vertex s, Vertex v) {
-    return Wide{q} * static_cast<Wide>(s > v ? s - v : v - s);
-  };
+  const std::vector<Edge<W>> edges{{0, 1, q}, {1, 2, q}, {2, 3, q}, {3, 4, q}};
+  const auto g = CsrGraph<W>::from_edges(5, edges);
+  std::size_t exact_runs = 0;
+  std::size_t d20_runs = 0;
+  std::size_t violations = 0;
   for (const std::uint64_t b : kSeparators) {
     for (const Vertex s : {Vertex{1}, Vertex{2}, Vertex{3}}) {
       INFO("b=" << b << " s=" << s);
-      // On g itself the MST root is vertex 0, so the Sec 5.1 root distance D_T(0, 4) = 2^64 is
-      // formed; it is an auxiliary quantity and must not stop the run (fixed on main).
-      std::string direct_outcome = "returned";
-      try {
-        const auto r = direct(g, s, forced(b));
-        for (Vertex v = 0; v < 5; ++v) {
-          INFO("vertex " << v);
-          REQUIRE(Wide{r.dist[v]} == oracle(s, v));
-        }
-      } catch (const std::overflow_error& e) {
-        direct_outcome = e.what();
-      }
+      std::vector<to::Exact> by_hand(5);
+      for (Vertex v = 0; v < 5; ++v) by_hand[v] = Wide{q} * (s > v ? s - v : v - s);
+      // On g itself the MST root is vertex 0, so D_T(0, 4) = 2^64 is formed in Sec 5.1 (an
+      // auxiliary quantity, no longer a reason to throw).
+      const auto rd = predict_range(g, s, b, forced(b), 3);
+      REQUIRE(rd.dist == by_hand);
+      require_predicted(rd, by_hand, [&] { return direct(g, s, forced(b)).dist; }, violations);
       // Through Alg 8 l.2 the contracted vertices are numbered from s.
-      std::string entry_outcome = "returned";
-      try {
-        const auto r = pe::paper_sssp(g, s, forced(b), 5);
-        for (Vertex v = 0; v < 5; ++v) {
-          INFO("vertex " << v);
-          REQUIRE(Wide{r.dist[v]} == oracle(s, v));
-        }
-      } catch (const std::overflow_error& e) {
-        entry_outcome = e.what();
-      }
-      INFO("direct: " << direct_outcome << "; paper_sssp: " << entry_outcome);
-      if (b == 1) {
-        // Every vertex is a pivot: no owner radius, nothing beyond the overflow rule.
-        REQUIRE(direct_outcome == "returned");
-        REQUIRE(entry_outcome == "returned");
-      } else {
-        // b >= 2: an owner radius R = 2^62 >= 2^54 is outside the documented range of the
-        // Sec 7.3 calendars (D-20, 2^10 max R < 2^64): rejected there, by both entries.
-        REQUIRE(direct_outcome.rfind("calendars:", 0) == 0);
-        REQUIRE(entry_outcome.rfind("calendars:", 0) == 0);
-      }
+      const auto c = po::contract_zero_edges(g, s);
+      const auto re = predict_range(c.graph, c.source, b, forced(b), 5);
+      require_predicted(
+          re, by_hand, [&] { return pe::paper_sssp(g, s, forced(b), 5).dist; }, violations);
+      // b = 1: every vertex is a pivot, R = 0, exact. b >= 2: a cell spans an edge of 2^62,
+      // R >= 2^62, rejected by D-20 in both entries.
+      const auto want = b == 1 ? RangeCase::Kind::kExact : RangeCase::Kind::kCalendars;
+      CHECK(rd.kind == want);
+      CHECK(re.kind == want);
+      (b == 1 ? exact_runs : d20_runs) += 2;
     }
   }
+  CHECK(exact_runs == 6);
+  CHECK(d20_runs == 36);
+  // From s = 2 no tentative length reaches 2^64 - 1 (the largest d[u] + w is 3 * 2^62), so the
+  // D-20 rejections from s = 2 are outside the overflow rule (2 entries x 6 separators).
+  CHECK(violations == 12);
   // The Mode A entry takes the recorded base case (N < 2^64) and is exact on the same input.
   const auto a = sssp::paper::paper_sssp(g, Vertex{2});
   REQUIRE(a.dist == std::vector<W>{2 * q, q, 0, q, 2 * q});
+}
+
+TEST_CASE("D-20 versus the overflow rule: one edge of 2^55 (minimal)",
+          "[differential][paper_experimental][outer][pipeline]") {
+  using W = std::uint64_t;
+  // The smallest input found on which D-20 rejects a run that the overflow rule of
+  // include/sssp/paper.hpp does not allow to throw: two vertices, one edge of 2^55, b = 3 (one
+  // pivot, R = 2^55). d(0, 1) = 2^55 and the largest d[u] + w is 2^56. One edge of 2^53 runs
+  // to the end. Reported against D-20 (adopted), not fixed here.
+  for (const int k : {53, 55}) {
+    INFO("k=" << k);
+    const W w = W{1} << k;
+    const auto g = CsrGraph<W>::from_edges(2, {{0, 1, w}});
+    for (const Vertex s : {Vertex{0}, Vertex{1}}) {
+      INFO("s=" << s);
+      const auto rc = predict_range(g, s, 3, forced(3), 5);
+      REQUIRE_FALSE(rc.tentative);
+      std::size_t violations = 0;
+      const std::vector<to::Exact> by_hand =
+          s == 0 ? std::vector<to::Exact>{0, Wide{w}} : std::vector<to::Exact>{Wide{w}, 0};
+      require_predicted(
+          rc, by_hand, [&] { return pe::paper_sssp(g, s, forced(3), 5).dist; }, violations);
+      CHECK(rc.kind == (k == 53 ? RangeCase::Kind::kExact : RangeCase::Kind::kCalendars));
+      CHECK(violations == (k == 53 ? 0U : 1U));
+    }
+  }
 }
