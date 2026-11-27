@@ -11,7 +11,7 @@
    "tests/unit/paper/primitives/test_split_findmin.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -44,5 +44,5 @@
    "output_tail": "      Start  9: unit:split-findmin: zero records are rejected - sssp::paper::SplitFindminRef<double>\n15/24 Test #23: unit:split-findmin: block size follows Lemma 3.11 ...........................................................................................   Passed    0.01 sec\n      Start 15: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindminRef<double>\n16/24 Test #13: unit:split-findmin: equal keys are resolved by original index - sssp::paper::SplitFindminRef<double> ........................................   Passed    0.01 sec\n      Start 11: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindminRef<double>\n17/24 Test #22: unit:split-findmin: double keys reject NaN ..................................................................................................   Passed    0.01 sec\n18/24 Test  #9: unit:split-findmin: zero records are rejected - sssp::paper::SplitFindminRef<double> ........................................................   Passed    0.01 sec\n19/24 Test #15: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindminRef<double> ....................   Passed    0.01 sec\n20/24 Test #11: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindminRef<double> ..........................   Passed    0.01 sec\n21/24 Test #18: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::SplitFindminRef<std::uint64_t> ...   Passed    3.18 sec\n22/24 Test #19: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::SplitFindminRef<double> ..........   Passed    3.19 sec\n23/24 Test #20: unit:split-findmin: longer random sequences on larger arrays match the naive model - sssp::paper::SplitFindminRef<std::uint64_t> ............   Passed    3.89 sec\n24/24 Test #21: unit:split-findmin: longer random sequences on larger arrays match the naive model - sssp::paper::SplitFindminRef<double> ...................   Passed    3.90 sec\n\n100% tests passed, 0 tests failed out of 24\n\nLabel Time Summary:\nunit    =  14.41 sec*proc (24 tests)\n\nTotal Test time (real) =   3.90 sec"
   }
  ],
- "commit": null
+ "commit": "d6ea37f"
 }

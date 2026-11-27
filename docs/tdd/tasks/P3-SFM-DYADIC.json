@@ -12,7 +12,7 @@
    "tests/property/paper/test_split_findmin_property.cpp"
   ]
  },
- "phase": "REFACTOR",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -48,5 +48,5 @@
    "output_tail": "79/88 Test #47: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::DyadicSplitFindmin<std::uint64_t> ...................................   Passed    0.01 sec\n      Start 16: unit:split-findmin: zero records are rejected - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t>\n80/88 Test #28: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::OneLevelBlockedSplitFindmin<double> ..........................   Passed    0.01 sec\n      Start  7: unit:split-findmin: k=1 is one interval that cannot be split - sssp::paper::DyadicSplitFindmin<std::uint64_t>\n81/88 Test #41: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ............................   Passed    0.01 sec\n82/88 Test #35: unit:split-findmin: equal keys are resolved by original index - sssp::paper::DyadicSplitFindmin<double> .................................................   Passed    0.01 sec\n83/88 Test #42: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindminRef<double> ................................   Passed    0.01 sec\n84/88 Test  #7: unit:split-findmin: k=1 is one interval that cannot be split - sssp::paper::DyadicSplitFindmin<std::uint64_t> ...........................................   Passed    0.01 sec\n85/88 Test #16: unit:split-findmin: zero records are rejected - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t> .................................................   Passed    0.02 sec\n86/88 Test #86: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.91 sec\n87/88 Test #59: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<double> ...................   Passed    3.03 sec\n88/88 Test #55: unit:split-findmin: exhaustive random operation sequences for k=1..70 match the naive model - sssp::paper::DyadicSplitFindmin<std::uint64_t> ............   Passed    2.89 sec\n\n100% tests passed, 0 tests failed out of 88\n\nLabel Time Summary:\nproperty    =  12.07 sec*proc (4 tests)\nunit        =  90.31 sec*proc (84 tests)\n\nTotal Test time (real) =  14.36 sec"
   }
  ],
- "commit": null
+ "commit": "d6ea37f"
 }
