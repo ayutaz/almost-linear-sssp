@@ -21,7 +21,7 @@
       "src/paper/local/atom_replacement.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -40,5 +40,5 @@
       "output_tail": "13/19 Test #53: property:Lemma 5.9 holds on every connected graph with N <= 4 and every b - std::uint64_t ................   Passed    1.52 sec\n      Start 54: property:Lemma 5.9 holds on every connected graph with N <= 4 and every b - double\n14/19 Test #54: property:Lemma 5.9 holds on every connected graph with N <= 4 and every b - double .......................   Passed    1.56 sec\n      Start 55: property:Lemma 5.9 on seeded random graphs with shrinking - std::uint64_t\n15/19 Test #55: property:Lemma 5.9 on seeded random graphs with shrinking - std::uint64_t ................................   Passed    0.07 sec\n      Start 56: property:Lemma 5.9 on seeded random graphs with shrinking - double\n16/19 Test #56: property:Lemma 5.9 on seeded random graphs with shrinking - double .......................................   Passed    0.07 sec\n      Start 84: property:shrinking: a planted light cycle shrinks to a reproducible 1-minimal cycle\n17/19 Test #84: property:shrinking: a planted light cycle shrinks to a reproducible 1-minimal cycle ......................   Passed    0.02 sec\n      Start 85: property:shrinking: a false bound on Estimate shrinks to a reproducible minimal sample\n18/19 Test #85: property:shrinking: a false bound on Estimate shrinks to a reproducible minimal sample ...................   Passed    0.04 sec\n      Start 86: property:shrinking: no failure leaves the outcome empty\n19/19 Test #86: property:shrinking: no failure leaves the outcome empty ..................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 19\n\nLabel Time Summary:\nproperty    =  24.19 sec*proc (19 tests)\n\nTotal Test time (real) =  24.20 sec"
     }
   ],
-  "commit": null
+  "commit": "2eebc42"
 }
