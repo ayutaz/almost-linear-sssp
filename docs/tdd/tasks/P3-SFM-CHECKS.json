@@ -12,7 +12,7 @@
       "tests/unit/paper/primitives/test_split_findmin.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -40,7 +40,7 @@
       "output_tail": "ninja: no work to do.\n\nLabel Time Summary:\ndifferential    =   3.48 sec*proc (44 tests)\nintegration     =   0.63 sec*proc (6 tests)\nproperty        =  20.60 sec*proc (36 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 188.79 sec*proc (770 tests)\n\nTotal Test time (real) =  27.42 sec"
     }
   ],
-  "commit": null,
+  "commit": "406c522",
   "test_reduction_allowed": [
     {
       "reason": "Q-16 decision revised by the lead on 2026-11-27: key increases now throw std::invalid_argument in every build (was: assert in debug, no-op under NDEBUG); the fork-based Q-16 test was rewritten to REQUIRE_THROWS_AS with an unchanged-state check",
