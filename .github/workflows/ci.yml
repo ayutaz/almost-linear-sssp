@@ -13,6 +13,12 @@ on:
   pull_request:
     paths-ignore: *docs_only
   workflow_dispatch:
+    inputs:
+      os:
+        description: "all = ubuntu + macOS; ubuntu = Linux jobs only (used for wip/ task branches to spare the macOS runner quota)"
+        type: choice
+        options: [all, ubuntu]
+        default: all
 
 # Least privilege: read-only token for every job. Untrusted PRs run on `pull_request`
 # (never `pull_request_target`), so they receive no secrets and a read-only token.
@@ -116,6 +122,9 @@ jobs:
         os: [macos-26, ubuntu-26.04]
         # ci = Debug + -Werror, ci-release = Release + -Werror (CMakePresets.json)
         preset: [ci, ci-release]
+        # workflow_dispatch with os=ubuntu drops the macOS jobs (push events leave inputs empty).
+        exclude:
+          - os: ${{ inputs.os == 'ubuntu' && 'macos-26' || 'none' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
