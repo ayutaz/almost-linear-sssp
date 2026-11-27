@@ -10,7 +10,7 @@
       "tests/harness/test_stop_gate.py"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -116,5 +116,5 @@
       "output_tail": "........................................                                 [100%]\n40 passed in 43.64s"
     }
   ],
-  "commit": null
+  "commit": "31ad9d9"
 }

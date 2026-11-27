@@ -3,14 +3,20 @@
   "spec": "SessionStart hook emits a short (<=40 lines) factual additionalContext: git status summary, docs/PROGRESS.md AUTO block or head, open TODO/IN_PROGRESS/BLOCKED rows of docs/TASKS.md, active TDD tasks, missing tools, latest CI run via gh only when a git remote and gh exist (4 s timeout); always exit 0 (fail-open)",
   "paper_ref": null,
   "files": {
-    "impl": [".claude/hooks/session_start.py"],
-    "tests": ["tests/harness/test_session_start.py"]
+    "impl": [
+      ".claude/hooks/session_start.py"
+    ],
+    "tests": [
+      "tests/harness/test_session_start.py"
+    ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
-      "tests": ["tests/harness/test_session_start.py (18 tests)"],
+      "tests": [
+        "tests/harness/test_session_start.py (18 tests)"
+      ],
       "command": "uv run pytest tests/harness/test_session_start.py",
       "exit_code": 1,
       "reason": "feature absent: .claude/hooks/session_start.py does not exist (python: can't open file ... [Errno 2] No such file or directory, hook exit 2)",
@@ -19,12 +25,14 @@
     },
     {
       "phase": "GREEN",
-      "tests": ["tests/harness/test_session_start.py (18 tests)"],
+      "tests": [
+        "tests/harness/test_session_start.py (18 tests)"
+      ],
       "command": "uv run pytest tests/harness/test_session_start.py",
       "exit_code": 0,
       "timestamp": "2026-11-27T10:30:24+0900",
       "output_tail": "..................                                                       [100%]\n18 passed in 7.94s"
     }
   ],
-  "commit": null
+  "commit": "31ad9d9"
 }

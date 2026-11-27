@@ -10,7 +10,7 @@
       "tests/harness/test_post_tool_use.py"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -34,5 +34,5 @@
       "output_tail": "23 passed in 10.66s"
     }
   ],
-  "commit": null
+  "commit": "31ad9d9"
 }

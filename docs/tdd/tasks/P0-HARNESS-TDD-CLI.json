@@ -11,7 +11,7 @@
       "tests/harness/conftest.py"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -156,5 +156,5 @@
       "output_tail": "..........................................................               [100%]\n58 passed in 14.90s"
     }
   ],
-  "commit": null
+  "commit": "31ad9d9"
 }
