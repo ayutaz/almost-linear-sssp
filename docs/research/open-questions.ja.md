@@ -1,6 +1,6 @@
 # 未解決の問い・曖昧な点(arXiv 2611.34911v1)
 
-[English](open-questions.md) | 日本語
+[English](open-questions.md) | **日本語** | [简体中文](open-questions.zh-CN.md)
 
 3 つの解析文書の曖昧点を、ID を振り直して 1 つの表にまとめた。行番号 `l.NNN` は `.cache/paper/2611.34911v1.txt` のもの。
 
@@ -118,3 +118,7 @@
 | Q-81 | 新規(P4-REVIEW、`docs/reviews/P4-REVIEW-owner-model.md` の F-2) | Sec 6.2(Estimate、`first_covering_centers`) | uint64 で、Estimate の標本の探索の中の道の長さ d + w が 2^64 に届くと、`estimate.cpp` が `std::overflow_error` を投げる。これは `include/sssp/paper.hpp` のあふれの規則で許されるか(レビューは、この道が G の中ではなく、pivot-routing のグラフの標本の中の道だと指摘している) | 許される。実際の道の長さなので、あふれの規則は例外を許す(基底ケースの Dijkstra と同じ扱い)。テストでの固定は P3-ESTIMATE-RADIUS-DOUBLE で行う | `pivots/estimate` | **決定(リード、2026-11-27)** |
 | Q-82 | 新規(P4-REVIEW、`docs/reviews/P4-REVIEW-outer.md` の項目 16) | CLAUDE.md の fallback の方針、ADR 0008 | fallback の割合の分母: 記録には縮約した後の (N, m') が入るが、`scripts/analyze_results.py` は N を元の n で、m' を元の m で割っている。そのため、0 の辺が多い入力や、届かない部分がある入力では、外側の構成がどこも動いていないのに、割合が 1 よりずっと小さく出る(重みがすべて 0 なら 1/n) | P6-FALLBACK-SHARE-DENOM で直す(レビューの案は、(N, m') に対する割合を出すか、元の大きさと縮約した大きさを並べて出すこと) | `scripts/analyze_results.py`、報告 | 未解決 |
 | Q-83 | 新規(P4-REVIEW、`docs/reviews/P4-REVIEW-local.md` §4.1 の反例 1) | `include/sssp/paper.hpp` のあふれの規則、Lemma 5.7 の証明(l.1107)、Alg 2 l.11 | あふれの規則にある「到達できる u の d[u] + w」に、状態の写しの制約つき距離は含まれるか。反例 1: どの d[u] + w も型に収まるのに、Alg 4(radial)+ Evaluate が `std::overflow_error` を投げる(uint64、36 頂点)。同じことが、P3-OUTER-PIPELINE の PL-11 の SC-8 でも起きる | 含まれない。d[u] + w は、頂点そのものへの仮の路長を指す。写しの制約つき距離は補助の量として扱う(Lemma 5.7 の証明は、写しの距離が物理の距離より大きくなることを認めている)。範囲の外の申し出しか受けなかった状態は、値の無いまま残して印を付ける。写しの最小を取る段階で、どの写しにも値が無く、しかも印の付いた写しがある頂点についてだけ `std::overflow_error` を投げる。実装は P3-EVAL-RANGE-COPIES で行い、D-23 を広げる形になる | `hierarchy/evaluate`、`outer/shortest_paths`、`include/sssp/paper.hpp` | **決定(リード、2026-11-27)** |
+| Q-84 | 新規(Q-83) | `include/sssp/paper.hpp` のあふれの規則、Alg 2 l.11、Alg 3 | Q-83 の補足: 範囲の外の印は、それを持つ状態の後ろの状態には伝わらない。写しの最小を取るとき、値の無い頂点をどう扱うか | 範囲の外の印が 1 つでも付いた実行では、値の無い頂点はすべて `std::overflow_error` にする。印が 1 つも無いのに値の無い頂点があれば `std::logic_error` にする。根拠: 入力は連結なので、距離が収まる頂点では、最短の道の写しに必ず値が付く。この規則で、印が上流にしかない頂点の取りこぼしを防ぐ | `hierarchy/evaluate`、`outer/shortest_paths` | **決定(リード、2026-11-27)** |
+| Q-85 | 新規(P4-REVIEW、`docs/reviews/P4-REVIEW-owner-model.md` の F-1、F-5) | Sec 7.3、Lemma 7.3(l.1711、l.1723〜1724)、D-20 | D-20 の calendars の量(2^9·R、格子点の倍加)は、投げてよい路長か、補助の量か | 補助の量。正確に計算するか、飽和させる。投げてはいけない。実装の実際の境目は R ≥ 2^55(b = 3 で重み 2^55 の辺 1 本が投げる)で、D-20 の文の 2^54 と 1 ビットずれている。D-20 は P3-CALENDAR-SCALE-OVERFLOW の後で書き直す | `owner/calendars`、`owner/owner_distances` | **決定(リード、2026-11-27)** |
+| Q-86 | 新規(P4-REVIEW) | Sec 7.4、Lemma 7.9(l.1944)、Alg 7 l.14 | 丸めで起きる Lemma 7.9 の違反(double で、一度も emit されない頂点)は、`std::logic_error` で報告される。数値の理由で拒否したものは、D-24 と同じように `std::domain_error` にするか | 決めていない | `owner/owner_distances` | 未解決 |
+| Q-89 | 新規(P4-REVIEW) | Sec 8.1(l.1966〜2001)、Lemma 8.1〜8.3 | Sec 8.1 には、ライブラリ側のチェッカー `check_outer_states` が無い(`check_aux_metric`、`check_calendars`、`check_outer_scales` はある)。いまは、テスト側の検査(`tests/unit/paper/outer/outer_states_test_support.hpp` と、性質テスト・差分テスト)で補っている | 決めていない | `outer/outer_states` | 未解決 |

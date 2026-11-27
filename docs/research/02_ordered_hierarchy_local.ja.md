@@ -1,6 +1,6 @@
 # 02 順序付き階層の評価(Sec 4)と局所階層(Sec 5)の解析
 
-[English](02_ordered_hierarchy_local.md) | 日本語
+[English](02_ordered_hierarchy_local.md) | **日本語** | [简体中文](02_ordered_hierarchy_local.zh-CN.md)
 
 対象: arXiv 2611.34911v1 "Linear Single-Source Shortest Path, Almost"(Gholami, Hajiaghayi)
 範囲: Sec 4(Def 4.1–4.2, 4.1–4.3, Lemma 4.3–4.7, Alg 2 `Scan`, Alg 3 `Evaluate`)と

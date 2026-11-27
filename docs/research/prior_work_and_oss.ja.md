@@ -1,6 +1,6 @@
 # 先行研究と既存 OSS の調査
 
-[English](prior_work_and_oss.md) | 日本語
+[English](prior_work_and_oss.md) | **日本語** | [简体中文](prior_work_and_oss.zh-CN.md)
 
 - 調査日: 2026-11-27
 - 対象論文: Iman Gholami, MohammadTaghi Hajiaghayi, "Linear Single-Source Shortest Path, Almost", arXiv:2611.34911v1(2026-11-25 投稿) <https://arxiv.org/abs/2611.34911>

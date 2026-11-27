@@ -1,6 +1,6 @@
 # 01 前提と基本構造(Sec 1–3)の解析
 
-[English](01_preliminaries_primitives.md) | 日本語
+[English](01_preliminaries_primitives.md) | **日本語** | [简体中文](01_preliminaries_primitives.zh-CN.md)
 
 - 対象: arXiv 2611.34911v1「Linear Single-Source Shortest Path, Almost」(Gholami, Hajiaghayi, 2026-11-25)
 - 範囲: Section 1(Introduction / Technical Overview)、Section 2(Preliminaries)、Section 3(Graph and Data-Structure Primitives, 3.1–3.5)

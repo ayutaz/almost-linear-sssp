@@ -1,6 +1,6 @@
 # 閾値・定数の定量解析（arXiv 2611.34911v1）
 
-[English](thresholds.md) | 日本語
+[English](thresholds.md) | **日本語** | [简体中文](thresholds.zh-CN.md)
 
 `L_N = ⌈log2(N+2)⌉`（Sec 2、l.284）。整数では `L_N = bit_length(N+1)`（N = 1..4999 で `ceil(log2(N+2))` と一致することを確認済み）。
 計算は Python の多倍長整数で厳密に行った（帯ごとの二分探索。スクリプトは scratchpad にあり、リポジトリには置いていない）。
