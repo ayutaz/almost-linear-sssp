@@ -16,7 +16,7 @@
 
 ### ci.yml
 
-- **matrix**:`os = [macos-26, ubuntu-26.04]` x `preset = [ci, ci-release]` x `shard = [labels, slow]`(`fail-fast: false`)。`slow` 这个 shard 只在单独的 runner 上运行 `slow` 标签,使每个 job 都在 45 分钟的上限之内。
+- **matrix**:`os = [macos-26, ubuntu-26.04]` x `preset = [ci, ci-release]` x `shard = [labels, slow-1, slow-2]`(`fail-fast: false`)。`labels` 这个 shard 运行按标签划分的各个步骤和 pytest。`slow-1` 和 `slow-2` 这两个 shard 用 `ctest -I <n>,,2`(在选出的测试中,从第 n 个起每隔一个取一个)平分 `<category>-slow` 的测试,各在单独的 runner 上运行,使每个 job 都在 45 分钟的上限之内。两个 shard 互不重叠,合起来覆盖全部 slow 测试。
 - **CTest 按标签分成独立的步骤**:`unit`、`integration`、`differential`、`property`、`regression`。
   - 用 `-L '^unit$'` 这样的完全匹配正则来指定。
   - 附带 `--no-tests=ignore`,所以测试数为 0 的标签不会失败。
@@ -31,6 +31,11 @@
 - 失败时,把 `build/<preset>/Testing/Temporary/` 保存为 artifact。
 
 ### sanitizer.yml
+
+- **matrix**:`os = [ubuntu-26.04, macos-26]` x `shard = [fast, slow-1, slow-2, slow-3]`(`fail-fast: false`)。每个 shard 在自己的 runner 上完成 configure 和构建(构建约 7 分钟),再运行互不重叠的一部分测试,于是原来耗时 27 / 39 分钟的单个 job 变成 4 个并行的 job。
+  - `fast`:非 slow 的标签(`-L '^(unit|integration|differential|property|regression)$'`),以及捕获无标签测试的步骤(`-LE '^(unit|integration|differential|property|regression)(-slow)?$'`)。
+  - `slow-1`、`slow-2`、`slow-3`:用 `ctest -I <n>,,3` 分摊 `<category>-slow` 的测试(`-L '^(unit|integration|differential|property|regression)-slow$'`)。slow 测试约占运行时间的 95%,选出的测试每隔三个交给同一个 shard,所以三个 shard 的耗时大致相当。
+  - 每个测试恰好在一个 shard 中运行:`fast` 与 slow 各 shard 的标签集合互不相交,`-LE` 步骤捕获没有已知标签的测试,`-I 1,,3` / `2,,3` / `3,,3` 对 slow 的选择做划分。失败 shard 的 CTest 日志保存为 `sanitizer-logs-<os>-<shard>`。
 
 - `ASAN_OPTIONS` 按操作系统区分。
   - Linux:`detect_leaks=1`(启用 LeakSanitizer)、`strict_string_checks`、`detect_stack_use_after_return`、`check_initialization_order` 等。
@@ -189,7 +194,7 @@
 
 这个流程需要以下 workflow 设置:
 - `concurrency.group` 中包含 `inputs.ref`(benchmark 为 runner 和 suite)。否则,并行启动的运行会互相取消。
-- 构建 job 的 matrix 中的 `shard = [labels, slow]`(见上文 ci.yml)。
+- 构建 job 的 matrix 中的 `shard = [labels, slow-1, slow-2]`(见上文 ci.yml),以及 sanitizer job 的 `shard = [fast, slow-1, slow-2, slow-3]`(见上文 sanitizer.yml)。需要时增加 shard,而不是延长 timeout。
 
 ## 用 actionlint 验证
 
