@@ -1,0 +1,49 @@
+{
+  "id": "P2-BENCH-CPP",
+  "spec": "sssp_bench (Google Benchmark) registers every algorithm of the bench_runner registry for each weight type it supports on shared CsrGraph inputs and fixed seeded sources, times only the solver call (graph build and verification excluded), and refuses to time a case whose result disagrees with binary-heap Dijkstra or fails verify_sssp",
+  "paper_ref": "none",
+  "files": {
+    "impl": [
+      "benchmarks/*.cpp",
+      "benchmarks/*.hpp",
+      "benchmarks/CMakeLists.txt"
+    ],
+    "tests": [
+      "benchmarks/tests/*.cpp"
+    ],
+    "covers": [
+      "src/bench_runner/registry.cpp",
+      "include/sssp/bench_runner.hpp",
+      "include/sssp/verify.hpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug --target sssp_bench_driver_tests && ctest --preset debug -R \"bench-driver\"'",
+      "exit_code": 1,
+      "reason": "benchmarks/sssp_bench_driver.cpp has no implementation yet: Suite, check_case, refusal_reason, parse_driver_args, weight_type_of are undefined symbols when linking sssp_bench_driver_tests and sssp_bench (feature absent)",
+      "timestamp": "2026-11-27T13:40:03+09:00",
+      "output_tail": "  \"sssp::bench::gbench::has_builtin_weights(std::__1::basic_string_view<char, std::__1::char_traits<char>>)\", referenced from:\n      CATCH2_INTERNAL_TEST_266() in test_sssp_bench_driver.cpp.o\n      CATCH2_INTERNAL_TEST_266() in test_sssp_bench_driver.cpp.o\n  \"sssp::bench::gbench::Suite::verify_all(std::__1::basic_ostream<char, std::__1::char_traits<char>>&)\", referenced from:\n      CATCH2_INTERNAL_TEST_156() in test_sssp_bench_driver.cpp.o\n  \"sssp::bench::gbench::Suite::register_benchmarks()\", referenced from:\n      CATCH2_INTERNAL_TEST_230() in test_sssp_bench_driver.cpp.o\n  \"sssp::bench::gbench::Suite::check(unsigned long)\", referenced from:\n      CATCH2_INTERNAL_TEST_156() in test_sssp_bench_driver.cpp.o\n  \"sssp::bench::gbench::Suite::Suite(sssp::bench::gbench::DriverConfig const&)\", referenced from:\n      CATCH2_INTERNAL_TEST_103() in test_sssp_bench_driver.cpp.o\n      CATCH2_INTERNAL_TEST_135() in test_sssp_bench_driver.cpp.o\n      CATCH2_INTERNAL_TEST_156() in test_sssp_bench_driver.cpp.o\n      CATCH2_INTERNAL_TEST_230() in test_sssp_bench_driver.cpp.o\n  \"sssp::bench::gbench::Suite::any_failed() const\", referenced from:\n      CATCH2_INTERNAL_TEST_156() in test_sssp_bench_driver.cpp.o\n      CATCH2_INTERNAL_TEST_230() in test_sssp_bench_driver.cpp.o\nld: symbol(s) not found for architecture arm64\nclang++: error: linker command failed with exit code 1 (use -v to see invocation)\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T13:43:57+09:00",
+      "output_tail": "          Start  998: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n 999/1006 Test  #987: property:Lemma 7.7: on arbitrary cells a slot is scanned once per cell it meets - std::uint64_t .........................................................   Passed    0.67 sec\n1000/1006 Test  #998: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.07 sec\n1001/1006 Test  #988: property:Lemma 7.7: on arbitrary cells a slot is scanned once per cell it meets - double ................................................................   Passed    0.83 sec\n1002/1006 Test  #982: property:name_routes: Mode A certificates against Bellman-Ford, measured acceptance .....................................................................   Passed    1.56 sec\n1003/1006 Test  #990: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    1.13 sec\n1004/1006 Test  #991: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    6.39 sec\n1005/1006 Test  #949: property:Lemmas 7.1 and 7.2 on seeded graph families - double ...........................................................................................   Passed   13.76 sec\n1006/1006 Test  #948: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed   97.88 sec\n\n100% tests passed, 0 tests failed out of 1006\n\nLabel Time Summary:\ndifferential    =  35.40 sec*proc (69 tests)\nintegration     =   1.07 sec*proc (7 tests)\nproperty        = 150.48 sec*proc (54 tests)\nregression      =   0.12 sec*proc (6 tests)\nunit            = 198.54 sec*proc (870 tests)\n\nTotal Test time (real) = 126.57 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T13:51:46+09:00",
+      "output_tail": "          Start  996: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf\n 999/1006 Test  #993: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.01 sec\n1000/1006 Test #1005: unit:bench-driver:driver arguments are parsed and validated .............................................................................................   Passed    0.02 sec\n1001/1006 Test  #994: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.01 sec\n1002/1006 Test #1000: unit:bench-driver:all algorithms of one input share the same graph object and sources ...................................................................   Passed    0.02 sec\n1003/1006 Test  #997: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.02 sec\n1004/1006 Test  #995: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.02 sec\n1005/1006 Test  #996: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.02 sec\n1006/1006 Test  #948: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  178.07 sec\n\n100% tests passed, 0 tests failed out of 1006\n\nLabel Time Summary:\ndifferential    =  40.48 sec*proc (69 tests)\nintegration     =   1.34 sec*proc (7 tests)\nproperty        = 243.63 sec*proc (54 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 173.38 sec*proc (870 tests)\n\nTotal Test time (real) = 178.09 sec"
+    }
+  ],
+  "commit": "231581d"
+}
