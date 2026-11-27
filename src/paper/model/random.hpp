@@ -53,24 +53,50 @@ concept BitSource = requires(S& s, unsigned c) {
   { s.next_bits(c) } -> std::convertible_to<std::uint64_t>;
 };
 
-/// Uniform integer in 0..h-1 (Sec 2, l.307-308): h = 1 returns 0 without drawing; otherwise draw
-/// ceil(log2 h) bits and reject outcomes >= h. Throws std::invalid_argument for h = 0.
+namespace random_detail {
+
+/// Sec 2, l.307-308 for h >= 2 with c = ceil(log2 h) supplied by the caller: draw c bits and
+/// reject outcomes >= h.
 template <BitSource S>
-std::uint64_t uniform_below(S& src, std::uint64_t h) {
-  if (h == 0) throw std::invalid_argument("uniform_below: empty range");
-  if (h == 1) return 0;
-  const unsigned c = ceil_log2(h);
+std::uint64_t draw_below(S& src, std::uint64_t h, unsigned c) {
   for (;;) {
     const std::uint64_t x = static_cast<std::uint64_t>(src.next_bits(c));
     if (x < h) return x;
   }
 }
 
+}  // namespace random_detail
+
+/// Uniform integer in 0..h-1 (Sec 2, l.307-308): h = 1 returns 0 without drawing; otherwise draw
+/// ceil(log2 h) bits and reject outcomes >= h. Throws std::invalid_argument for h = 0.
+/// The bit count is computed once for this range by the word logarithm; a caller that draws
+/// repeatedly from changing ranges uses the IlogTable overload instead (Q-51 decision (b)).
+template <BitSource S>
+std::uint64_t uniform_below(S& src, std::uint64_t h) {
+  if (h == 0) throw std::invalid_argument("uniform_below: empty range");
+  if (h == 1) return 0;
+  return random_detail::draw_below(src, h, ceil_log2(h));
+}
+
+/// As above, with ceil(log2 h) read from a table of the index range (Sec 2, l.303-304: integer
+/// logarithms on a range of k indices are tabulated in O(k)). Draws exactly the same bits as the
+/// word version. Throws std::invalid_argument for h = 0 and std::out_of_range if 2 <= h and
+/// h > lg.range().
+template <BitSource S>
+std::uint64_t uniform_below(S& src, std::uint64_t h, const IlogTable& lg) {
+  if (h == 0) throw std::invalid_argument("uniform_below: empty range");
+  if (h == 1) return 0;
+  return random_detail::draw_below(src, h, lg.ceil_log2(h));
+}
+
 /// Uniformly random order of a (Fisher-Yates: position i receives a uniform element of 0..i).
+/// The draw ranges a.size(), ..., 2 change at every step, so their bit counts come from one
+/// IlogTable over 1..a.size(), built in O(a.size()) (Sec 2, l.303-304; Q-51 decision (b)).
 template <class T, BitSource S>
 void random_shuffle(std::span<T> a, S& src) {
+  const IlogTable lg(a.size());
   for (std::size_t i = a.size(); i > 1; --i) {
-    const auto j = static_cast<std::size_t>(uniform_below(src, i));
+    const auto j = static_cast<std::size_t>(uniform_below(src, i, lg));
     using std::swap;
     swap(a[i - 1], a[j]);
   }
