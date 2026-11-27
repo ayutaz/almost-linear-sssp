@@ -23,7 +23,7 @@
       "src/paper/hierarchy/evaluate.hpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -43,5 +43,5 @@
       "output_tail": "16/22 Test  #931: unit:practical-local: fallback sizes are those of the contracted source component - double .................   Passed    0.03 sec\n      Start  933: unit:practical-local: a one-vertex contracted component is recorded as trivial - double\n17/22 Test  #933: unit:practical-local: a one-vertex contracted component is recorded as trivial - double ....................   Passed    0.03 sec\n      Start  929: unit:practical-local: a small component is a recorded direct search - double\n18/22 Test  #929: unit:practical-local: a small component is a recorded direct search - double ...............................   Passed    0.03 sec\n      Start  930: unit:practical-local: fallback sizes are those of the contracted source component - std::uint64_t\n19/22 Test  #930: unit:practical-local: fallback sizes are those of the contracted source component - std::uint64_t ..........   Passed    0.03 sec\n20/22 Test #1009: differential:practical-local: hand-made boundary graphs - double ...........................................   Passed    0.56 sec\n21/22 Test #1054: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - std::uint64_t ...   Passed  159.21 sec\n22/22 Test #1055: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - double ..........   Passed  159.49 sec\n\n100% tests passed, 0 tests failed out of 22\n\nLabel Time Summary:\ndifferential         =  36.80 sec*proc (6 tests)\ndifferential-slow    = 318.70 sec*proc (2 tests)\nproperty             =   0.78 sec*proc (2 tests)\nunit                 =   0.35 sec*proc (12 tests)\n\nTotal Test time (real) = 160.08 sec"
     }
   ],
-  "commit": null
+  "commit": "2d293fd"
 }
