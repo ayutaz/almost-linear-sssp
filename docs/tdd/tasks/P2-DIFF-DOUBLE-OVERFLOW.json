@@ -1,0 +1,31 @@
+{
+ "id": "P2-DIFF-DOUBLE-OVERFLOW",
+ "spec": "On double weights, a reachable vertex whose true distance exceeds DBL_MAX must not be returned as unreachable (dist = inf): every baseline throws std::overflow_error, as bellman_ford already does (regression 20261127-double-sum-overflow).",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "include/sssp/graph.hpp",
+   "src/baseline/dijkstra_common.hpp",
+   "src/baseline/dijkstra_binary_heap.cpp"
+  ],
+  "tests": [
+   "tests/regression/test_double_sum_overflow.cpp",
+   "tests/regression/cases/20261127-double-sum-overflow.json"
+  ]
+ },
+ "phase": "RED",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "regression:20261127-double-sum-overflow: *"
+   ],
+   "command": "ctest --preset debug -R 'regression:20261127-double-sum'",
+   "exit_code": 8,
+   "reason": "dijkstra_binary_heap / dijkstra_4ary_heap / dijkstra_fibonacci_heap return dist[2] = inf without throwing for edges {0,1,1e308},{1,2,1e308} (no exception thrown where std::overflow_error was expected); bellman_ford throws. Recorded with [!shouldfail] removed; the committed test carries [!shouldfail] until the fix, whose commit must remove it.",
+   "timestamp": "2026-11-27T10:54:39+09:00",
+   "output_tail": "1/2 Test #229: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ...............   Passed    0.01 sec\n2/2 Test #230: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ...***Failed    0.01 sec\ntests/regression/test_double_sum_overflow.cpp:41: FAILED:\nbecause no exception was thrown where one was expected:\ntests/regression/test_double_sum_overflow.cpp:42: FAILED:\nbecause no exception was thrown where one was expected:\ntests/regression/test_double_sum_overflow.cpp:43: FAILED:\nbecause no exception was thrown where one was expected:\nThe following tests FAILED:\n\t230 - regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex (Failed) regression"
+  }
+ ],
+ "commit": null
+}
