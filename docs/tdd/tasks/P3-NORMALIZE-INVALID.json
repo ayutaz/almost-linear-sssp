@@ -12,7 +12,7 @@
       "tests/regression/cases/20261127-normalize-invalid-lengths.json"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -65,5 +65,5 @@
       "output_tail": "103/109 Test #1378: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance .........................................   Passed    0.02 sec\n        Start 1375: regression:20261127-child-order-overflow: the same path with shorter edges (passes before the fix)\n104/109 Test #1377: regression:Counted<double> graphs reject negative and NaN weights ..................................................................   Passed    0.02 sec\n        Start 1397: regression:20261127-normalize-invalid-lengths: the H5 check costs O(log c0), exact at the bound\n105/109 Test #1095: differential:P4-OVERFLOW-E2E: regression evaluate-mass-overflow and its boundary ...................................................   Passed    0.03 sec\n        Start 1096: differential:P4-OVERFLOW-E2E: regression evaluate-relax-overflow, every source\n106/109 Test #1375: regression:20261127-child-order-overflow: the same path with shorter edges (passes before the fix) .................................   Passed    0.02 sec\n107/109 Test #1397: regression:20261127-normalize-invalid-lengths: the H5 check costs O(log c0), exact at the bound ....................................   Passed    0.02 sec\n108/109 Test #1096: differential:P4-OVERFLOW-E2E: regression evaluate-relax-overflow, every source .....................................................   Passed    0.03 sec\n109/109 Test #1082: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ..............................................   Passed   15.32 sec\n\n100% tests passed, 0 tests failed out of 109\n\nLabel Time Summary:\ndifferential    =  34.41 sec*proc (20 tests)\nproperty        =  14.01 sec*proc (5 tests)\nregression      =   0.72 sec*proc (31 tests)\nunit            =   3.36 sec*proc (53 tests)\n\nTotal Test time (real) =  18.20 sec"
     }
   ],
-  "commit": null
+  "commit": "b70ce9d"
 }
