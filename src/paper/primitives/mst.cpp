@@ -1,10 +1,12 @@
-// Sec 3.2 minimum spanning trees: GrowthPass (Algorithm 1, Lemma 3.4) and a Kruskal reference.
+// Sec 3.2 minimum spanning trees: GrowthPass (Algorithm 1, Lemma 3.4), the three-pass MST
+// (Lemma 3.5), the lightest edge per vertex pair, and a Kruskal reference.
 #include "paper/primitives/mst.hpp"
 
 #include <algorithm>
 #include <cstdint>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "paper/primitives/fib_heap.hpp"
@@ -95,6 +97,7 @@ GrowthPassResult<W> growth_pass(const QuotientGraph<W>& h, std::size_t limit) {
   std::vector<std::uint32_t> offer(k, 0);
   std::vector<std::uint32_t> selected_q;  // F as quotient-edge indices
   FibHeap<MstEdgeKey<W>> heap(k);         // one node pool per pass; discard() per growth
+  [[maybe_unused]] std::uint64_t boundary_comparisons = 0;
 
   for (Vertex start = 0; start < k; ++start) {  // Alg 1 l.4
     if (growth_of[start] != kNoGrowth) continue;
@@ -113,10 +116,13 @@ GrowthPassResult<W> growth_pass(const QuotientGraph<W>& h, std::size_t limit) {
           heap.insert(x, key);
           offer[x] = arc.edge;
           ++st.heap_inserts;
-        } else if (key < heap.key(x)) {
-          heap.decrease(x, key);
-          offer[x] = arc.edge;
-          ++st.heap_decreases;
+        } else {
+          SSSP_COUNT(++boundary_comparisons);
+          if (key < heap.key(x)) {  // improve x's boundary edge
+            heap.decrease(x, key);
+            offer[x] = arc.edge;
+            ++st.heap_decreases;
+          }
         }
       }
       if (heap.empty()) {  // Alg 1 l.9-10
@@ -140,7 +146,7 @@ GrowthPassResult<W> growth_pass(const QuotientGraph<W>& h, std::size_t limit) {
       u = v;  // Alg 1 l.14
     }
   }
-  st.comparisons = heap.comparisons();
+  st.comparisons = heap.comparisons() + boundary_comparisons;
 
   // Alg 1 l.15 / proof of Lemma 3.4: graph search in F, then one scan of all edge endpoints.
   std::vector<std::size_t> f_off(k + 1, 0);
@@ -189,6 +195,141 @@ GrowthPassResult<W> growth_pass(const QuotientGraph<W>& h, std::size_t limit) {
   return out;
 }
 
+GrowthLimits three_pass_limits(std::size_t k) noexcept {
+  static_assert(sizeof(std::size_t) == sizeof(std::uint64_t), "64-bit size_t expected");
+  // L_k = ceil(log2(k + 2)): the least c with 2^c >= k + 2, i.e. 2^c >= k and 2^c - k >= 2,
+  // which avoids forming k + 2 (Sec 2: integer word operations, no floating-point log).
+  std::size_t lk = 0;
+  while (lk < 64) {
+    const std::uint64_t p = std::uint64_t{1} << lk;
+    if (p >= k && p - k >= 2) break;
+    ++lk;
+  }
+  std::size_t log_lk = 0;  // ceil(log2 L_k)
+  while ((std::size_t{1} << log_lk) < lk) ++log_lk;
+  return GrowthLimits{std::max<std::size_t>(2, log_lk), lk};
+}
+
+namespace {
+
+void record_pass(Diagnostics& d, std::size_t index, const GrowthPassStats& st) {
+  const std::string p = "mst.pass" + std::to_string(index) + ".";
+  if (st.limit != kUnboundedGrowth) d.counters[p + "limit"] += st.limit;
+  d.counters[p + "vertices_in"] += st.vertices_in;
+  d.counters[p + "edges_in"] += st.edges_in;
+  d.counters[p + "vertices_out"] += st.vertices_out;
+  d.counters[p + "edges_out"] += st.edges_out;
+  d.counters[p + "growths"] += st.growths;
+  d.counters[p + "extractions"] += st.extractions;
+  d.ops.vertex_scans += st.vertices_in;  // each quotient vertex is scanned once (Lemma 3.4)
+  d.ops.edge_scans += 2 * st.edges_in;
+  d.ops.comparisons += st.comparisons;
+  d.ops.queue_pushes += st.heap_inserts;
+  d.ops.decrease_keys += st.heap_decreases;
+  d.ops.queue_pops += st.extractions;
+}
+
+/// Lemma 3.5: passes with B1, B2 (chosen from the original k) and +infinity, retaining all
+/// selected indices across contractions.
+template <class W>
+SpanningForestResult three_passes(std::size_t n, std::span<const Edge<W>> edges, Diagnostics* diag,
+                                  bool require_connected) {
+  if (require_connected && n == 0) {
+    throw std::invalid_argument("mst_three_pass: the graph must have k >= 1 vertices");
+  }
+  QuotientGraph<W> q = singleton_quotient<W>(n, edges);
+  const GrowthLimits lim = three_pass_limits(n);
+  const std::size_t limits[3] = {lim.b1, lim.b2, kUnboundedGrowth};
+  SpanningForestResult out;
+  std::vector<bool> chosen(edges.size(), false);
+  for (const std::size_t limit : limits) {
+    // "A singleton requires no pass": stop once no quotient edge is left (for a connected
+    // input this happens exactly when the quotient is a single vertex).
+    if (q.edges.empty()) break;
+    GrowthPassResult<W> r = growth_pass(q, limit);
+    for (const EdgeId id : r.selected) chosen[id] = true;
+    out.passes.push_back(r.stats);
+    q = std::move(r.quotient);
+  }
+  if (require_connected && q.num_vertices != 1) {
+    throw std::invalid_argument("mst_three_pass: the graph is disconnected");
+  }
+  // Increasing indices by one scan of the edge list (no comparison sort).
+  for (std::size_t i = 0; i < chosen.size(); ++i) {
+    if (chosen[i]) out.edges.push_back(static_cast<EdgeId>(i));
+  }
+  if (diag != nullptr) {
+    diag->counters["mst.passes"] += out.passes.size();
+    for (std::size_t i = 0; i < out.passes.size(); ++i) record_pass(*diag, i + 1, out.passes[i]);
+  }
+  return out;
+}
+
+}  // namespace
+
+template <class W>
+SpanningForestResult mst_three_pass(std::size_t n, std::span<const Edge<W>> edges,
+                                    Diagnostics* diag) {
+  return three_passes<W>(n, edges, diag, true);
+}
+
+template <class W>
+SpanningForestResult mst_three_pass(const CsrGraph<W>& g, Diagnostics* diag) {
+  return three_passes<W>(g.num_vertices(), g.edges(), diag, true);
+}
+
+template <class W>
+SpanningForestResult spanning_forest_three_pass(std::size_t n, std::span<const Edge<W>> edges,
+                                                Diagnostics* diag) {
+  return three_passes<W>(n, edges, diag, false);
+}
+
+template <class W>
+SpanningForestResult spanning_forest_three_pass(const CsrGraph<W>& g, Diagnostics* diag) {
+  return three_passes<W>(g.num_vertices(), g.edges(), diag, false);
+}
+
+template <class W>
+std::vector<EdgeId> lightest_edge_per_pair(std::size_t n, std::span<const Edge<W>> edges) {
+  validate_edges<W>(n, edges);
+  // Non-loop edges as (lo, hi) pairs, grouped by two stable counting sorts (Lemma 3.1):
+  // first by hi, then by lo.
+  std::vector<EdgeId> ids;
+  ids.reserve(edges.size());
+  for (std::size_t i = 0; i < edges.size(); ++i) {
+    if (edges[i].u != edges[i].v) ids.push_back(static_cast<EdgeId>(i));
+  }
+  auto lo = [&](EdgeId id) { return std::min(edges[id].u, edges[id].v); };
+  auto hi = [&](EdgeId id) { return std::max(edges[id].u, edges[id].v); };
+  std::vector<EdgeId> buf(ids.size());
+  std::vector<std::size_t> count(n + 1, 0);
+  auto stable_pass = [&](auto coord) {
+    std::fill(count.begin(), count.end(), 0);
+    for (const EdgeId id : ids) ++count[coord(id) + 1];
+    for (std::size_t v = 0; v < n; ++v) count[v + 1] += count[v];
+    for (const EdgeId id : ids) buf[count[coord(id)]++] = id;
+    ids.swap(buf);
+  };
+  stable_pass(hi);
+  stable_pass(lo);
+  std::vector<bool> keep(edges.size(), false);
+  for (std::size_t i = 0; i < ids.size();) {
+    EdgeId best = ids[i];
+    std::size_t j = i + 1;
+    for (; j < ids.size() && lo(ids[j]) == lo(best) && hi(ids[j]) == hi(best); ++j) {
+      const EdgeId c = ids[j];
+      if (MstEdgeKey<W>{edges[c].weight, c} < MstEdgeKey<W>{edges[best].weight, best}) best = c;
+    }
+    keep[best] = true;
+    i = j;
+  }
+  std::vector<EdgeId> out;
+  for (std::size_t i = 0; i < keep.size(); ++i) {
+    if (keep[i]) out.push_back(static_cast<EdgeId>(i));
+  }
+  return out;
+}
+
 template <class W>
 std::vector<EdgeId> mst_kruskal_ref(std::size_t n, std::span<const Edge<W>> edges) {
   validate_edges<W>(n, edges);
@@ -232,5 +373,26 @@ template GrowthPassResult<double> growth_pass<double>(const QuotientGraph<double
 template std::vector<EdgeId> mst_kruskal_ref<std::uint64_t>(std::size_t,
                                                             std::span<const Edge<std::uint64_t>>);
 template std::vector<EdgeId> mst_kruskal_ref<double>(std::size_t, std::span<const Edge<double>>);
+template SpanningForestResult mst_three_pass<std::uint64_t>(std::size_t,
+                                                            std::span<const Edge<std::uint64_t>>,
+                                                            Diagnostics*);
+template SpanningForestResult mst_three_pass<double>(std::size_t, std::span<const Edge<double>>,
+                                                     Diagnostics*);
+template SpanningForestResult mst_three_pass<std::uint64_t>(const CsrGraph<std::uint64_t>&,
+                                                            Diagnostics*);
+template SpanningForestResult mst_three_pass<double>(const CsrGraph<double>&, Diagnostics*);
+template SpanningForestResult spanning_forest_three_pass<std::uint64_t>(
+    std::size_t, std::span<const Edge<std::uint64_t>>, Diagnostics*);
+template SpanningForestResult spanning_forest_three_pass<double>(std::size_t,
+                                                                 std::span<const Edge<double>>,
+                                                                 Diagnostics*);
+template SpanningForestResult spanning_forest_three_pass<std::uint64_t>(
+    const CsrGraph<std::uint64_t>&, Diagnostics*);
+template SpanningForestResult spanning_forest_three_pass<double>(const CsrGraph<double>&,
+                                                                 Diagnostics*);
+template std::vector<EdgeId> lightest_edge_per_pair<std::uint64_t>(
+    std::size_t, std::span<const Edge<std::uint64_t>>);
+template std::vector<EdgeId> lightest_edge_per_pair<double>(std::size_t,
+                                                            std::span<const Edge<double>>);
 
 }  // namespace sssp::paper

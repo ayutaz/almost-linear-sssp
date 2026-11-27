@@ -7,6 +7,7 @@
 #include <numeric>
 #include <random>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "sssp/graph.hpp"
@@ -76,6 +77,75 @@ std::size_t count_components(std::size_t n, const std::vector<sssp::Edge<W>>& ed
     if (d.unite(e.u, e.v)) --c;
   }
   return c;
+}
+
+/// Matrix of optional weights: `has[i][j]` false means "no walk".
+template <class W>
+struct PairTable {
+  std::vector<std::vector<W>> value;
+  std::vector<std::vector<bool>> has;
+  explicit PairTable(std::size_t n)
+      : value(n, std::vector<W>(n, W{0})), has(n, std::vector<bool>(n, false)) {}
+};
+
+/// Naive minimax walk values for all pairs (Floyd–Warshall over (min, max)); O(n^3).
+/// value[x][y] = least possible maximum edge length of an x–y walk. Uses comparisons only.
+template <class W>
+PairTable<W> minimax_all_pairs(std::size_t n, const std::vector<sssp::Edge<W>>& edges) {
+  PairTable<W> t(n);
+  for (const auto& e : edges) {
+    if (e.u == e.v) continue;
+    for (const auto& [a, b] : {std::pair{e.u, e.v}, std::pair{e.v, e.u}}) {
+      if (!t.has[a][b] || e.weight < t.value[a][b]) {
+        t.value[a][b] = e.weight;
+        t.has[a][b] = true;
+      }
+    }
+  }
+  for (std::size_t k = 0; k < n; ++k) {
+    for (std::size_t i = 0; i < n; ++i) {
+      if (!t.has[i][k]) continue;
+      for (std::size_t j = 0; j < n; ++j) {
+        if (!t.has[k][j] || i == j) continue;
+        const W via = std::max(t.value[i][k], t.value[k][j]);
+        if (!t.has[i][j] || via < t.value[i][j]) {
+          t.value[i][j] = via;
+          t.has[i][j] = true;
+        }
+      }
+    }
+  }
+  return t;
+}
+
+/// b_T(x, y): heaviest edge on the x–y path of the forest `tree` (edge ids into `edges`),
+/// by a search from every vertex; O(n^2).
+template <class W>
+PairTable<W> tree_bottlenecks(std::size_t n, const std::vector<sssp::Edge<W>>& edges,
+                              const std::vector<sssp::EdgeId>& tree) {
+  std::vector<std::vector<std::pair<std::size_t, W>>> adj(n);
+  for (const auto id : tree) {
+    adj[edges[id].u].emplace_back(edges[id].v, edges[id].weight);
+    adj[edges[id].v].emplace_back(edges[id].u, edges[id].weight);
+  }
+  PairTable<W> t(n);
+  for (std::size_t s = 0; s < n; ++s) {
+    std::vector<std::size_t> stack{s};
+    std::vector<bool> seen(n, false);
+    seen[s] = true;
+    while (!stack.empty()) {
+      const std::size_t x = stack.back();
+      stack.pop_back();
+      for (const auto& [y, w] : adj[x]) {
+        if (seen[y]) continue;
+        seen[y] = true;
+        t.value[s][y] = (x == s) ? w : std::max(t.value[s][x], w);
+        t.has[s][y] = true;
+        stack.push_back(y);
+      }
+    }
+  }
+  return t;
 }
 
 }  // namespace mst_test

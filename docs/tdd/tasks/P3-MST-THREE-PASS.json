@@ -1,0 +1,96 @@
+{
+ "id": "P3-MST-THREE-PASS",
+ "spec": "Three-pass MST of Lemma 3.5 (B1 = max(2, ceil(log2 L_k)), B2 = L_k from the original k, then B = +inf) whose edge set equals the Kruskal (length, index) MST exactly, whose tree paths realise the minimax walk value for every vertex pair, and whose quotient after each pass stays within 1 + 2l'/B; connected API rejects disconnected input, spanning_forest_three_pass returns the minimum spanning forest; lightest_edge_per_pair keeps the (length, index)-least edge per unordered vertex pair; per-pass sizes recorded in Diagnostics.counters",
+ "paper_ref": "Sec 3.2, Lemma 3.5 (three passes, bottleneck property), Lemma 3.4 (vertex bound); Alg 4 l.4 (lightest edge per pair)",
+ "files": {
+  "impl": [
+   "src/paper/primitives/mst.hpp",
+   "src/paper/primitives/mst.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/primitives/test_mst.cpp",
+   "tests/property/paper/test_mst_property.cpp",
+   "tests/unit/paper/primitives/mst_test_support.hpp"
+  ]
+ },
+ "phase": "GREEN",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "three_pass_limits follow Lemma 3.5: B1 = max(2, ceil(log2 L_k)), B2 = L_k",
+    "mst_three_pass equals the Kruskal MST on a hand example",
+    "mst_three_pass breaks equal lengths by input index",
+    "mst_three_pass handles a single vertex, loops and multi-edges",
+    "mst_three_pass requires a connected input; the forest variant does not",
+    "mst_three_pass validates edges",
+    "mst_three_pass equals Kruskal and stays within the per-pass bounds",
+    "MST tree paths realise the minimax walk value (Lemma 3.5 bottleneck)",
+    "mst_three_pass records per-pass quotient sizes in Diagnostics",
+    "mst_three_pass accepts a CsrGraph",
+    "lightest_edge_per_pair keeps the (length, index)-least edge per pair",
+    "three-pass spanning forest equals Kruskal on seeded graph families",
+    "three-pass MST on a large sparse graph runs all passes within bounds",
+    "bottleneck property holds on seeded random graphs"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E 'error:' | grep -v 'too many errors' | sed -E 's/:[0-9]+:[0-9]+:/:/' | sort -u | head -12; grep -c . /dev/null; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "error: no member named 'mst_three_pass' / 'spanning_forest_three_pass' / 'three_pass_limits' / 'lightest_edge_per_pair' in namespace 'sssp::paper' (three-pass MST not implemented yet); the shared test helpers compile",
+   "timestamp": "2026-11-27T10:46:32+09:00",
+   "output_tail": "tests/property/paper/test_mst_property.cpp: error: no member named 'mst_three_pass' in namespace 'sssp::paper'\ntests/property/paper/test_mst_property.cpp: error: no member named 'spanning_forest_three_pass' in namespace 'sssp::paper'\ntests/property/paper/test_mst_property.cpp: error: no member named 'three_pass_limits' in namespace 'sssp::paper'\ntests/property/paper/test_mst_property.cpp: error: use of undeclared identifier 'mst_three_pass'\ntests/property/paper/test_mst_property.cpp: error: use of undeclared identifier 'spanning_forest_three_pass'\ntests/property/paper/test_mst_property.cpp: error: use of undeclared identifier 'three_pass_limits'\ntests/unit/paper/primitives/test_mst.cpp: error: no member named 'lightest_edge_per_pair' in namespace 'sssp::paper'\ntests/unit/paper/primitives/test_mst.cpp: error: no member named 'mst_three_pass' in namespace 'sssp::paper'\ntests/unit/paper/primitives/test_mst.cpp: error: no member named 'spanning_forest_three_pass' in namespace 'sssp::paper'\ntests/unit/paper/primitives/test_mst.cpp: error: no member named 'three_pass_limits' in namespace 'sssp::paper'\ntests/unit/paper/primitives/test_mst.cpp: error: use of undeclared identifier 'mst_three_pass'\ntests/unit/paper/primitives/test_mst.cpp: error: use of undeclared identifier 'three_pass_limits'\n0"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E 'error:' | grep -v 'too many errors' | sed -E 's/:[0-9]+:[0-9]+:/:/' | sort -u | head -12; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "same failure re-recorded with the build's own exit code (the previous RED event's exit code came from a stray 'grep -c' in its command): three-pass MST symbols missing from sssp::paper",
+   "timestamp": "2026-11-27T10:46:43+09:00",
+   "output_tail": "tests/property/paper/test_mst_property.cpp: error: no member named 'mst_three_pass' in namespace 'sssp::paper'\ntests/property/paper/test_mst_property.cpp: error: no member named 'spanning_forest_three_pass' in namespace 'sssp::paper'\ntests/property/paper/test_mst_property.cpp: error: no member named 'three_pass_limits' in namespace 'sssp::paper'\ntests/property/paper/test_mst_property.cpp: error: use of undeclared identifier 'mst_three_pass'\ntests/property/paper/test_mst_property.cpp: error: use of undeclared identifier 'spanning_forest_three_pass'\ntests/property/paper/test_mst_property.cpp: error: use of undeclared identifier 'three_pass_limits'\ntests/unit/paper/primitives/test_mst.cpp: error: no member named 'lightest_edge_per_pair' in namespace 'sssp::paper'\ntests/unit/paper/primitives/test_mst.cpp: error: no member named 'mst_three_pass' in namespace 'sssp::paper'\ntests/unit/paper/primitives/test_mst.cpp: error: no member named 'spanning_forest_three_pass' in namespace 'sssp::paper'\ntests/unit/paper/primitives/test_mst.cpp: error: no member named 'three_pass_limits' in namespace 'sssp::paper'\ntests/unit/paper/primitives/test_mst.cpp: error: use of undeclared identifier 'mst_three_pass'\ntests/unit/paper/primitives/test_mst.cpp: error: use of undeclared identifier 'three_pass_limits'"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "set -o pipefail; cmake --build --preset debug -j8 2>&1 | tail -1 && ctest --preset debug -R 'mst_three_pass|three_pass_limits|three-pass|lightest_edge_per_pair|bottleneck|MST tree paths' 2>&1 | grep -E 'tests passed|Failed' && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:48:03+09:00",
+   "output_tail": "ninja: no work to do.\n100% tests passed, 0 tests failed out of 27\n100% tests passed, 0 tests failed out of 128"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "set -o pipefail; cmake --build --preset debug -j8 2>&1 | tail -1 && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "reason": "count boundary-improvement key comparisons in GrowthPassStats::comparisons",
+   "timestamp": "2026-11-27T10:49:30+09:00",
+   "output_tail": "ninja: no work to do.\n100% tests passed, 0 tests failed out of 128"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "mst_three_pass records per-pass quotient sizes in Diagnostics"
+   ],
+   "command": "set -o pipefail; cmake --build --preset release -j8 2>&1 | tail -1 && ctest --preset release -R 'records per-pass quotient sizes' 2>&1 | grep -E 'tests passed|Failed|REQUIRE|with expansion|^  [0-9]'",
+   "exit_code": 8,
+   "reason": "regression: with SSSP_DIAGNOSTICS=0 (release preset) heap comparison counting is compiled out, so diag.ops.comparisons is 0 and the Diagnostics test's comparisons > 0 fails",
+   "timestamp": "2026-11-27T10:49:52+09:00",
+   "output_tail": "ninja: no work to do.\n1/2 Test #101: unit:mst_three_pass records per-pass quotient sizes in Diagnostics - std::uint64_t ...***Failed    0.01 sec\n  REQUIRE( diag.ops.comparisons > 0 )\nwith expansion:\n  0 > 0\n2/2 Test #102: unit:mst_three_pass records per-pass quotient sizes in Diagnostics - double ..........***Failed    0.01 sec\n  REQUIRE( diag.ops.comparisons > 0 )\nwith expansion:\n  0 > 0\n0% tests passed, 2 tests failed out of 2\n\t101 - unit:mst_three_pass records per-pass quotient sizes in Diagnostics - std::uint64_t (Failed) unit\n\t102 - unit:mst_three_pass records per-pass quotient sizes in Diagnostics - double (Failed) unit"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "mst_three_pass records per-pass quotient sizes in Diagnostics",
+    "full suite in debug and release"
+   ],
+   "command": "set -o pipefail; cmake --build --preset release -j8 2>&1 | tail -1 && ctest --preset release 2>&1 | grep -E 'tests passed|Failed' && cmake --build --preset debug -j8 2>&1 | tail -1 && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:50:15+09:00",
+   "output_tail": "ninja: no work to do.\n100% tests passed, 0 tests failed out of 120\nninja: no work to do.\n100% tests passed, 0 tests failed out of 128"
+  }
+ ],
+ "commit": null
+}
