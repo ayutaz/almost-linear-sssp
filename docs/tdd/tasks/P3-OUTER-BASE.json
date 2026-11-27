@@ -11,7 +11,7 @@
       "tests/unit/paper/outer/test_base_case.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -65,5 +65,5 @@
       "output_tail": "        Start 266: unit:outer base case: hand-computed distances and tree - std::uint64_t\n552/559 Test #126: unit:ParseError message names the line and the problem ..................................................................................................   Passed    0.46 sec\n553/559 Test #490: unit:SplitMix64 matches the reference sequence ..........................................................................................................   Passed    0.20 sec\n554/559 Test #277: unit:outer base case reports integer distance overflow ..................................................................................................   Passed    0.17 sec\n555/559 Test #272: unit:outer base case: zero weights are non-negative lengths - std::uint64_t .............................................................................   Passed    0.06 sec\n556/559 Test #273: unit:outer base case: zero weights are non-negative lengths - double ....................................................................................   Passed    0.09 sec\n557/559 Test #268: unit:outer base case: one vertex - std::uint64_t ........................................................................................................   Passed    0.11 sec\n558/559 Test #275: unit:outer base case: lightest edge per vertex pair (Alg 8 l.5) - double ................................................................................   Passed    0.13 sec\n559/559 Test #266: unit:outer base case: hand-computed distances and tree - std::uint64_t ..................................................................................   Passed    0.09 sec\n\n100% tests passed, 0 tests failed out of 559\n\nLabel Time Summary:\ndifferential    =   2.47 sec*proc (17 tests)\nintegration     =   0.52 sec*proc (6 tests)\nproperty        =  11.84 sec*proc (21 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  92.74 sec*proc (514 tests)\n\nTotal Test time (real) =  14.84 sec"
     }
   ],
-  "commit": "7a0058d"
+  "commit": "4212354"
 }
