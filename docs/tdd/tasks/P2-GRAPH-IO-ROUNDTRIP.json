@@ -1,0 +1,6 @@
+{"id":"P2-GRAPH-IO-ROUNDTRIP","spec":"Integration: every generator type (both weight types, several weight distributions, multi-edges and self-loops) and the whole small-graph suite round-trip bit for bit through the edge-list format and through DIMACS with kMergeReversePairs; DIMACS without merging doubles every non-loop edge; file round-trip feeds an identical CSR (same arcs, weights, edge ids)","paper_ref":null,
+ "files":{"impl":["src/graph/io.cpp","src/graph/generators.cpp"],"tests":["tests/integration/test_io_roundtrip.cpp"]},
+ "phase":"DONE",
+ "events":[
+  {"phase":"GREEN","tests":["edge-list format round-trips every generated graph bit for bit","DIMACS format round-trips every generated graph with reverse-pair merging","file round-trip feeds an identical CSR graph"],"command":"cmake --build --preset debug -j8 && ctest --preset debug","exit_code":0,"reason":"No RED event: this integration test composes two components that were each developed test-first (P2-GRAPH-IO, P2-GRAPH-GENERATORS) and adds no new behaviour; it passed on its first run.","timestamp":"2026-11-27T10:33:44+0900","output_tail":"integration    =   0.54 sec*proc (6 tests)\nunit           =   1.10 sec*proc (86 tests)\nTotal Test time (real) =   0.22 sec"}],
+ "commit":null}
