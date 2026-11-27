@@ -1,0 +1,47 @@
+{
+  "id": "P5-PRACTICAL-LOCAL",
+  "spec": "Mode C practical::local_sssp: zero-edge contraction, local hierarchy (exact-height D-11 or Lambda grid D-8) with one reused normalisation, Evaluate and Lemma 8.5 tree restoration give distances equal to Bellman-Ford and Dijkstra and pass verify_sssp; every chosen optimisation is logged by name and every direct-search region is a FallbackRecord",
+  "paper_ref": "Alg 8 l.2 and l.6 (Lemma 8.5), Alg 4 l.6-12 (Sec 5.1-5.4, Lemma 5.10), Sec 4.1-4.3 (Alg 2, Alg 3, Lemma 4.6); deviations D-8, D-11, D-14; Mode C steps not in the paper are labelled",
+  "files": {
+    "impl": [
+      "src/experimental/practical/*.hpp",
+      "src/experimental/practical/*.cpp"
+    ],
+    "tests": [
+      "tests/unit/practical/test_*.cpp",
+      "tests/differential/practical/test_*.cpp",
+      "tests/property/practical/test_*.cpp"
+    ],
+    "covers": [
+      "src/paper/outer/contract_restore.hpp",
+      "src/paper/local/owner_decomposition.hpp",
+      "src/paper/local/radial_states.hpp",
+      "src/paper/local/threshold_joins.hpp",
+      "src/experimental/paper_experimental/local_assembly.hpp",
+      "src/paper/hierarchy/normalize.hpp",
+      "src/paper/hierarchy/child_order.hpp",
+      "src/paper/hierarchy/evaluate.hpp"
+    ]
+  },
+  "phase": "GREEN",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_unit_tests sssp_differential_tests 2>&1 | grep -E \"error|FAILED|ninja:\" | head -12; test ${PIPESTATUS[0]} -eq 0 && ctest --preset debug -j4 -R \"practical\"'",
+      "exit_code": 1,
+      "reason": "missing header experimental/practical/local_sssp.hpp: practical::local_sssp, PracticalOptions, option_log, record_options and the fallback reasons do not exist yet",
+      "timestamp": "2026-11-27T15:23:43+09:00",
+      "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/practical/test_practical_local_sssp.cpp.o \n./tests/unit/practical/test_practical_local_sssp.cpp:17:10: fatal error: 'experimental/practical/local_sssp.hpp' file not found\n1 error generated.\nFAILED: [code=1] tests/CMakeFiles/sssp_differential_tests.dir/differential/practical/test_practical_local_differential.cpp.o \n./tests/differential/practical/test_practical_local_differential.cpp:38:10: fatal error: 'experimental/practical/local_sssp.hpp' file not found\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_unit_tests sssp_differential_tests sssp_property_tests 2>&1 | tail -3 && ctest --preset debug -j4 -R \"practical\" 2>&1 | tail -40'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:38:34+09:00",
+      "output_tail": "16/22 Test  #931: unit:practical-local: fallback sizes are those of the contracted source component - double .................   Passed    0.03 sec\n      Start  933: unit:practical-local: a one-vertex contracted component is recorded as trivial - double\n17/22 Test  #933: unit:practical-local: a one-vertex contracted component is recorded as trivial - double ....................   Passed    0.03 sec\n      Start  929: unit:practical-local: a small component is a recorded direct search - double\n18/22 Test  #929: unit:practical-local: a small component is a recorded direct search - double ...............................   Passed    0.03 sec\n      Start  930: unit:practical-local: fallback sizes are those of the contracted source component - std::uint64_t\n19/22 Test  #930: unit:practical-local: fallback sizes are those of the contracted source component - std::uint64_t ..........   Passed    0.03 sec\n20/22 Test #1009: differential:practical-local: hand-made boundary graphs - double ...........................................   Passed    0.56 sec\n21/22 Test #1054: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - std::uint64_t ...   Passed  159.21 sec\n22/22 Test #1055: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - double ..........   Passed  159.49 sec\n\n100% tests passed, 0 tests failed out of 22\n\nLabel Time Summary:\ndifferential         =  36.80 sec*proc (6 tests)\ndifferential-slow    = 318.70 sec*proc (2 tests)\nproperty             =   0.78 sec*proc (2 tests)\nunit                 =   0.35 sec*proc (12 tests)\n\nTotal Test time (real) = 160.08 sec"
+    }
+  ],
+  "commit": null
+}
