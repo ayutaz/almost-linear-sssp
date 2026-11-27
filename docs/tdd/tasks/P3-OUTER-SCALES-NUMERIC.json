@@ -12,7 +12,7 @@
       "tests/property/paper/test_outer_scales_numeric_property.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -32,5 +32,5 @@
       "output_tail": "17/24 Test  #570: unit:outer scales numeric: double supports saturate at infinity .................................   Passed    0.03 sec\n      Start  568: unit:outer scales numeric: supports, merged grid and sentinels on a hand example\n18/24 Test  #571: unit:outer scales numeric: separate-grid cutoff .................................................   Passed    0.03 sec\n      Start 1117: property:outer scales numeric property: half-name test and s_U against linear scans\n19/24 Test  #558: unit:outer scales numeric: the saturated value starts exactly at 2^64 ...........................   Passed    0.04 sec\n      Start  567: unit:outer scales numeric: cutoff range s/2 < t <= s\n20/24 Test  #560: unit:outer scales numeric: F rejects h below 2 ..................................................   Passed    0.03 sec\n      Start  562: unit:outer scales numeric: s_U is the least radius\n21/24 Test  #568: unit:outer scales numeric: supports, merged grid and sentinels on a hand example ................   Passed    0.03 sec\n22/24 Test #1117: property:outer scales numeric property: half-name test and s_U against linear scans .............   Passed    0.03 sec\n23/24 Test  #567: unit:outer scales numeric: cutoff range s/2 < t <= s ............................................   Passed    0.03 sec\n24/24 Test  #562: unit:outer scales numeric: s_U is the least radius ..............................................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 24\n\nLabel Time Summary:\nproperty    =   0.65 sec*proc (6 tests)\nunit        =   0.63 sec*proc (18 tests)\n\nTotal Test time (real) =   0.35 sec"
     }
   ],
-  "commit": null
+  "commit": "815b74f"
 }
