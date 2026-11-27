@@ -11,7 +11,8 @@
 # docs/design/benchmark_runner_cli.md.
 #
 # Exit codes: 0 done (timeouts / memory limits are recorded, not fatal), 1 a job crashed or
-# the output failed schema validation or the build failed, 2 usage error or runner missing.
+# the output failed schema validation or the build failed or the start / end environment
+# could not be captured, 2 usage error or runner missing.
 #
 # Environment overrides:
 #   BENCH_TIMEOUT        seconds per job (default: profile value; smoke 60, standard 600)
@@ -58,6 +59,7 @@ COOLDOWN="${BENCH_COOLDOWN_SEC:-0}"
 # shellcheck disable=SC2206  # intentional word splitting: "uv run --quiet python"
 PY=(${BENCH_PYTHON:-uv run --quiet python})
 export PYTHONPATH="$ROOT/scripts${PYTHONPATH:+:$PYTHONPATH}"
+# Expected failure: probe sysctl (macOS) then nproc (Linux); only the build -j uses this.
 JOBS="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
 
 TIMEOUT="${BENCH_TIMEOUT:-$("${PY[@]}" -m bench.plan "$PROFILE" --order-seed 0 --timeout-sec)}"
@@ -94,6 +96,8 @@ if [ "$missing" = 1 ]; then
 fi
 
 # ---------------------------------------------------------------- run setup
+# Expected failure outside a git checkout (e.g. a source tarball): the run id then says
+# "nogit" visibly, and envinfo records git_sha as null.
 SHA="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo nogit)"
 RUN_ID="${BENCH_RUN_ID:-$PROFILE-$(date -u +%Y%m%dT%H%M%SZ)-$SHA}"
 OUT="$RAW_DIR/$RUN_ID.jsonl"
@@ -106,6 +110,7 @@ done
 MEM_KB=""
 if [ -n "${BENCH_MEM_LIMIT_MB:-}" ]; then
   MEM_KB=$((BENCH_MEM_LIMIT_MB * 1024))
+  # Probe in a subshell; the failure (macOS) is expected and reported as a warning below.
   if ! (ulimit -v "$MEM_KB") 2>/dev/null; then
     err "警告: この OS では ulimit -v (RLIMIT_AS) を設定できません。メモリ上限は強制されず、"
     err "      終了後に peak_rss_bytes と ${BENCH_MEM_LIMIT_MB} MiB を比較して警告するだけです。"
@@ -181,9 +186,18 @@ while IFS=$'\t' read -r build gt n deg shape wd wt algo trials warmup sources se
   [ "$COOLDOWN" != 0 ] && sleep "$COOLDOWN"
 done <"$PLAN_FILE"
 
-for preset in "${PRESETS[@]}"; do # state at the end (thermal limit, load) for comparison
-  "${PY[@]}" -m bench.envinfo --build-dir "$BUILD_ROOT/$preset" \
-    --out "$RAW_DIR/$RUN_ID.$preset.env-end.json" || true
+# State at the end (thermal limit, load). Protocol 7.3 invalidates a run whose
+# CPU_Speed_Limit is below 100 at the start OR the end, so without the end state the run's
+# validity cannot be established: report it and fail the run (records are kept).
+n_env_end_failed=0
+for preset in "${PRESETS[@]}"; do
+  env_end="$RAW_DIR/$RUN_ID.$preset.env-end.json"
+  if ! "${PY[@]}" -m bench.envinfo --build-dir "$BUILD_ROOT/$preset" --out "$env_end"; then
+    rm -f "$env_end" # never leave a partial or stale (same BENCH_RUN_ID) file that looks valid
+    err "終了時の環境情報を取得できませんでした: preset=$preset ($env_end)。"
+    err "  熱の状態を開始時と比べられないため、この run は無効です(benchmark_protocol.md 7.3)。"
+    n_env_end_failed=$((n_env_end_failed + 1))
+  fi
 done
 
 rc_final=0
@@ -203,6 +217,8 @@ EOF
 else
   log "レコードはありません: $OUT"
 fi
-log "done: ok=$n_ok timeout=$n_timeout memory_limit=$n_mem error=$n_err / $TOTAL"
+log "done: ok=$n_ok timeout=$n_timeout memory_limit=$n_mem error=$n_err / $TOTAL" \
+  "env_end_failed=$n_env_end_failed"
 [ "$n_err" -gt 0 ] && rc_final=1
+[ "$n_env_end_failed" -gt 0 ] && rc_final=1
 exit "$rc_final"

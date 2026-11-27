@@ -186,6 +186,12 @@ cmake --preset release-diag && cmake --build --preset release-diag
   - 電源状態(AC/バッテリー、低電力モード)、`pmset -g therm` の `CPU_Speed_Limit`、CPU 名、
     OS とバージョン、P/E コア数、load average(`os.getloadavg()`、`uptime` と同じ値)。
 - 開始時または終了時の `cpu_speed_limit` が 100 未満の run は、熱による制限を受けたものとして無効とする。
+- 開始時または終了時の環境情報(`env.json` / `env-end.json`)を取得できなかった run は、上の判定ができないため
+  無効とする。`scripts/run_benchmarks.sh` は取得の失敗を標準エラーに出し、終了時の失敗数を最後の
+  `done:` 行に `env_end_failed=<数>` として記録し、終了コード 1 で終える(開始時の失敗はその場で終了コード 1)。
+  計測済みのレコードは消さずに残すが、その run の値は公表に使わない。
+  - 取得には成功したが `cpu_speed_limit` が `null`(Linux など、取得手段の無い環境)の場合は失敗ではない。
+    その run は熱の判定ができないものとして報告書に書く。
 - 記録された load average が高い run は、公表値に使うかどうかを個別に判断し、使わない場合は理由を残す。
 
 ### 7.4 Linux の場合

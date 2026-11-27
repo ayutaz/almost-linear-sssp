@@ -9,11 +9,15 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "fetch_paper.sh"
 
 
-def run(tmp_path: Path, content: bytes, sha: str) -> subprocess.CompletedProcess:
+def run(tmp_path: Path, content: bytes, sha: str, **extra_env: str) -> subprocess.CompletedProcess:
     src = tmp_path / "src.pdf"
     src.write_bytes(content)
     env = dict(
-        os.environ, PAPER_URL=src.as_uri(), PAPER_SHA256=sha, PAPER_DIR=str(tmp_path / "out")
+        os.environ,
+        PAPER_URL=src.as_uri(),
+        PAPER_SHA256=sha,
+        PAPER_DIR=str(tmp_path / "out"),
+        **extra_env,
     )
     return subprocess.run(["bash", str(SCRIPT)], env=env, capture_output=True, text=True)
 
@@ -30,6 +34,28 @@ def test_fetch_rejects_checksum_mismatch(tmp_path):
     assert p.returncode != 0
     assert not (tmp_path / "out" / "2611.34911v1.pdf").exists()
     assert "checksum" in p.stderr.lower()
+
+
+def test_pdftotext_failure_is_reported_and_stale_text_removed(tmp_path):
+    # The verified PDF is the deliverable and the text copy is a convenience, so a failed
+    # extraction does not fail the fetch; it must be visible and must not leave an older
+    # text copy that looks current.
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "pdftotext"
+    fake.write_text("#!/bin/sh\necho 'simulated pdftotext failure' >&2\nexit 1\n")
+    fake.chmod(0o755)
+    stale = tmp_path / "out" / "2611.34911v1.txt"
+    stale.parent.mkdir()
+    stale.write_text("stale text from an older download\n")
+    data = b"%PDF-1.7 fake"
+    path = f"{bin_dir}{os.pathsep}{os.environ['PATH']}"
+    p = run(tmp_path, data, hashlib.sha256(data).hexdigest(), PATH=path)
+    assert p.returncode == 0, p.stderr
+    assert (tmp_path / "out" / "2611.34911v1.pdf").read_bytes() == data
+    assert "pdftotext" in p.stderr
+    assert "simulated pdftotext failure" in p.stderr
+    assert not stale.exists()
 
 
 def test_fetch_target_is_gitignored():

@@ -73,6 +73,8 @@ bootstrap_macos() {
   llvm_prefix="$("$brew" --prefix llvm 2>/dev/null || echo "$brew_prefix/opt/llvm")"
   local formulae=(cmake ninja llvm uv) f found
   local to_install=()
+  # Presence probes: an absent tool (non-zero status) is expected and leaves `found` empty,
+  # which is reported as missing (and installed) below.
   for f in "${formulae[@]}"; do
     case "$f" in
       llvm) found="$([ -x "$llvm_prefix/bin/clang-format" ] && echo "$llvm_prefix/bin" || true)" ;;

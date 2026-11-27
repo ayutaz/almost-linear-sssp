@@ -1,0 +1,46 @@
+{
+  "id": "P2-BENCH-NO-SILENT-FAIL",
+  "spec": "run_benchmarks.sh reports a failed end-of-run environment capture on stderr and in the summary and exits 1 (the thermal validity rule needs the end state); fetch_paper.sh warns and removes a stale text copy when pdftotext fails instead of discarding the failure",
+  "paper_ref": "none",
+  "files": {
+    "impl": [
+      "scripts/run_benchmarks.sh",
+      "scripts/fetch_paper.sh",
+      "scripts/coverage.sh",
+      "scripts/bootstrap.sh"
+    ],
+    "tests": [
+      "tests/python/test_bench_run_script.py",
+      "tests/python/test_fetch_paper.py"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "uv run pytest -q tests/python/test_bench_run_script.py tests/python/test_fetch_paper.py",
+      "exit_code": 1,
+      "reason": "run_benchmarks.sh swallows a failed end-of-run envinfo with '|| true' (exit 0, no message, no env_end_failed in the summary); fetch_paper.sh discards pdftotext failures with '2>/dev/null || true' and leaves the stale .txt",
+      "timestamp": "2026-11-27T12:47:09+09:00",
+      "output_tail": "        fake = bin_dir / \"pdftotext\"\n        fake.write_text(\"#!/bin/sh\\necho 'simulated pdftotext failure' >&2\\nexit 1\\n\")\n        fake.chmod(0o755)\n        stale = tmp_path / \"out\" / \"2611.34911v1.txt\"\n        stale.parent.mkdir()\n        stale.write_text(\"stale text from an older download\\n\")\n        data = b\"%PDF-1.7 fake\"\n        path = f\"{bin_dir}{os.pathsep}{os.environ['PATH']}\"\n        p = run(tmp_path, data, hashlib.sha256(data).hexdigest(), PATH=path)\n        assert p.returncode == 0, p.stderr\n        assert (tmp_path / \"out\" / \"2611.34911v1.pdf\").read_bytes() == data\n>       assert \"pdftotext\" in p.stderr\nE       AssertionError: assert 'pdftotext' in ''\nE        +  where '' = CompletedProcess(args=['bash', './scr...99cmxt7wypby49dd83z85/T/pytest-of-$USER/pytest-700/test_pdftotext_failure_is_repo0/out/2611.34911v1.pdf\\n', stderr='').stderr\n\ntests/python/test_fetch_paper.py:56: AssertionError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_run_script.py::test_end_environment_is_written_for_every_preset\nFAILED tests/python/test_bench_run_script.py::test_end_environment_failure_is_reported_and_fails_the_run\nFAILED tests/python/test_fetch_paper.py::test_pdftotext_failure_is_reported_and_stale_text_removed"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "uv run pytest -q tests/python",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:48:41+09:00",
+      "output_tail": "............................................ssssssssssss................ [ 24%]\n........................................................................ [ 49%]\n........................................................................ [ 74%]\n........................................................................ [ 98%]\n...                                                                      [100%]"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "uv run pytest -q tests/python",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:49:16+09:00",
+      "output_tail": "............................................ssssssssssss................ [ 24%]\n........................................................................ [ 49%]\n........................................................................ [ 74%]\n........................................................................ [ 98%]\n...                                                                      [100%]"
+    }
+  ],
+  "commit": "c9a6e04"
+}
