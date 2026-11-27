@@ -12,7 +12,7 @@ BENCH_TIMEOUT ?= 3600
 
 .PHONY: public-safety fetch-paper bootstrap configure build test test-unit test-integration test-differential test-property \
         test-regression test-harness test-python format format-check lint tidy sanitizer coverage \
-        verify benchmark-smoke benchmark benchmark-full report clean
+        verify benchmark-smoke benchmark benchmark-full report scaling clean
 
 public-safety:
 	uv run python scripts/check_public_safety.py
@@ -92,6 +92,9 @@ benchmark-full:
 
 report:
 	uv run python scripts/analyze_results.py
+
+scaling:
+	uv run python scripts/scaling_fit.py
 
 clean:
 	rm -rf build
