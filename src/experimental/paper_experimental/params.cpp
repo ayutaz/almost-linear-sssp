@@ -270,13 +270,17 @@ paper::LocalHierarchyParams PaperParams::local_hierarchy_params(std::uint64_t k)
   if (local_.alignment != LocalAlignment::kPaper) {
     throw std::logic_error(
         "paper_experimental: the Lambda alignment (D-8) is not provided by "
-        "paper::local_hierarchy (P5-EXP-LOCAL)");
+        "paper::local_hierarchy; use paper_experimental::local_hierarchy");
   }
   if (local_.assembly != LocalAssembly::kGrid) {
     throw std::logic_error(
         "paper_experimental: the exact-height assembly (D-11) is not provided by "
-        "paper::local_hierarchy (P5-EXP-LOCAL)");
+        "paper::local_hierarchy; use paper_experimental::local_hierarchy");
   }
+  return local_size_params(k);
+}
+
+paper::LocalHierarchyParams PaperParams::local_size_params(std::uint64_t k) const {
   paper::LocalHierarchyParams p;
   p.threshold_coeff = local_.threshold.coeff;
   p.threshold_exponent = local_.threshold.exponent;

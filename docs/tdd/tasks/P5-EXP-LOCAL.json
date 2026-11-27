@@ -1,0 +1,66 @@
+{
+  "id": "P5-EXP-LOCAL",
+  "spec": "Mode B local hierarchy entry: branches on PaperParams::local_branch (base case recorded as a FallbackRecord, unsupported is a failure), reproduces paper::local_hierarchy exactly for the paper alignment and grid, and provides the Lambda alignment and support (D-8) and the exact-height assembly (D-11), each validating Def 4.1 and giving Evaluate distances equal to Dijkstra",
+  "paper_ref": "Sec 5.4 l.1182-1243 (alignment c = 10 l.1206, support N^16 l.1216, grid and merges), Alg 4 l.2-12, Lemma 5.9 l.1152, Lemma 5.10 l.1265-1300",
+  "files": {
+    "impl": [
+      "src/experimental/paper_experimental/*.hpp",
+      "src/experimental/paper_experimental/*.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper_experimental/test_local_mode_b*.cpp",
+      "tests/differential/paper_experimental/test_local_mode_b*.cpp",
+      "tests/property/paper_experimental/test_local_mode_b*.cpp",
+      "tests/support/paper_experimental/local_mode_b_support.hpp"
+    ],
+    "covers": [
+      "src/paper/local/local_hierarchy.hpp",
+      "src/paper/local/assemble.hpp",
+      "src/paper/local/assemble.cpp",
+      "src/paper/local/threshold_joins.hpp",
+      "src/paper/local/radial_states.hpp",
+      "src/paper/local/owner_decomposition.hpp",
+      "src/paper/local/base_case.hpp",
+      "src/paper/hierarchy/evaluate.hpp",
+      "src/paper/local/saturating.hpp",
+      "src/paper/hierarchy/ordered_hierarchy.hpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"Mode B local|Mode B assembly|D-8|D-11\"'",
+      "exit_code": 1,
+      "reason": "missing headers experimental/paper_experimental/local_hierarchy.hpp and local_assembly.hpp: the Mode B local entry point (local_branch dispatch, base-case FallbackRecord, unsupported failure), the D-8 Lambda alignment/support, the D-11 exact-height assembly and PaperParams::local_size_params do not exist yet",
+      "timestamp": "2026-11-27T14:24:13+09:00",
+      "output_tail": "/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_property_tests.dir/property/paper_experimental/test_local_mode_b_property.cpp.o -MF tests/CMakeFiles/sssp_property_tests.dir/property/paper_experimental/test_local_mode_b_property.cpp.o.d -o tests/CMakeFiles/sssp_property_tests.dir/property/paper_experimental/test_local_mode_b_property.cpp.o -c ./tests/property/paper_experimental/test_local_mode_b_property.cpp\n./tests/property/paper_experimental/test_local_mode_b_property.cpp:26:10: fatal error: 'experimental/paper_experimental/local_assembly.hpp' file not found\n   26 | #include \"experimental/paper_experimental/local_assembly.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[2/7] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_local_mode_b.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_local_mode_b.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_local_mode_b.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_local_mode_b.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_local_mode_b.cpp.o -c ./tests/unit/paper_experimental/test_local_mode_b.cpp\n./tests/unit/paper_experimental/test_local_mode_b.cpp:20:10: fatal error: 'experimental/paper_experimental/local_assembly.hpp' file not found\n   20 | #include \"experimental/paper_experimental/local_assembly.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[3/7] Building CXX object tests/CMakeFiles/sssp_differential_tests.dir/differential/paper_experimental/test_local_mode_b_vs_dijkstra.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_differential_tests.dir/differential/paper_experimental/test_local_mode_b_vs_dijkstra.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_differential_tests.dir/differential/paper_experimental/test_local_mode_b_vs_dijkstra.cpp.o -MF tests/CMakeFiles/sssp_differential_tests.dir/differential/paper_experimental/test_local_mode_b_vs_dijkstra.cpp.o.d -o tests/CMakeFiles/sssp_differential_tests.dir/differential/paper_experimental/test_local_mode_b_vs_dijkstra.cpp.o -c ./tests/differential/paper_experimental/test_local_mode_b_vs_dijkstra.cpp\n./tests/differential/paper_experimental/test_local_mode_b_vs_dijkstra.cpp:23:10: fatal error: 'experimental/paper_experimental/local_hierarchy.hpp' file not found\n   23 | #include \"experimental/paper_experimental/local_hierarchy.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T14:31:32+09:00",
+      "output_tail": "          Start 1103: integration:sssp_bench verify-only\n1096/1103 Test #1075: property:Alg 7 invariants (Lemmas 7.7-7.9) on seeded auxiliary graphs - double ..........................................................................   Passed    1.34 sec\n1097/1103 Test #1098: unit:bench-driver:every case agrees with binary-heap Dijkstra on small inputs ...........................................................................   Passed    0.12 sec\n1098/1103 Test #1103: integration:sssp_bench verify-only ......................................................................................................................   Passed    0.44 sec\n1099/1103 Test #1083: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.87 sec\n1100/1103 Test #1101: unit:bench-driver:registered benchmarks cover the registry and run once without error ...................................................................   Passed    1.02 sec\n1101/1103 Test #1084: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.54 sec\n1102/1103 Test #1038: property:Lemmas 7.1 and 7.2 on seeded graph families - double ...........................................................................................   Passed   11.48 sec\n1103/1103 Test #1037: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed   58.12 sec\n\n100% tests passed, 0 tests failed out of 1103\n\nLabel Time Summary:\ndifferential    =  43.30 sec*proc (76 tests)\nintegration     =   1.02 sec*proc (7 tests)\nproperty        = 109.16 sec*proc (72 tests)\nregression      =   0.11 sec*proc (6 tests)\nunit            = 116.33 sec*proc (942 tests)\n\nTotal Test time (real) =  81.85 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T14:33:39+09:00",
+      "output_tail": "          Start 1102: unit:bench-driver:driver arguments are parsed and validated\n1096/1103 Test #1100: unit:bench-driver:size limits of the registry are refusals, not results .................................................................................   Passed    0.02 sec\n1097/1103 Test #1093: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.01 sec\n1098/1103 Test #1008: differential:every baseline rejects an invalid source with std::out_of_range - double ...................................................................   Passed    0.02 sec\n1099/1103 Test #1099: unit:bench-driver:check_case rejects wrong results instead of timing them ...............................................................................   Passed    0.02 sec\n1100/1103 Test #1094: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.01 sec\n1101/1103 Test #1007: differential:every baseline rejects an invalid source with std::out_of_range - std::uint64_t ............................................................   Passed    0.02 sec\n1102/1103 Test #1102: unit:bench-driver:driver arguments are parsed and validated .............................................................................................   Passed    0.02 sec\n1103/1103 Test #1037: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed   93.92 sec\n\n100% tests passed, 0 tests failed out of 1103\n\nLabel Time Summary:\ndifferential    =  66.97 sec*proc (76 tests)\nintegration     =   1.01 sec*proc (7 tests)\nproperty        = 176.73 sec*proc (72 tests)\nregression      =   0.13 sec*proc (6 tests)\nunit            = 175.02 sec*proc (942 tests)\n\nTotal Test time (real) =  98.06 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T14:37:47+09:00",
+      "output_tail": "          Start 1094: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n1096/1103 Test #1100: unit:bench-driver:size limits of the registry are refusals, not results .................................................................................   Passed    0.03 sec\n1097/1103 Test #1093: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.03 sec\n1098/1103 Test #1008: differential:every baseline rejects an invalid source with std::out_of_range - double ...................................................................   Passed    0.08 sec\n1099/1103 Test #1102: unit:bench-driver:driver arguments are parsed and validated .............................................................................................   Passed    0.03 sec\n1100/1103 Test #1091: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.03 sec\n1101/1103 Test #1092: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.03 sec\n1102/1103 Test #1094: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.04 sec\n1103/1103 Test #1037: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  172.09 sec\n\n100% tests passed, 0 tests failed out of 1103\n\nLabel Time Summary:\ndifferential    = 183.25 sec*proc (76 tests)\nintegration     =   2.57 sec*proc (7 tests)\nproperty        = 365.93 sec*proc (72 tests)\nregression      =   0.30 sec*proc (6 tests)\nunit            = 513.55 sec*proc (942 tests)\n\nTotal Test time (real) = 172.12 sec"
+    }
+  ],
+  "commit": null
+}

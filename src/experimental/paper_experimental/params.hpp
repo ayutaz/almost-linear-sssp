@@ -228,9 +228,14 @@ class PaperParams {
 
   [[nodiscard]] LocalBranch local_branch(std::uint64_t k) const;
   [[nodiscard]] LocalDerived local_derived(std::uint64_t k) const;
-  /// Parameters for the shared paper::local_hierarchy on k vertices (b = 0 keeps the paper's
-  /// L_k^4 path). Throws std::logic_error for D-8 or D-11, which the shared component does not
-  /// provide (P5-EXP-LOCAL).
+  /// The size test and separator of Alg 4 on k vertices as paper::LocalHierarchyParams (b = 0
+  /// keeps the paper's L_k^4 path), for every alignment and assembly: these two choices are
+  /// common to all variants (base-case reason, owner cells).
+  [[nodiscard]] paper::LocalHierarchyParams local_size_params(std::uint64_t k) const;
+  /// Parameters for the shared paper::local_hierarchy on k vertices: local_size_params(k) for
+  /// the paper's alignment and grid. Throws std::logic_error for D-8 or D-11, which the shared
+  /// component does not provide (it would silently run the paper's grid); those variants run
+  /// through paper_experimental::local_hierarchy (local_hierarchy.hpp, P5-EXP-LOCAL).
   [[nodiscard]] paper::LocalHierarchyParams local_hierarchy_params(std::uint64_t k) const;
 
   /// Throws std::invalid_argument for t = 0 and std::length_error for t >= 2^32.
