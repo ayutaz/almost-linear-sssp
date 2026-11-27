@@ -15,6 +15,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -222,6 +223,52 @@ template <class W>
 EdgeList<W> road_like(std::size_t rows, std::size_t cols, const RoadLikeOptions& road,
                       const GenOptions& opt);
 
+/// A point of the unit square [0,1)^2.
+struct Point2 {
+  double x = 0.0;
+  double y = 0.0;
+};
+
+/// Where the weights of a random geometric graph come from.
+enum class GeometricWeights {
+  kFromSpec,   ///< drawn from options.weights (weight sub-stream, in edge order); CLI "random"
+  kEuclidean,  ///< length of the edge between its points; options.weights is ignored
+};
+
+struct GeometricOptions {
+  GeometricWeights weights = GeometricWeights::kFromSpec;
+  /// kEuclidean with integer W: weight = round(length * integer_scale) (nearest, ties up). The
+  /// result can be 0 for very close points (zero weights are legal). Must be in (0, 2^52] so
+  /// that length * scale <= sqrt(2) * 2^52 < 2^53 stays exact-integer representable.
+  double integer_scale = 1000.0;
+};
+
+/// The points of random_geometric(n, ., ., {.seed = seed}): vertex i is at the i-th point.
+/// Points are drawn from the topology sub-stream of `seed`, x then y, each uniform01().
+std::vector<Point2> random_geometric_points(std::size_t n, std::uint64_t seed);
+
+/// Radius giving expected average degree ~avg_degree, ignoring the boundary of the square:
+/// sqrt(avg_degree / (pi n)) (0 for n < 2). The realised mean degree is (n-1) F(r) with
+/// F(r) = pi r^2 - 8/3 r^3 + 1/2 r^4 (r <= 1), i.e. lower by a relative ~8r/(3 pi).
+/// Throws std::invalid_argument unless avg_degree is finite and >= 0.
+double geometric_radius(std::size_t n, double avg_degree);
+
+/// Random geometric graph G(n, r) in the unit square: n points from
+/// random_geometric_points(n, opt.seed) and an edge {u, v} (u < v) for every pair with
+/// dx*dx + dy*dy <= r*r, evaluated in IEEE double (dx = x_u - x_v, dy = y_u - y_v; no FMA).
+/// Edges are listed in lexicographic (u, v) order. Neighbours are found with a grid of cells
+/// no narrower than r (at most n cells), so the expected time is O(n + m). r >= sqrt(2) gives
+/// the complete graph. Simple. `connected` joins components with connect_components; with
+/// kEuclidean those joining edges are weighted by their length as well.
+/// Throws std::invalid_argument unless r is finite and >= 0 (and for an invalid weight spec
+/// when kFromSpec, or an integer_scale outside (0, 2^52] when kEuclidean).
+template <class W>
+EdgeList<W> random_geometric(std::size_t n, double radius, const GeometricOptions& geo,
+                             const GenOptions& opt);
+
+/// "random" -> kFromSpec, "euclidean" -> kEuclidean; throws std::invalid_argument otherwise.
+GeometricWeights parse_geometric_weights(std::string_view name);
+
 /// Uniformly random labelled tree on n vertices (random Prüfer sequence).
 template <class W>
 EdgeList<W> random_tree(std::size_t n, const GenOptions& opt);
@@ -269,7 +316,7 @@ std::size_t count_components(const EdgeList<W>& g);
 struct GraphSpec {
   std::string type = "er";
   std::size_t n = 1000;     ///< vertices (grid/road: rows = cols = floor(sqrt(n)) if unset)
-  double avg_degree = 4.0;  ///< er, chung_lu
+  double avg_degree = 4.0;  ///< er, chung_lu, geometric (unless radius is set)
   std::size_t degree = 3;   ///< regular
   std::size_t attach = 2;   ///< ba
   std::size_t rows = 0;     ///< grid, road
@@ -277,6 +324,9 @@ struct GraphSpec {
   double exponent = 2.5;    ///< chung_lu
   MultiEdgePolicy multi = MultiEdgePolicy::kSwitchToSimple;  ///< regular
   RoadLikeOptions road{};
+  /// geometric: explicit radius; if unset, geometric_radius(n, avg_degree).
+  std::optional<double> radius{};
+  GeometricOptions geometric{};  ///< geometric
   GenOptions options{};
 };
 

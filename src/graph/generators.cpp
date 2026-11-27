@@ -12,6 +12,7 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
+#include <numbers>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -258,6 +259,14 @@ class UnionFind {
 std::size_t rounded_edge_count(std::size_t n, double avg_degree) {
   check(std::isfinite(avg_degree) && avg_degree >= 0.0, "avg_degree must be finite and >= 0");
   return static_cast<std::size_t>(std::floor(static_cast<double>(n) * avg_degree / 2.0 + 0.5));
+}
+
+/// floor(sqrt(n)), exact.
+std::size_t side(std::size_t n) {
+  std::size_t s = static_cast<std::size_t>(std::sqrt(static_cast<double>(n)));
+  while (s * s > n) --s;
+  while ((s + 1) * (s + 1) <= n) ++s;
+  return s;
 }
 
 /// Pair index t in [0, n(n-1)/2) -> (b, a) with b < a, t = a(a-1)/2 + b. Exact integer result
@@ -562,6 +571,147 @@ EdgeList<W> road_like(std::size_t rows, std::size_t cols, const RoadLikeOptions&
   return g;
 }
 
+// ------------------------------------------------------------------ random geometric
+
+std::vector<Point2> random_geometric_points(std::size_t n, std::uint64_t seed) {
+  check_n(n);
+  Xoshiro256ss rng(substream_seed(seed, kTopology));
+  std::vector<Point2> p(n);
+  for (auto& q : p) {
+    q.x = rng.uniform01();
+    q.y = rng.uniform01();
+  }
+  return p;
+}
+
+double geometric_radius(std::size_t n, double avg_degree) {
+  check(std::isfinite(avg_degree) && avg_degree >= 0.0,
+        "geometric: avg_degree must be finite and >= 0");
+  if (n < 2) return 0.0;
+  return std::sqrt(avg_degree / (std::numbers::pi * static_cast<double>(n)));
+}
+
+GeometricWeights parse_geometric_weights(std::string_view name) {
+  if (name == "random") return GeometricWeights::kFromSpec;
+  if (name == "euclidean") return GeometricWeights::kEuclidean;
+  throw std::invalid_argument("unknown geometric weights: " + std::string(name) +
+                              " (random|euclidean)");
+}
+
+namespace {
+
+/// Squared distance; the edge predicate is squared_distance(a, b) <= r * r.
+double squared_distance(const Point2& a, const Point2& b) {
+  const double dx = a.x - b.x;
+  const double dy = a.y - b.y;
+  return dx * dx + dy * dy;
+}
+
+template <class W>
+W euclidean_weight(const Point2& a, const Point2& b, double integer_scale) {
+  const double len = std::sqrt(squared_distance(a, b));
+  if constexpr (std::is_integral_v<W>) {
+    return static_cast<W>(std::floor(len * integer_scale + 0.5));
+  } else {
+    return len;
+  }
+}
+
+/// Cells per side k of the neighbour grid: k * k <= n (memory O(n)) and k * r <= 1 - 1e-9.
+/// Why the margin suffices: an accepted pair has |x_u - x_v| <= r (1 + 3 eps) (the predicate
+/// rounds), and the cell coordinate floor(fl(x k)) adds an absolute error <= 2 k eps <= 2^-36
+/// (k <= 2^16 because n < 2^32). So (x_u - x_v) k is below 1, hence the cell coordinates of
+/// the two points differ by at most 1 per axis and scanning the 3 x 3 block of cells finds
+/// every pair. Expected work per point is O(1 + n / k^2) = O(1 + expected degree).
+std::size_t geometric_cells_per_side(std::size_t n, double r) {
+  const std::size_t cap = std::max<std::size_t>(1, side(n));
+  if (!(r > 0.0)) return cap;
+  const double fit = (1.0 - 1e-9) / r;
+  if (fit >= static_cast<double>(cap)) return cap;
+  return std::max<std::size_t>(1, static_cast<std::size_t>(fit));
+}
+
+/// All pairs u < v with squared_distance <= r * r, in lexicographic (u, v) order.
+std::vector<Pair> geometric_pairs(const std::vector<Point2>& p, double r) {
+  const std::size_t n = p.size();
+  const std::size_t k = geometric_cells_per_side(n, r);
+  const auto kd = static_cast<double>(k);
+  auto coord = [&](double t) { return std::min(k - 1, static_cast<std::size_t>(t * kd)); };
+  // Counting sort of the points by cell; inside a cell the points stay in increasing order.
+  std::vector<std::size_t> cell(n);
+  std::vector<std::size_t> start(k * k + 1, 0);
+  for (std::size_t i = 0; i < n; ++i) {
+    cell[i] = coord(p[i].y) * k + coord(p[i].x);
+    ++start[cell[i] + 1];
+  }
+  for (std::size_t c = 0; c < k * k; ++c) start[c + 1] += start[c];
+  std::vector<Vertex> members(n);
+  {
+    std::vector<std::size_t> next(start.begin(), start.end() - 1);
+    for (std::size_t i = 0; i < n; ++i) members[next[cell[i]]++] = static_cast<Vertex>(i);
+  }
+  // For v in increasing order, emit (u, v) for the neighbours u < v in the 3 x 3 cell block.
+  const double r2 = r * r;
+  std::vector<Pair> by_v;
+  for (std::size_t v = 0; v < n; ++v) {
+    const std::size_t cy = cell[v] / k;
+    const std::size_t cx = cell[v] % k;
+    for (std::size_t y = (cy == 0 ? 0 : cy - 1); y <= std::min(k - 1, cy + 1); ++y) {
+      for (std::size_t x = (cx == 0 ? 0 : cx - 1); x <= std::min(k - 1, cx + 1); ++x) {
+        const std::size_t c = y * k + x;
+        for (std::size_t i = start[c]; i < start[c + 1]; ++i) {
+          const Vertex u = members[i];
+          if (u >= v) break;  // members are sorted
+          if (squared_distance(p[u], p[v]) <= r2) by_v.emplace_back(u, static_cast<Vertex>(v));
+        }
+      }
+    }
+  }
+  // Stable counting sort by u: v is already non-decreasing, so the result is (u, v)-sorted.
+  std::vector<std::size_t> pos(n + 1, 0);
+  for (const auto& e : by_v) ++pos[e.first + 1];
+  for (std::size_t u = 0; u < n; ++u) pos[u + 1] += pos[u];
+  std::vector<Pair> out(by_v.size());
+  for (const auto& e : by_v) out[pos[e.first]++] = e;
+  return out;
+}
+
+}  // namespace
+
+template <class W>
+EdgeList<W> random_geometric(std::size_t n, double radius, const GeometricOptions& geo,
+                             const GenOptions& opt) {
+  check(std::isfinite(radius) && radius >= 0.0, "geometric: radius must be finite and >= 0");
+  const bool euclidean = geo.weights == GeometricWeights::kEuclidean;
+  if (euclidean) {
+    check(
+        std::isfinite(geo.integer_scale) && geo.integer_scale > 0.0 && geo.integer_scale <= 0x1p52,
+        "geometric: integer_scale must be in (0, 2^52]");
+  } else {
+    validate_weight_spec(opt.weights);
+  }
+  const auto points = random_geometric_points(n, opt.seed);
+  const auto pairs = geometric_pairs(points, radius);
+  if (!euclidean) return finish<W>(n, pairs, opt);
+  EdgeList<W> g{n, {}};
+  g.edges.reserve(pairs.size());
+  for (const auto& [u, v] : pairs) {
+    g.edges.push_back({u, v, euclidean_weight<W>(points[u], points[v], geo.integer_scale)});
+  }
+  if (opt.connected) {
+    // Same joining edges as every other generator (connect sub-stream); their weights are then
+    // replaced by the edge lengths, so the spec passed here only fixes the weight draws.
+    const std::size_t m = g.edges.size();
+    connect_components(g, WeightSpec{.dist = WeightDist::kConstant, .lo = 0.0},
+                       substream_seed(opt.seed, kConnect));
+    for (std::size_t i = m; i < g.edges.size(); ++i) {
+      auto& e = g.edges[i];
+      e.weight = euclidean_weight<W>(points[e.u], points[e.v], geo.integer_scale);
+    }
+  }
+  return g;
+}
+
 template <class W>
 EdgeList<W> random_tree(std::size_t n, const GenOptions& opt) {
   check_n(n);
@@ -661,7 +811,7 @@ EdgeList<W> adversarial_long_path(std::size_t n) {
 // ------------------------------------------------------------------ registry
 
 namespace {
-constexpr std::array<GeneratorInfo, 9> kCatalog{{
+constexpr std::array<GeneratorInfo, 10> kCatalog{{
     {"er", "Erdos-Renyi G(n,m), m = round(n*avg_degree/2), simple", "n, avg_degree"},
     {"regular", "random d-regular graph (configuration model)", "n, degree, multi"},
     {"ba", "Barabasi-Albert preferential attachment, connected", "n, attach"},
@@ -673,14 +823,10 @@ constexpr std::array<GeneratorInfo, 9> kCatalog{{
     {"adversarial_decrease_key", "Dijkstra decrease-key adversary, k = n-1 (fixed weights)", "n"},
     {"adversarial_long_path", "path with decoy skip edges, n-1 hop shortest path (fixed weights)",
      "n"},
+    {"geometric", "random geometric graph in the unit square, edge iff distance <= r, simple",
+     "n, radius (default sqrt(avg_degree/(pi n))), geo-weights random|euclidean, int-scale"},
 }};
 
-std::size_t side(std::size_t n) {
-  std::size_t s = static_cast<std::size_t>(std::sqrt(static_cast<double>(n)));
-  while (s * s > n) --s;
-  while ((s + 1) * (s + 1) <= n) ++s;
-  return s;
-}
 }  // namespace
 
 std::span<const GeneratorInfo> generator_catalog() noexcept {
@@ -712,24 +858,30 @@ EdgeList<W> generate(const GraphSpec& s) {
     return adversarial_decrease_key<W>(s.n - 1);
   }
   if (s.type == "adversarial_long_path") return adversarial_long_path<W>(s.n);
+  if (s.type == "geometric") {
+    const double r = s.radius ? *s.radius : geometric_radius(s.n, s.avg_degree);
+    return random_geometric<W>(s.n, r, s.geometric, o);
+  }
   throw std::invalid_argument("unknown generator type: " + s.type + " (see --list)");
 }
 
-#define SSSP_INSTANTIATE_GENERATORS(W)                                                  \
-  template std::size_t count_components<W>(const EdgeList<W>&);                         \
-  template void connect_components<W>(EdgeList<W>&, const WeightSpec&, std::uint64_t);  \
-  template EdgeList<W> erdos_renyi<W>(std::size_t, double, const GenOptions&);          \
-  template EdgeList<W> erdos_renyi_gnm<W>(std::size_t, std::size_t, const GenOptions&); \
-  template EdgeList<W> random_regular<W>(std::size_t, std::size_t, MultiEdgePolicy,     \
-                                         const GenOptions&);                            \
-  template EdgeList<W> barabasi_albert<W>(std::size_t, std::size_t, const GenOptions&); \
-  template EdgeList<W> grid_2d<W>(std::size_t, std::size_t, const GenOptions&);         \
-  template EdgeList<W> road_like<W>(std::size_t, std::size_t, const RoadLikeOptions&,   \
-                                    const GenOptions&);                                 \
-  template EdgeList<W> random_tree<W>(std::size_t, const GenOptions&);                  \
-  template EdgeList<W> chung_lu<W>(std::size_t, double, double, const GenOptions&);     \
-  template EdgeList<W> adversarial_decrease_key<W>(std::size_t);                        \
-  template EdgeList<W> adversarial_long_path<W>(std::size_t);                           \
+#define SSSP_INSTANTIATE_GENERATORS(W)                                                   \
+  template std::size_t count_components<W>(const EdgeList<W>&);                          \
+  template void connect_components<W>(EdgeList<W>&, const WeightSpec&, std::uint64_t);   \
+  template EdgeList<W> erdos_renyi<W>(std::size_t, double, const GenOptions&);           \
+  template EdgeList<W> erdos_renyi_gnm<W>(std::size_t, std::size_t, const GenOptions&);  \
+  template EdgeList<W> random_regular<W>(std::size_t, std::size_t, MultiEdgePolicy,      \
+                                         const GenOptions&);                             \
+  template EdgeList<W> barabasi_albert<W>(std::size_t, std::size_t, const GenOptions&);  \
+  template EdgeList<W> grid_2d<W>(std::size_t, std::size_t, const GenOptions&);          \
+  template EdgeList<W> road_like<W>(std::size_t, std::size_t, const RoadLikeOptions&,    \
+                                    const GenOptions&);                                  \
+  template EdgeList<W> random_geometric<W>(std::size_t, double, const GeometricOptions&, \
+                                           const GenOptions&);                           \
+  template EdgeList<W> random_tree<W>(std::size_t, const GenOptions&);                   \
+  template EdgeList<W> chung_lu<W>(std::size_t, double, double, const GenOptions&);      \
+  template EdgeList<W> adversarial_decrease_key<W>(std::size_t);                         \
+  template EdgeList<W> adversarial_long_path<W>(std::size_t);                            \
   template EdgeList<W> generate<W>(const GraphSpec&);
 
 SSSP_INSTANTIATE_GENERATORS(std::uint64_t)

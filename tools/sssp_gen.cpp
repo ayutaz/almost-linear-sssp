@@ -27,13 +27,17 @@ constexpr std::string_view kUsage = R"(usage: sssp_gen --type TYPE [options]
   --list                      list generator types and weight distributions
   --type TYPE                 generator (see --list)
   --n N                       vertices (default 1000)
-  --avg-degree D              er, chung_lu (default 4)
+  --avg-degree D              er, chung_lu, geometric (default 4)
   --degree D                  regular (default 3)
   --multi keep|drop|switch    regular: self-loop/multi-edge policy (default switch)
   --attach M                  ba (default 2)
   --rows R --cols C           grid, road (default floor(sqrt(n)) each)
   --exponent G                chung_lu power-law exponent > 2 (default 2.5)
-  --jitter J --keep-prob P --shortcut-prob P --shortcut-radius R --int-scale S   road
+  --jitter J --keep-prob P --shortcut-prob P --shortcut-radius R   road
+  --radius R                  geometric: connection radius (default sqrt(avg-degree/(pi n)))
+  --geo-weights random|euclidean   geometric: weights from --weights (default) or edge lengths
+  --int-scale S               road, geometric euclidean: integer weight = round(length * S)
+                              (default 1000)
   --weights DIST              uniform_int|uniform_real|log_uniform|exponential|constant|
                               zero_mixed|wide_range (default uniform_int)
   --lo X --hi X --mean X --zero-prob P --wide-log2 K   weight parameters
@@ -118,6 +122,11 @@ Cli parse(int argc, char** argv) {
       s.road.shortcut_radius = parse_number<int>(a, value());
     } else if (a == "--int-scale") {
       s.road.integer_scale = parse_number<double>(a, value());
+      s.geometric.integer_scale = s.road.integer_scale;
+    } else if (a == "--radius") {
+      s.radius = parse_number<double>(a, value());
+    } else if (a == "--geo-weights") {
+      s.geometric.weights = sssp::gen::parse_geometric_weights(value());
     } else if (a == "--weights") {
       w.dist = sssp::gen::parse_weight_dist(value());
     } else if (a == "--lo") {

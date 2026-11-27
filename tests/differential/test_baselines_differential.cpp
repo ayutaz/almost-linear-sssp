@@ -357,6 +357,14 @@ sssp::gen::GraphSpec random_spec(const std::string& type, sssp::test::SplitMix64
     s.exponent = 2.1 + rng.unit();
   } else if (type == "adversarial_decrease_key") {
     s.n = 1 + rng.below(30);
+  } else if (type.rfind("geometric", 0) == 0) {
+    // radius 0 (no edges), sparse, dense, and >= sqrt(2) (complete graph)
+    s.type = "geometric";
+    const double radii[] = {0.0, 0.1, 0.25, 0.6, 1.5};
+    s.radius = radii[rng.below(5)];
+    if (type == "geometric_euclidean") {
+      s.geometric.weights = sssp::gen::GeometricWeights::kEuclidean;
+    }
   }
   return s;
 }
@@ -371,7 +379,9 @@ const std::vector<std::string> kFamilies{"er",
                                          "tree",
                                          "chung_lu",
                                          "adversarial_decrease_key",
-                                         "adversarial_long_path"};
+                                         "adversarial_long_path",
+                                         "geometric_random",
+                                         "geometric_euclidean"};
 
 /// Stable per-family seed component (std::hash is implementation-defined).
 std::uint64_t family_id(const std::string& family) {
@@ -465,6 +475,12 @@ TEMPLATE_TEST_CASE("baselines agree on generated graphs: adversarial families",
                    "[differential][baselines]", std::uint64_t, double) {
   run_family<TestType>("adversarial_decrease_key");
   run_family<TestType>("adversarial_long_path");
+}
+
+TEMPLATE_TEST_CASE("baselines agree on generated graphs: geometric (random/euclidean weights)",
+                   "[differential][baselines]", std::uint64_t, double) {
+  run_family<TestType>("geometric_random");
+  run_family<TestType>("geometric_euclidean");
 }
 
 TEST_CASE("every generator family is covered by the differential test",
