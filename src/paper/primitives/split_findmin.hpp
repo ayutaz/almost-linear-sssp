@@ -15,8 +15,14 @@
 //    reused, so at most 2k-1 IDs exist; bounds() of a retired ID reports its last bounds.
 //  - split(pos) returns false (and changes nothing) when pos is already a boundary, including
 //    pos = 0 and pos = k; it throws std::out_of_range when pos > k.
-//  - decrease(i, key) with key above the current key violates the precondition (Sec 3.5 only
-//    lowers keys, A10): it asserts in debug builds and is ignored otherwise. NaN keys throw.
+//  - decrease(i, key) with key above the current key violates the precondition (Sec 3.5 l.579
+//    only lowers a key, A10): it throws std::invalid_argument in every build and changes nothing
+//    (Q-16, revised 2026-11-27). Equal keys are accepted and change nothing. NaN keys throw
+//    std::invalid_argument as well.
+//  - [Supplement] Record indices i >= k passed to decrease, query, interval_of or key throw
+//    std::out_of_range in every build and change nothing, like split(pos) with pos > k and
+//    bounds() of an identifier never issued. These input checks are not paper operations; each
+//    costs one comparison, so the bounds of Lemmas 3.10 and 3.11 are unchanged.
 //
 // Implementations:
 //  - SplitFindminRef<Key>: boundary std::set + segment tree, O(log k) per operation (reference).
@@ -177,6 +183,18 @@ void check_key(Key key) {
   if (sfm_is_nan(key)) throw std::invalid_argument("split-findmin key is NaN");
 }
 
+/// [Supplement] Record index check, active in every build (not a paper operation).
+inline void check_index(std::uint32_t i, std::uint32_t k) {
+  if (i >= k) throw std::out_of_range("split-findmin record index beyond the array");
+}
+
+/// Sec 3.5 l.579: a decrease lowers a key. A larger key is rejected in every build (Q-16);
+/// equal keys pass. Call after check_key, since NaN compares false.
+template <class Key>
+void check_not_raised(Key current, Key key) {
+  if (current < key) throw std::invalid_argument("split-findmin decrease must not raise a key");
+}
+
 }  // namespace sfm_detail
 
 // ------------------------------------------------------------------------------------------
@@ -217,10 +235,9 @@ class SplitFindminRef {
   }
 
   void decrease(std::uint32_t i, Key key) {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     sfm_detail::check_key(key);
-    assert(!(tree_[leaf_ + i].key < key) && "split-findmin decrease must not raise a key");
-    if (tree_[leaf_ + i].key < key) return;
+    sfm_detail::check_not_raised(tree_[leaf_ + i].key, key);
     std::size_t v = leaf_ + i;
     tree_[v].key = key;
     for (v >>= 1; v >= 1; v >>= 1) {
@@ -231,8 +248,7 @@ class SplitFindminRef {
   }
 
   [[nodiscard]] SfmMin<Key> query(std::uint32_t i) const {
-    assert(i < k_);
-    const IntervalBounds b = bounds_[interval_of(i)];
+    const IntervalBounds b = bounds_[interval_of(i)];  // interval_of checks i
     // Iterative bottom-up range minimum over [b.lo, b.hi).
     SfmMin<Key> best{WeightTraits<Key>::infinity(), std::numeric_limits<std::uint32_t>::max()};
     for (std::size_t l = leaf_ + b.lo, r = leaf_ + b.hi; l < r; l >>= 1, r >>= 1) {
@@ -249,14 +265,14 @@ class SplitFindminRef {
   }
 
   [[nodiscard]] IntervalId interval_of(std::uint32_t i) const {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     return id_of_start_[*std::prev(starts_.upper_bound(i))];
   }
 
   [[nodiscard]] IntervalBounds bounds(IntervalId id) const { return bounds_.at(id); }
 
   [[nodiscard]] Key key(std::uint32_t i) const {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     return tree_[leaf_ + i].key;
   }
 
@@ -388,12 +404,12 @@ class DyadicSplitFindmin {
     return true;
   }
 
-  /// Sec 3.5: "On a decrease, compare with both stored minima."
+  /// Sec 3.5: "On a decrease, compare with both stored minima." The index, NaN and raise checks
+  /// run first and throw before anything changes (Q-16; the index check is a [Supplement]).
   void decrease(std::uint32_t i, Key key) {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     sfm_detail::check_key(key);
-    assert(!(keys_[i] < key) && "split-findmin decrease must not raise a key");
-    if (keys_[i] < key) return;
+    sfm_detail::check_not_raised(keys_[i], key);
     keys_[i] = key;
     const SfmMin<Key> rec{key, i};
     const std::uint32_t n = node_of_[i];
@@ -404,12 +420,12 @@ class DyadicSplitFindmin {
 
   /// Sec 3.5: "A lookup from a record follows its node's descriptor pointer."
   [[nodiscard]] SfmMin<Key> query(std::uint32_t i) const {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     return descs_[node_desc_[node_of_[i]]].min;
   }
 
   [[nodiscard]] IntervalId interval_of(std::uint32_t i) const {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     return node_desc_[node_of_[i]];
   }
 
@@ -419,7 +435,7 @@ class DyadicSplitFindmin {
   }
 
   [[nodiscard]] Key key(std::uint32_t i) const {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     return keys_[i];
   }
 
@@ -592,14 +608,15 @@ class BlockedSplitFindmin {
   }
 
   /// Lemma 3.11 step 2: update the lower structure; in a whole block also decrease the proxy if
-  /// the block minimum decreased; refresh the owner's minimum from its pieces.
+  /// the block minimum decreased; refresh the owner's minimum from its pieces. The index, NaN and
+  /// raise checks run here, before any nested structure changes (Q-16; the index check is a
+  /// [Supplement]).
   void decrease(std::uint32_t i, key_type key) {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     sfm_detail::check_key(key);
     const std::uint32_t b = i / block_;
     const std::uint32_t off = i - b * block_;
-    assert(!(lower_[b].key(off) < key) && "split-findmin decrease must not raise a key");
-    if (lower_[b].key(off) < key) return;
+    sfm_detail::check_not_raised(lower_[b].key(off), key);
     lower_[b].decrease(off, key);
     if (whole_[b] != 0 && key < upper_.key(b)) upper_.decrease(b, key);
     Owner& w = owners_[owner_of(i)];
@@ -608,9 +625,15 @@ class BlockedSplitFindmin {
 
   /// Lemma 3.11 step 1: reach the owner through the lower descriptor (split block) or through
   /// the upper descriptor of the block's proxy (whole block); return the owner's minimum.
-  [[nodiscard]] SfmMin<key_type> query(std::uint32_t i) const { return owners_[owner_of(i)].min; }
+  [[nodiscard]] SfmMin<key_type> query(std::uint32_t i) const {
+    sfm_detail::check_index(i, k_);
+    return owners_[owner_of(i)].min;
+  }
 
-  [[nodiscard]] IntervalId interval_of(std::uint32_t i) const { return owner_of(i); }
+  [[nodiscard]] IntervalId interval_of(std::uint32_t i) const {
+    sfm_detail::check_index(i, k_);
+    return owner_of(i);
+  }
 
   [[nodiscard]] IntervalBounds bounds(IntervalId id) const {
     const Owner& w = owners_.at(id);
@@ -618,7 +641,7 @@ class BlockedSplitFindmin {
   }
 
   [[nodiscard]] key_type key(std::uint32_t i) const {
-    assert(i < k_);
+    sfm_detail::check_index(i, k_);
     const std::uint32_t b = i / block_;
     return lower_[b].key(i - b * block_);
   }
