@@ -18,7 +18,7 @@
       "src/paper/model/wide_length.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -37,5 +37,5 @@
       "output_tail": "        Start 1337: regression:20261127-child-order-overflow: order_children on the path of four edges of 2^62\n267/272 Test #1346: regression:20261127-evaluate-mass-overflow: one edge of length 2^63 - 1 (passes before the fix) ....................................   Passed    0.02 sec\n        Start 1344: regression:20261127-evaluate-double-slot-rounding: representable sums (pass before the fix)\n268/272 Test #1337: regression:20261127-child-order-overflow: order_children on the path of four edges of 2^62 .........................................   Passed    0.02 sec\n        Start 1341: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf\n269/272 Test #1344: regression:20261127-evaluate-double-slot-rounding: representable sums (pass before the fix) ........................................   Passed    0.01 sec\n270/272 Test #1341: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ......................................   Passed    0.02 sec\n271/272 Test #1159: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - std::uint64_t ...........................   Passed  279.05 sec\n272/272 Test #1160: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - double ..................................   Passed  280.57 sec\n\n100% tests passed, 0 tests failed out of 272\n\nLabel Time Summary:\ndifferential         = 173.31 sec*proc (34 tests)\ndifferential-slow    = 559.62 sec*proc (2 tests)\nproperty             =  49.17 sec*proc (17 tests)\nregression           =   0.64 sec*proc (23 tests)\nunit                 =  11.82 sec*proc (196 tests)\n\nTotal Test time (real) = 286.34 sec"
     }
   ],
-  "commit": null
+  "commit": "320de3b"
 }
