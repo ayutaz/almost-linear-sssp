@@ -15,6 +15,10 @@
 // Lemmas 7.1-7.2 hold for every valid assignment, so each source must satisfy every check.
 // Weights are integers (std::uint64_t) or quarter-integers below 2^42 (double), so every sum
 // formed here is exact in double as well (Q-06).
+//
+// Counters are compiled out with SSSP_DIAGNOSTICS=0 (ci-release, release): assertions on them run
+// only when they are counted. The coverage checks (Coverage below) are counted from the returned
+// structures, so they hold in every build.
 
 #include <algorithm>
 #include <catch2/catch_template_test_macros.hpp>
@@ -417,7 +421,9 @@ void check_instance(const std::vector<Edge<W>>& edges, std::size_t n, std::size_
   }
 
   REQUIRE(ow::check_aux_metric(g, od, cls, aux, J).empty());
+#if SSSP_DIAGNOSTICS
   REQUIRE(diag.counters["aux_metric.root_loops"] == loops);
+#endif
   ++cov.cases;
   if (t > 1) ++cov.multi_pivot;
 }
@@ -490,7 +496,10 @@ TEMPLATE_TEST_CASE("paper outer separator: one owner and J equals the distance f
         sssp::paper::model::WordRng rng(seed);
         Diagnostics diag;
         const auto cls = ow::classify_interowner_edges(g, od, rng, {}, &diag);
+        CHECK(cls.interowner == std::vector<std::uint8_t>(edges.size(), 0));
+#if SSSP_DIAGNOSTICS
         CHECK(diag.counters["aux_metric.interowner_edges"] == 0);
+#endif
         CHECK(diag.fallbacks.empty());
         const auto aux = ow::build_aux_graph(g, od, cls);
         const auto J = ow::owner_coordinates_ref(aux);

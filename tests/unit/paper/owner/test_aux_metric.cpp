@@ -8,6 +8,10 @@
 // single pivot on every graph small enough to write by hand; that case is tested separately.
 // Hand-written route names use P = 1 (p_log2 = 0) and are valid certificates in the sense of
 // Definition 6.1 (checked with check_route_names against Floyd-Warshall on G_P).
+//
+// Counters are compiled out with SSSP_DIAGNOSTICS=0 (ci-release, release): assertions on them run
+// only when they are counted. Every counted quantity is also checked on the returned structures,
+// so the behaviour is tested in every build.
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -144,10 +148,13 @@ TEMPLATE_TEST_CASE("classification of the 7-vertex example from given names", ""
         std::vector<W>{W{0}, W{0}, W{5}, W{0}, W{7}, W{0}, W{5}, W{14}, W{0}, W{0}, W{5}});
   CHECK(cls.p_log2 == 0);
   CHECK(cls.hop_bound == 3);
+  // 5 interowner edges (1 radial, 4 macro) and 2 omitted ones, fixed by the vectors above.
+#if SSSP_DIAGNOSTICS
   CHECK(diag.counters["aux_metric.interowner_edges"] == 5);
   CHECK(diag.counters["aux_metric.radial_interowner_edges"] == 1);
   CHECK(diag.counters["aux_metric.macro_edges"] == 4);
   CHECK(diag.counters["aux_metric.omitted_edges"] == 2);
+#endif
   CHECK(diag.fallbacks.empty());
 }
 
@@ -174,9 +181,13 @@ TEST_CASE("integer detours saturate at the infinity sentinel and are then macro"
   names.p_log2 = 63;  // 5 * 2^63 does not fit in 64 bits
   Diagnostics diag;
   const auto cls = classify_outer_edges(g, od, pe, names, &diag);
+  // All 3 dictionary detours saturate (the size check keeps the loop from passing vacuously).
+  REQUIRE(cls.dictionary_detour.size() == 3);
   for (const W d : cls.dictionary_detour) CHECK(d == sssp::WeightTraits<W>::infinity());
   CHECK(cls.edge_class[6] == OuterEdgeClass::kMacro);
+#if SSSP_DIAGNOSTICS
   CHECK(diag.counters["aux_metric.saturated_detours"] == 3);
+#endif
 }
 
 TEMPLATE_TEST_CASE("invalid route names are rejected", "", std::uint64_t, double) {
@@ -237,9 +248,12 @@ TEMPLATE_TEST_CASE("auxiliary graph, owner-spoke tree and J of the 7-vertex exam
   CHECK(aux.tree_order.size() == 5);
   CHECK(aux.radius == std::vector<W>{W{0}, W{3}, W{1}, W{2}, W{1}});
   CHECK(aux.owner_distance == std::vector<W>{W{0}, W{3}, W{1}, W{2}, W{1}});
+  // 5 vertices, 5 edges and no loop at a: every radial edge has an aux edge (aux_edge above).
+#if SSSP_DIAGNOSTICS
   CHECK(diag.counters["aux_metric.aux_vertices"] == 5);
   CHECK(diag.counters["aux_metric.aux_edges"] == 5);
   CHECK(diag.counters["aux_metric.root_loops"] == 0);
+#endif
 
   const auto J = owner_coordinates_ref(aux);
   CHECK(J == std::vector<W>{W{0}, W{3}, W{1}, W{2}, W{1}});
@@ -261,7 +275,10 @@ TEMPLATE_TEST_CASE("one owner: J is the distance to the single pivot and can be 
   CHECK(cls.edge_class == std::vector<OuterEdgeClass>(3, OuterEdgeClass::kRadial));
   CHECK(cls.detour == std::vector<W>(3, W{0}));
   CHECK(cls.dictionary.empty());
+  CHECK(cls.interowner == std::vector<std::uint8_t>(3, 0));
+#if SSSP_DIAGNOSTICS
   CHECK(diag.counters["aux_metric.interowner_edges"] == 0);
+#endif
   const auto aux = build_aux_graph(g, od, cls);
   CHECK(aux.input_vertex == std::vector<Vertex>{kNoVertex, 1, 2});
   CHECK(aux.radius == std::vector<W>{W{0}, W{2}, W{2}});
@@ -304,8 +321,11 @@ TEMPLATE_TEST_CASE("a radial edge between two pivots becomes a discarded loop at
   const auto aux = build_aux_graph(g, od, cls, &diag);
   CHECK(aux.num_vertices() == 1);
   CHECK(aux.graph.num_edges() == 0);
+  // The radial chord (both ends pivots) is the one discarded loop at a.
   CHECK(aux.aux_edge[6] == kNoEdge);
+#if SSSP_DIAGNOSTICS
   CHECK(diag.counters["aux_metric.root_loops"] == 1);
+#endif
   const auto J = owner_coordinates_ref(aux);
   CHECK(J == std::vector<W>{W{0}});
   CHECK(check_aux_metric(g, od, cls, aux, J).empty());
