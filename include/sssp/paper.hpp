@@ -9,6 +9,9 @@
 // so every feasible input runs the base case; each run records exactly one FallbackRecord with
 // the contracted size, also when SSSP_DIAGNOSTICS = 0. Timings of these variants are timings of
 // the paper's preprocessing plus a Dijkstra search, not of the paper's outer construction.
+// The other branch (l.8-15, src/paper/outer/shortest_paths.hpp) is wired with the paper's
+// constants and is unreachable here for N < 2^64 (Q-04); it is exercised through Mode B
+// parameters (src/experimental/paper_experimental/sssp.hpp).
 //
 // Variants (benchmark / CLI names):
 //   "paper-faithful"     base case by the scan Dijkstra of Lemma 3.2, as Alg 8 l.5 states.
@@ -29,8 +32,16 @@ enum class PaperVariant : std::uint8_t {
   kFaithfulD1,  ///< "paper-faithful-d1": binary-heap Dijkstra base case (deviation D-1)
 };
 
+/// Default of PaperOptions::seed (Q-70): a fixed value, so that runs are reproducible.
+inline constexpr std::uint64_t kDefaultPaperSeed = 0x2611'3491'5353'5031ULL;
+
 struct PaperOptions {
   PaperVariant variant = PaperVariant::kFaithful;
+  /// Seed of the generator (SplitMix64, src/paper/model/random.hpp) that the outer
+  /// construction passes to NameRoutes (Alg 8 l.9, Alg 5: the only randomised step; its output
+  /// is correct for every seed, Lemma 6.8). The base-case branch draws nothing, so for every
+  /// N < 2^64 the result does not depend on it.
+  std::uint64_t seed = kDefaultPaperSeed;
 };
 
 /// Every variant, in registration order.
@@ -68,8 +79,11 @@ constexpr std::optional<PaperVariant> parse_algorithm_name(std::string_view name
 /// Evaluate (Sec 4.3) is stricter than the first point: it skips a relaxation value beyond the
 /// range and throws only if a state that received nothing else never emits. For double weights
 /// Evaluate rejects a slot that rounds back to its start with std::domain_error (D-24). Neither
-/// is on this function's path yet (base case only). Sec 4.2 order_children can still overflow on
-/// sums of forest path lengths, an auxiliary quantity (open finding of P3-EVAL-ARITH-FIX).
+/// is on this function's path for N < 2^64 (base case only); both are on the path of the outer
+/// construction. On that path two auxiliary quantities can still overflow while every distance
+/// fits (std::overflow_error, not a result): sums of forest path lengths in Sec 4.2
+/// order_children (P3-CHILDORDER-OVERFLOW) and the MST root distances of Sec 5.1
+/// owner_decomposition (P3-OWNERDECOMP-OVERFLOW); both fixes are not on main yet.
 template <class W>
 SsspResult<W> paper_sssp(const CsrGraph<W>& g, Vertex s, PaperOptions options = {});
 

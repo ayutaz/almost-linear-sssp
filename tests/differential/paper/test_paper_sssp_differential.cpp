@@ -121,18 +121,60 @@ TEST_CASE("Mode A never takes the outer construction for N < 2^64", "[paper][sss
   REQUIRE_FALSE(sssp::paper::takes_outer_construction(std::numeric_limits<std::uint64_t>::max()));
 }
 
-TEST_CASE("the missing outer construction throws instead of being replaced by a search",
-          "[paper][sssp][outer]") {
-  const auto g = CsrGraph<std::uint64_t>::from_edges(3, {{0, 1, 2}, {1, 2, 0}});
+TEMPLATE_TEST_CASE("Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2)",
+                   "[paper][sssp][outer]", std::uint64_t, double) {
+  using W = TestType;
+  // Unreachable through paper_sssp for N < 2^64 (Q-04); called directly it is the same code
+  // with b = L_N^64, hence one pivot (Q-72). e0 0-1 (2), e1 1-2 (0), e2 2-3 (4), e3 0-3 (7),
+  // e4 3-4 (1), e5 1-1 (9), e6 5-6 (1): classes {0}, {1, 2}, {3}, {4}; 5 and 6 unreachable.
+  const auto g = CsrGraph<W>::from_edges(7, {{0, 1, W{2}},
+                                             {1, 2, W{0}},
+                                             {2, 3, W{4}},
+                                             {0, 3, W{7}},
+                                             {3, 4, W{1}},
+                                             {1, 1, W{9}},
+                                             {5, 6, W{1}}});
+  const W inf = WeightTraits<W>::infinity();
   const auto c = sssp::paper::outer::contract_zero_edges(g, 0);
+  REQUIRE(c.graph.num_vertices() == 4);
   sssp::Diagnostics diag;
-  try {
-    (void)sssp::paper::outer_construction(c, diag);
-    FAIL("outer_construction returned");
-  } catch (const std::logic_error& e) {
-    CHECK(std::string(e.what()) == "outer construction not implemented");
+  const std::vector<W> contracted =
+      sssp::paper::outer_construction(c, sssp::paper::kDefaultPaperSeed, diag);
+  const auto bf_contracted = sssp::baseline::bellman_ford(c.graph, c.source);
+  CHECK(contracted == bf_contracted.dist);
+  const auto r = sssp::paper::outer::restore_predecessor_tree(g, 0, c, contracted);
+  CHECK(r.dist == std::vector<W>{W{0}, W{2}, W{2}, W{6}, W{7}, inf, inf});
+  REQUIRE(sssp::verify_sssp(g, 0, r).ok);
+  // The construction is not a fallback and never records an outer base case; what it records
+  // are Alg 4's base cases on its atoms.
+  for (const auto& fb : diag.fallbacks) {
+    CHECK(fb.reason == "local: k <= 2*L_k^4 (paper base case)");
   }
-  CHECK(diag.fallbacks.empty());  // nothing was solved, nothing is reported as solved
+#if SSSP_DIAGNOSTICS
+  CHECK(diag.counters.at("outer.constructions") == 1);
+  CHECK(diag.counters.at("outer.pivots") == 1);
+  CHECK(diag.counters.count("outer_base_cases") == 0);
+#endif
+}
+
+TEMPLATE_TEST_CASE("PaperOptions::seed: fixed default, no effect on the base-case branch (Q-70)",
+                   "[paper][sssp]", std::uint64_t, double) {
+  using W = TestType;
+  static_assert(PaperOptions{}.seed == sssp::paper::kDefaultPaperSeed);
+  const auto g = CsrGraph<W>::from_edges(
+      5, {{0, 1, W{3}}, {1, 2, W{1}}, {2, 3, W{0}}, {3, 4, W{2}}, {0, 4, W{9}}});
+  const auto ref = sssp::paper::paper_sssp(g, 1);
+  for (const std::uint64_t seed : {std::uint64_t{0}, std::uint64_t{1}, ~std::uint64_t{0}}) {
+    for (const PaperVariant v : kBoth) {
+      PaperOptions o;
+      o.variant = v;
+      o.seed = seed;
+      const auto r = sssp::paper::paper_sssp(g, 1, o);
+      CHECK(r.dist == ref.dist);
+      CHECK(r.parent == ref.parent);
+      require_one_record(r, v, ContractedSize{4, 4});
+    }
+  }
 }
 
 TEMPLATE_TEST_CASE("paper_sssp: hand example with zero classes, loops and an unreachable part",
