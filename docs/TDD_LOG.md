@@ -5,6 +5,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 
 | Task | Phase | RED→GREEN | Paper | Commit | Spec |
 | :- | :- | -: | :- | :- | :- |
+| P0-CI-FIX | DONE | 1 | - | 045074c | CI builds with clang 22 and runs on GitHub macOS VMs: Google Benchmark (third-party) is built without its own -Werror/-pedantic-errors and its headers are SYSTEM for our targets, while our own -Werror stays; bench.envinfo reports efficiency_cores=0 when hw.nperflevels is 1 (no perflevel1), and null only when the core split cannot be determined |
 | P0-FETCH-PAPER | DONE | 1 | - | - | Fetch arXiv 2611.34911v1 into gitignored .cache/paper with pinned SHA-256; reject mismatches |
 | P0-FIX-TIDY-SDK | DONE | 1 | - | - | make tidy passes the macOS SDK sysroot to Homebrew clang-tidy so standard headers resolve |
 | P0-GRAPH-CSR | DONE | 1 | Sec 2 (input model: undirected, non-negative real lengths) | - | Undirected CSR graph (both orientations, multi-edges, self-loops, isolated vertices), input validation (out-of-range, negative, NaN, inf), weight traits (infinity, exactness, overflow-checked add) |
@@ -51,6 +52,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P2-HEAP-DARY | REFACTOR | 1 | - | - | Indexed d-ary min-heap (template arity D, Dijkstra uses D=4) over ids [0,n) with push/decrease-key/pop, storage allocated once at construction, membership/key queries, invariant validator, comparison counter, std::invalid_argument/std::out_of_range on misuse |
 | P2-HEAP-FIB | REFACTOR | 1 | - | - | Indexed Fibonacci min-heap (Fredman-Tarjan) over ids [0,n): lazy insert, extract-min with consolidation, decrease-key with cut and cascading cut, node pool allocated once at construction, structural accessors (parent_of, degree, is_marked, root_count, cascading_cuts), invariant validator, comparison counter |
 | P2-HEAP-RADIX | REFACTOR | 1 | - | - | Indexed radix heap (Ahuja-Mehlhorn-Orlin-Tarjan) for monotone 64-bit unsigned keys: 65 buckets by bit width of key XOR last-popped key, intrusive doubly-linked lists over a node pool allocated once, decrease-key by bucket move, rejection of keys below the last popped key, comparisons counted only for bucket-minimum search |
+| P2-REPORT-PAPER-COLORS | DONE | 1 | - | 98251f4 | analyze_results gives every algorithm the runner can emit (other than the bellman-ford oracle) or that is registered for a future mode its own palette colour; paper-faithful and paper-faithful-d1 no longer fall back to OTHER_COLOR and are distinguishable from each other and from the baselines |
 | P2-VERIFY-SPT | DONE | 1 | none (comparison-addition model, Sec 2, is the reason exact and rounded checks are separated) | cd433dc | verify_sssp checks a single-source result without trusting the algorithm: sizes, dist[source]=0, parent edge existence/endpoints, tree distance consistency, acyclic parent pointers reaching the source, unreachable <=> infinite with no parent (checked by BFS), the optimality certificate dist[v] <= dist[u]+w on every arc, and optional reference agreement; exact for integers, gamma_k tolerance for doubles; JSON dump for exact rational checking |
 | P3-CHILD-ORDER | DONE | 1 | Sec 4.2 l.725-779, Lemma 4.4, Lemma 4.5 | c61f924 | order_children(NH) runs, at every internal node X, a directed DFS on the light child DAG launched at unvisited children in F-preorder of their provisional representatives (F-preorder minimum, Q-25), entering DFS-tree heads at the arc head and inspecting outgoing light arcs in cyclic F-preorder of their tails from the entry; ranks are the reverse finishing order (all light arcs forward), representatives the entry states, and g(i,j) the charge between consecutive marks (F moves at certified link lengths, tree arcs twice), so g bounds the physical walk and the total obeys Lemma 4.4 |
 | P3-CONTRACT-RESTORE | DONE | 1 | Sec 8.3, Algorithm 8 l.2 and l.6/l.16, Lemma 8.5 (txt l.2145-2185) | 890cf66 | Zero-edge components are contracted (loops dropped, only the source component retained, parallel edges and original edge ids kept) to a positive-weight graph, and exact contracted distances are lifted back to all original vertices with a first-discovery tree of tight original arcs whose recomputed sums equal the labels; unreachable vertices get infinity |
@@ -88,6 +90,16 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P3-SFM-DYADIC | DONE | 1 | Sec 3.5, Lemma 3.10 (dyadic representation, proof: rescans move records to strict descendants; at most two maximal nodes per depth) | d6ea37f | Dyadic split-findmin (Lemma 3.10): padded balanced tree, each live interval as an ordered list of maximal nodes; split exposes the cut path and rescans member records; decrease/query/descriptor lookup O(1); agrees with the naive model; counted rescans <= k*ceil(log2 k), exposed nodes <= 2K-2, per-split list visits <= 4(D+1) |
 | P3-SFM-REF | DONE | 1 | Sec 3.5 (interface), Lemma 3.10/3.11 (reference for differential tests); research notes A8, A9, A10 | d6ea37f | Reference split-findmin (boundary set + segment tree, O(log k) per operation): split at a prescribed boundary (existing boundary rejected), decrease, query (min key and original index; ties by (inf flag, value, index)), interval_of / bounds with fresh IDs for both sides of a split; agrees with a naive model on exhaustive random sequences |
 | P3-THRESHOLD-JOINS | DONE | 1 | Sec 5.3 l.1109-1180, Lemma 5.8, Lemma 5.9 | b081d55 | Threshold components and joins: I0, O0 (min propagation in the macro-free block DAG, attaining macro edge kept), I*, O* (block-DAG order with two bottleneck sweeps on each block MST), theta = max(I*, O*), B0 = max(I0, O0); join records = block MST edges, state-to-owner joins at finite theta, corridor joins; I0/O0/I*/O* equal brute force, Lemma 5.8 bounds, Lemma 5.9 (union-find of joins <= W and < W restricted to states = SCCs of arcs <= W and < W) for every distinct W |
+
+## P0-CI-FIX
+
+- Spec: CI builds with clang 22 and runs on GitHub macOS VMs: Google Benchmark (third-party) is built without its own -Werror/-pedantic-errors and its headers are SYSTEM for our targets, while our own -Werror stays; bench.envinfo reports efficiency_cores=0 when hw.nperflevels is 1 (no perflevel1), and null only when the core split cannot be determined
+- Impl: `cmake/Dependencies.cmake`, `scripts/bench/envinfo.py`
+- Tests: `tests/python/test_bench_envinfo.py`
+- RED (exit 1, 2026-11-27T11:56:02+09:00): clang 22 diagnoses __COUNTER__ in benchmark.h:1461 as a C2y extension; Google Benchmark's own CMakeLists adds -Werror (BENCHMARK_ENABLE_WERROR default ON) and an unconditional -pedantic-errors to the third-party build, so the dependency fails before any of our code is compiled (reproduces ci/ci-release ubuntu-26.04 in run 45929909889) — `cmake --build build/clang22-ci-release --target benchmark`
+- RED (exit 1, 2026-11-27T11:58:22+09:00): bench.envinfo reads efficiency_cores only from hw.perflevel1.physicalcpu; a macOS arm64 VM (GitHub macos-26 runner) reports hw.nperflevels=1 and has no perflevel1, so efficiency_cores is null instead of 0 (the CI failure of test_collect_reports_perf_levels_on_macos) — `uv run pytest tests/python/test_bench_envinfo.py -q -k core_split`
+- GREEN (exit 0, 2026-11-27T11:59:49+09:00) — `sh -c 'set -e; cmake --build build/clang22-ci-release --clean-first -j 6 > build/clang22-ci-release-green.log 2>&1; ctest --test-dir build/clang22-ci-release -j 8 --output-on-failure > build/clang22-ci-release-ctest.log 2>&1; tail -3 build/clang22-ci-release-ctest.log; uv run pytest tests/python/test_bench_envinfo.py -q'`
+- REFACTOR (exit 0, 2026-11-27T12:06:36+09:00) — `uv run pytest tests/python/test_bench_envinfo.py -q`
 
 ## P0-FETCH-PAPER
 
@@ -535,6 +547,15 @@ Do not edit by hand; edit the evidence files and regenerate.
 - RED (exit 1, 2026-11-27T10:24:50+09:00): fatal error: 'baseline/heaps/radix_heap.hpp' file not found (heap not implemented yet) — `cmake --build --preset debug -j8 -k 0 2>&1 \| grep -E 'fatal error' \| sort -u \| head -8; exit ${PIPESTATUS[0]}`
 - GREEN (exit 0, 2026-11-27T10:26:01+09:00) — `cmake --build --preset debug -j8 && ctest --preset debug -R 'radix heap' 2>&1 \| grep -E 'tests passed\|Failed' && ctest --preset debug 2>&1 \| grep -E 'tests passed'`
 - REFACTOR (exit 0, 2026-11-27T10:26:16+09:00) — `cmake --build --preset debug -j8 && ctest --preset debug 2>&1 \| grep -E 'tests passed'`
+
+## P2-REPORT-PAPER-COLORS
+
+- Spec: analyze_results gives every algorithm the runner can emit (other than the bellman-ford oracle) or that is registered for a future mode its own palette colour; paper-faithful and paper-faithful-d1 no longer fall back to OTHER_COLOR and are distinguishable from each other and from the baselines
+- Impl: `scripts/analyze_results.py`
+- Tests: `tests/python/test_bench_analyze.py`
+- RED (exit 1, 2026-11-27T12:07:15+09:00): ALGO_COLORS has no entry for paper-faithful or paper-faithful-d1 (the Mode A names the runner emits since P2-BENCH-PAPER-REGISTER), so both are drawn in OTHER_COLOR and cannot be told apart — `uv run pytest tests/python/test_bench_analyze.py -q -k distinct_colours`
+- GREEN (exit 0, 2026-11-27T12:07:32+09:00) — `uv run pytest tests/python/test_bench_analyze.py -q`
+- REFACTOR (exit 0, 2026-11-27T12:07:49+09:00) — `uv run pytest tests/python/test_bench_analyze.py -q`
 
 ## P2-VERIFY-SPT
 
