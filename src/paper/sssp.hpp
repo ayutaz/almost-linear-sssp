@@ -19,16 +19,20 @@ constexpr bool takes_outer_construction(std::uint64_t big_n) {
   return model::outer_nontrivial(big_n);
 }
 
-/// Alg 8 l.8-15 on the contracted graph: exact contracted distances by the outer construction.
-/// NOT IMPLEMENTED (task P3-OUTER-PIPELINE): always throws std::logic_error("outer construction
-/// not implemented"). It is never replaced by a direct search; in Mode A it is unreachable
-/// because takes_outer_construction is false for every N < 2^64.
+/// Alg 8 l.8-15 on the contracted graph with the paper's constants (b = L_N^64, the NameRoutes
+/// constants of Alg 5, Alg 4 with 2 L_k^4): the exact contracted distances by the outer
+/// construction, outer::outer_construction(c.graph, c.source, WordRng(seed),
+/// outer::kPaperOuterParams, &diag). Never replaced by a direct search; it throws as that
+/// function does. In Mode A it is unreachable through paper_sssp because
+/// takes_outer_construction is false for every N < 2^64 (Q-04); called directly, b exceeds N and
+/// the decomposition has one pivot (Q-72).
 template <class W>
-std::vector<W> outer_construction(const outer::ZeroContraction<W>& c, Diagnostics& diag);
+std::vector<W> outer_construction(const outer::ZeroContraction<W>& c, std::uint64_t seed,
+                                  Diagnostics& diag);
 
 extern template std::vector<std::uint64_t> outer_construction(
-    const outer::ZeroContraction<std::uint64_t>&, Diagnostics&);
+    const outer::ZeroContraction<std::uint64_t>&, std::uint64_t, Diagnostics&);
 extern template std::vector<double> outer_construction(const outer::ZeroContraction<double>&,
-                                                       Diagnostics&);
+                                                       std::uint64_t, Diagnostics&);
 
 }  // namespace sssp::paper
