@@ -1,0 +1,50 @@
+{
+ "id": "P3-CHILD-ORDER",
+ "spec": "order_children(NH) runs, at every internal node X, a directed DFS on the light child DAG launched at unvisited children in F-preorder of their provisional representatives (F-preorder minimum, Q-25), entering DFS-tree heads at the arc head and inspecting outgoing light arcs in cyclic F-preorder of their tails from the entry; ranks are the reverse finishing order (all light arcs forward), representatives the entry states, and g(i,j) the charge between consecutive marks (F moves at certified link lengths, tree arcs twice), so g bounds the physical walk and the total obeys Lemma 4.4",
+ "paper_ref": "Sec 4.2 l.725-779, Lemma 4.4, Lemma 4.5",
+ "files": {
+  "impl": [
+   "src/paper/hierarchy/child_order.hpp",
+   "src/paper/hierarchy/child_order.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/hierarchy/test_child_order.cpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "unit:child order*"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E \"error|FAILED\" | head -5; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/hierarchy/child_order.hpp' file not found (Sec 4.2 child order absent)",
+   "timestamp": "2026-11-27T11:07:16+09:00",
+   "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_child_order.cpp.o \ntests/unit/paper/hierarchy/test_child_order.cpp:28:10: fatal error: 'paper/hierarchy/child_order.hpp' file not found\n1 error generated."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "unit:child order* (10 cases incl. uint64_t/double",
+    " 150 reference seeds, 3x20 + 3x30 base-case inputs each)"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T11:09:41+09:00",
+   "output_tail": "        Start  80: unit:Counted weights instrument a generic SSSP routine\n381/388 Test #338: unit:counting sort rejects a key outside [0, k) .........................................................   Passed    0.07 sec\n382/388 Test  #96: unit:2D grid has 4-neighbour edges only and is connected - std::uint64_t ................................   Passed    0.07 sec\n383/388 Test #340: unit:radix sort with no coordinates keeps the input order ...............................................   Passed    0.02 sec\n384/388 Test #349: unit:verify accepts a correct shortest-path tree - U64 ..................................................   Passed    0.04 sec\n385/388 Test #122: unit:double weights are written in %.17g form ...........................................................   Passed    0.03 sec\n386/388 Test  #73: unit:Counted counts each addition and comparison - U64 ..................................................   Passed    0.03 sec\n387/388 Test  #82: unit:CSR keeps multi-edges, self-loops and isolated vertices ............................................   Passed    0.03 sec\n388/388 Test  #80: unit:Counted weights instrument a generic SSSP routine ..................................................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 388\n\nLabel Time Summary:\ndifferential    =   1.38 sec*proc (4 tests)\nintegration     =   0.56 sec*proc (6 tests)\nproperty        =   2.71 sec*proc (11 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  16.16 sec*proc (366 tests)\n\nTotal Test time (real) =   4.70 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "full suite after removing an unused include"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T11:09:59+09:00",
+   "output_tail": "        Start  25: unit:radix heap decrease-key moves an item to a lower bucket\n381/388 Test #352: unit:verify detects broken results - double .............................................................   Passed    0.06 sec\n382/388 Test #362: unit:verify is exact for integer weights regardless of tolerance ........................................   Passed    0.02 sec\n383/388 Test #104: unit:decrease-key adversary forces Theta(m) decrease-keys in Dijkstra ...................................   Passed    0.03 sec\n384/388 Test  #89: unit:topology does not depend on the weight distribution or weight type .................................   Passed    0.03 sec\n385/388 Test  #85: unit:integer distance addition detects overflow .........................................................   Passed    0.03 sec\n386/388 Test #308: unit:level ancestor test block size must lie in [2, 8] ..................................................   Passed    0.05 sec\n387/388 Test  #25: unit:radix heap decrease-key moves an item to a lower bucket ............................................   Passed    0.03 sec\n388/388 Test #354: unit:verify detects a zero-weight parent cycle that every distance check misses - double ................   Passed    0.04 sec\n\n100% tests passed, 0 tests failed out of 388\n\nLabel Time Summary:\ndifferential    =   1.63 sec*proc (4 tests)\nintegration     =   0.69 sec*proc (6 tests)\nproperty        =   3.31 sec*proc (11 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  21.15 sec*proc (366 tests)\n\nTotal Test time (real) =   4.72 sec"
+  }
+ ],
+ "commit": null
+}
