@@ -1,0 +1,47 @@
+{
+ "id": "P2-COUNTED-WEIGHT",
+ "spec": "sssp::Counted<W> wraps uint64_t/double weights and counts additions and comparisons in thread-local counters; it exposes only comparison-addition operations (no -, *, /) and plugs into WeightTraits and CsrGraph",
+ "paper_ref": "Sec 2 (comparison-addition model)",
+ "files": {
+  "impl": [
+   "include/sssp/counted.hpp"
+  ],
+  "tests": [
+   "tests/unit/counted/test_counted.cpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "Counted *",
+    "CountedScope measures the delta of a region",
+    "WeightTraits support Counted weights"
+   ],
+   "command": "bash -c cmake --build --preset debug 2>&1 | grep -E \"error\" | head -3; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'sssp/counted.hpp' file not found (feature absent)",
+   "timestamp": "2026-11-27T10:31:12+09:00",
+   "output_tail": "tests/unit/counted/test_counted.cpp:12:10: fatal error: 'sssp/counted.hpp' file not found\n1 error generated."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all Counted cases"
+   ],
+   "command": "bash -c cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:31:44+09:00",
+   "output_tail": "      Start  1: unit:Bellman-Ford rejects an invalid source - U64\n39/48 Test #31: unit:verify accepts a correct shortest-path tree - U64 .....................................   Passed    0.01 sec\n      Start 33: unit:verify detects broken results - U64\n40/48 Test #28: unit:weight traits define infinity per weight type .........................................   Passed    0.01 sec\n      Start 17: unit:Counted counts each addition and comparison - U64\n41/48 Test #12: unit:Bellman-Ford with double weights matches Floyd-Warshall where sums are exact ..........   Passed    0.11 sec\n42/48 Test #37: unit:verify does not require a particular tree among equal-length paths - U64 ..............   Passed    0.02 sec\n43/48 Test  #1: unit:Bellman-Ford rejects an invalid source - U64 ..........................................   Passed    0.01 sec\n44/48 Test #34: unit:verify detects broken results - double ................................................   Passed    0.01 sec\n45/48 Test #33: unit:verify detects broken results - U64 ...................................................   Passed    0.01 sec\n46/48 Test #17: unit:Counted counts each addition and comparison - U64 .....................................   Passed    0.01 sec\n47/48 Test #11: unit:Bellman-Ford matches Floyd-Warshall on the required graph catalogue - U64 .............   Passed    0.12 sec\n48/48 Test #47: unit:verify accepts Bellman-Ford on the required catalogue .................................   Passed    0.22 sec\n\n100% tests passed, 0 tests failed out of 48\n\nLabel Time Summary:\nunit    =   1.04 sec*proc (48 tests)\n\nTotal Test time (real) =   0.22 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "command": "bash -c cmake --build --preset ci && ctest --preset ci",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:31:46+09:00",
+   "output_tail": "41/48 Test #18: unit:Counted counts each addition and comparison - double ..................................   Passed    0.01 sec\n      Start 21: unit:Counted statistics are per thread\n42/48 Test #19: unit:Counted copies, constructions and value() are free ....................................   Passed    0.01 sec\n      Start 22: unit:WeightTraits support Counted weights - U64\n43/48 Test #20: unit:CountedScope measures the delta of a region ...........................................   Passed    0.01 sec\n      Start 23: unit:WeightTraits support Counted weights - double\n44/48 Test #21: unit:Counted statistics are per thread .....................................................   Passed    0.01 sec\n      Start 24: unit:Counted weights instrument a generic SSSP routine\n45/48 Test #22: unit:WeightTraits support Counted weights - U64 ............................................   Passed    0.01 sec\n46/48 Test #23: unit:WeightTraits support Counted weights - double .........................................   Passed    0.01 sec\n47/48 Test #24: unit:Counted weights instrument a generic SSSP routine .....................................   Passed    0.01 sec\n48/48 Test #47: unit:verify accepts Bellman-Ford on the required catalogue .................................   Passed    0.21 sec\n\n100% tests passed, 0 tests failed out of 48\n\nLabel Time Summary:\nunit    =   0.80 sec*proc (48 tests)\n\nTotal Test time (real) =   0.65 sec\n-- GLOB mismatch!"
+  }
+ ],
+ "commit": null
+}
