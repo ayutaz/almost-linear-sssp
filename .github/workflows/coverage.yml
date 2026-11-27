@@ -6,6 +6,10 @@ name: coverage
 run-name: ${{ inputs.ref != '' && format('{0} {1}', github.workflow, inputs.ref) || github.workflow }}
 
 on:
+  # A push to wip/coverage-* runs it before the file is on the default branch
+  # (workflow_dispatch only works for workflows that exist on the default branch).
+  push:
+    branches: ["wip/coverage-*"]
   workflow_dispatch:
     inputs:
       ref:
