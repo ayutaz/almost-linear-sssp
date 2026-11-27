@@ -14,7 +14,7 @@
       "tests/differential/paper/portioned_cases.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -42,5 +42,5 @@
       "output_tail": "        Start  14: unit:indexed d-ary heap rejects invalid operations - Dary4\n886/893 Test #338: unit:portioned: a singleton root emits its due minimum once or retires at its deadline ..................................................................   Passed    0.02 sec\n887/893 Test #266: unit:Q-21: a zero-length 2-cycle below one node violates H3 there, at any height - std::uint64_t ........................................................   Passed    0.04 sec\n888/893 Test   #4: unit:binary heap does not reallocate within reserved capacity ...........................................................................................   Passed    0.02 sec\n889/893 Test #760: unit:verify accepts a correct shortest-path tree - double ...............................................................................................   Passed    0.03 sec\n890/893 Test #175: unit:edge-list format keeps self-loops, multi-edges and isolated vertices ...............................................................................   Passed    0.03 sec\n891/893 Test #181: unit:negative zero is accepted and normalised to +0 .....................................................................................................   Passed    0.03 sec\n892/893 Test  #14: unit:indexed d-ary heap rejects invalid operations - Dary4 ..............................................................................................   Passed    0.03 sec\n893/893 Test #276: unit:Q-21: zero-length arcs on no cycle and zero-length self-arcs are accepted - std::uint64_t ..........................................................   Passed    0.04 sec\n\n100% tests passed, 0 tests failed out of 893\n\nLabel Time Summary:\ndifferential    =  19.58 sec*proc (62 tests)\nintegration     =   0.66 sec*proc (6 tests)\nproperty        =  25.10 sec*proc (43 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 114.89 sec*proc (776 tests)\n\nTotal Test time (real) =  21.50 sec"
     }
   ],
-  "commit": null
+  "commit": "64699de"
 }
