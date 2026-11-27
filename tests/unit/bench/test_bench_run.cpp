@@ -287,6 +287,91 @@ TEST_CASE("bench run: --graph-file reads a generated edge list", "[bench]") {
   CHECK(recs[0].find("avg_degree")->dump() == "6");
 }
 
+TEST_CASE("bench run: Mode A records carry the paper base-case FallbackRecord", "[bench]") {
+  for (const bool use_double : {false, true}) {
+    TempDir dir;
+    const std::string out = dir.file("r.jsonl");
+    auto args =
+        args_for(dir, out, {"--type",        "er",
+                            "--n",           "120",
+                            "--avg-degree",  "3",
+                            "--weights",     use_double ? "uniform_real" : "zero_mixed",
+                            "--weight-type", use_double ? "double" : "uint64",
+                            "--seed",        "5",
+                            "--sources",     "2",
+                            "--algorithms",  "paper-faithful,paper-faithful-d1,dijkstra-binary",
+                            "--trials",      "1",
+                            "--warmup",      "1"});
+    const auto r = run(args);
+    INFO(r.err);
+    REQUIRE(r.code == 0);
+    const auto recs = read_records(out);
+    REQUIRE(recs.size() == 2 * 2 * 3);
+    std::set<std::string> seen;
+    for (const Json& rec : recs) {
+      INFO(rec.dump());
+      const std::string algo = rec.find("algorithm")->as_string();
+      seen.insert(algo);
+      CHECK(rec.find("status")->as_string() == "ok");
+      CHECK(rec.find("correctness")->dump() ==
+            R"({"verified":true,"ok":true,"method":"reference:dijkstra-binary"})");
+      const Json& fb = *rec.find("fallback");
+      if (algo == "dijkstra-binary") {
+        CHECK(rec.find("mode")->as_string() == "baseline");
+        CHECK(as_u64(*fb.find("count")) == 0);
+        continue;
+      }
+      CHECK(rec.find("mode")->as_string() == "paper-faithful");
+      // Exactly one record (Alg 8 l.5 base case), written also when diagnostics are off.
+      REQUIRE(as_u64(*fb.find("count")) == 1);
+      const Json& f = fb.find("records")->elements().at(0);
+      const std::string expected_reason =
+          algo == "paper-faithful"
+              ? "outer: N <= L_N^64 (paper base case, scan Dijkstra)"
+              : "outer: N <= L_N^64 (paper base case, binary-heap Dijkstra, deviation D-1)";
+      CHECK(f.find("reason")->as_string() == expected_reason);
+      // The fallback share is the contracted source component: at most (n, m), at least the
+      // source; the totals equal the single record.
+      CHECK(as_u64(*f.find("vertices")) >= 1);
+      CHECK(as_u64(*f.find("vertices")) <= as_u64(*rec.find("n")));
+      CHECK(as_u64(*f.find("edges")) <= as_u64(*rec.find("m")));
+      CHECK(as_u64(*fb.find("vertices")) == as_u64(*f.find("vertices")));
+      CHECK(as_u64(*fb.find("edges")) == as_u64(*f.find("edges")));
+      // paper_sssp is one call: contraction, base case and tree restoration are all in sssp.
+      const Json& t = *rec.find("times_ns");
+      CHECK(t.find("preprocess")->is_null());
+      CHECK(t.find("tree")->is_null());
+      CHECK(as_u64(*t.find("sssp")) >= 1);
+    }
+    CHECK(seen == std::set<std::string>{"paper-faithful", "paper-faithful-d1", "dijkstra-binary"});
+  }
+}
+
+TEST_CASE("bench run: the scan base case is refused above its vertex limit", "[bench]") {
+  TempDir dir;
+  const std::string out = dir.file("r.jsonl");
+  const std::string too_many = std::to_string(sssp::bench::kScanBaseCaseMaxVertices + 1);
+  const auto refused = run(args_for(
+      dir, out,
+      {"--type", "tree", "--n", too_many, "--algorithms", "paper-faithful-d1,paper-faithful",
+       "--trials", "1", "--warmup", "0", "--verify", "none"}));
+  CHECK(refused.code == sssp::bench::kExitUnsupported);
+  CHECK(refused.err.find("paper-faithful is limited to n <= " +
+                         std::to_string(sssp::bench::kScanBaseCaseMaxVertices)) !=
+        std::string::npos);
+  CHECK(refused.err.find(too_many) != std::string::npos);
+  CHECK_FALSE(fs::exists(out));  // refused before the first record, nothing substituted
+
+  // The binary-heap variant has no limit: the same graph runs.
+  const auto d1 =
+      run(args_for(dir, out,
+                   {"--type", "tree", "--n", too_many, "--algorithms", "paper-faithful-d1",
+                    "--trials", "1", "--warmup", "0", "--verify", "none"}));
+  INFO(d1.err);
+  CHECK(d1.code == 0);
+  CHECK(read_records(out).size() == 1);
+}
+
 TEST_CASE("bench run: exit codes and nothing written on refusal", "[bench]") {
   TempDir dir;
   const std::string out = dir.file("r.jsonl");
@@ -354,7 +439,18 @@ TEST_CASE("bench run: --list and --version", "[bench]") {
     CHECK(a.find("mode")->as_string() == *sssp::bench::schema_mode(name));
     CHECK(a.find("weight_types")->dump() ==
           (name == "dijkstra-radix" ? R"(["uint64"])" : R"(["uint64","double"])"));
+    // Size limits (exit 3 above them); null when the algorithm has none.
+    const auto* e = sssp::bench::find_algorithm(name);
+    REQUIRE(e != nullptr);
+    CHECK(a.find("max_work")->dump() ==
+          (e->max_work == 0 ? std::string("null") : std::to_string(e->max_work)));
+    CHECK(a.find("max_vertices")->dump() ==
+          (e->max_vertices == 0 ? std::string("null") : std::to_string(e->max_vertices)));
   }
+  std::set<std::string> names;
+  for (const auto& a : algos) names.insert(a.find("name")->as_string());
+  CHECK(names.count("paper-faithful") == 1);
+  CHECK(names.count("paper-faithful-d1") == 1);
 
   const auto v = run({"--version"});
   CHECK(v.code == 0);

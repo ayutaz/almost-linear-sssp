@@ -177,6 +177,11 @@ int run_benchmark(const Options& o, const Json& env, Clock::time_point start, st
                         name + " is limited to n * m <= " + std::to_string(e->max_work) +
                             "; this graph has " + std::to_string(work));
     }
+    if (e->max_vertices != 0 && n > e->max_vertices) {
+      throw RunnerError(kExitUnsupported,
+                        name + " is limited to n <= " + std::to_string(e->max_vertices) +
+                            "; this graph has n = " + std::to_string(n));
+    }
     algos.push_back(e);
   }
   if (o.verify == VerifyMode::kBellmanFord && work > kBellmanFordMaxWork) {
@@ -328,6 +333,8 @@ Json list_json() {
     if (e.solve_f64 != nullptr) wt.push_back(Json::string("double"));
     a.set("weight_types", std::move(wt));
     a.set("takes_params", Json::boolean(e.takes_params));
+    a.set("max_work", e.max_work == 0 ? Json::null() : Json::integer(e.max_work));
+    a.set("max_vertices", e.max_vertices == 0 ? Json::null() : Json::integer(e.max_vertices));
     algos.push_back(std::move(a));
   }
   Json j = Json::object();

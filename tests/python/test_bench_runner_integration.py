@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 import pytest
-from bench import schema
+from bench import plan, schema
 from bench_fixtures import ROOT, SCRIPTS
 
 BUILD_DIR = ROOT / "build" / "debug"
@@ -149,6 +149,85 @@ def test_baselines_on_small_graphs_pass_schema_validation(env_json, tmp_path):
     isolated = [r for r in records if r["isolated"]]
     assert isolated and all(r["peak_rss_bytes"] for r in isolated)
     assert all(r["peak_rss_bytes"] is None for r in records if not r["isolated"])
+
+
+@pytest.mark.parametrize("weight_type", ["uint64", "double"])
+def test_mode_a_records_pass_schema_validation_with_fallbacks(env_json, tmp_path, weight_type):
+    out = tmp_path / "SYNTHETIC-TEST-DATA.jsonl"
+    weights = "uniform_int" if weight_type == "uint64" else "uniform_real"
+    res = _runner(
+        "--type",
+        "er",
+        "--n",
+        "150",
+        "--weights",
+        weights,
+        "--weight-type",
+        weight_type,
+        "--algorithms",
+        "paper-faithful,paper-faithful-d1",
+        "--trials",
+        "1",
+        "--warmup",
+        "0",
+        "--env-json",
+        env_json,
+        "--run-id",
+        "SYNTHETIC-TEST-DATA-run",
+        "--out",
+        out,
+    )
+    assert res.returncode == 0, res.stderr
+    res = _validate(out)
+    assert res.returncode == 0, res.stderr + res.stdout
+    records = _records(out)
+    assert sorted(r["algorithm"] for r in records) == ["paper-faithful", "paper-faithful-d1"]
+    for rec in records:
+        assert rec["mode"] == "paper-faithful"
+        assert rec["status"] == "ok"
+        assert rec["correctness"]["ok"] is True
+        fb = rec["fallback"]
+        assert fb["count"] == 1
+        (f,) = fb["records"]
+        assert f["reason"].startswith("outer: N <= L_N^64 (paper base case, ")
+        assert ("deviation D-1" in f["reason"]) == (rec["algorithm"] == "paper-faithful-d1")
+        assert 1 <= f["vertices"] <= rec["n"] and f["edges"] <= rec["m"]
+        assert (fb["vertices"], fb["edges"]) == (f["vertices"], f["edges"])
+
+
+def test_list_limits_match_the_plan_exclusions():
+    res = _runner("--list")
+    assert res.returncode == 0, res.stderr
+    listed = {a["name"]: a["max_vertices"] for a in json.loads(res.stdout)["algorithms"]}
+    assert {k: v for k, v in listed.items() if v is not None} == {
+        a: limit for a, (limit, _) in plan.VERTEX_LIMITS.items()
+    }
+    for a in plan.BENCH_ALGORITHMS:
+        assert a in listed, a  # every planned algorithm is registered
+
+
+def test_scan_base_case_above_its_limit_exits_3(env_json, tmp_path):
+    limit, _ = plan.VERTEX_LIMITS["paper-faithful"]
+    out = tmp_path / "out.jsonl"
+    res = _runner(
+        "--type",
+        "tree",
+        "--n",
+        limit + 1,
+        "--algorithms",
+        "paper-faithful",
+        "--verify",
+        "none",
+        "--env-json",
+        env_json,
+        "--run-id",
+        "R",
+        "--out",
+        out,
+    )
+    assert res.returncode == 3, res.stderr
+    assert f"paper-faithful is limited to n <= {limit}" in res.stderr
+    assert not out.exists()
 
 
 @pytest.mark.parametrize(

@@ -59,8 +59,21 @@ BENCH_ALGORITHMS = (
     "dijkstra-4ary",
     "dijkstra-fibonacci",
     "dijkstra-radix",
-    "paper",
+    # Mode A entry under its registered names (include/sssp/paper.hpp). "paper" (the outer
+    # construction) stays a reserved schema name and is not planned until it exists.
+    "paper-faithful",
+    "paper-faithful-d1",
 )
+#: Algorithms that the runner refuses (exit 3) above a vertex count, with the reason. Jobs beyond
+#: the limit are left out of the plan (see excluded_jobs) instead of being run to a refusal.
+#: Must equal `sssp_bench_runner --list` max_vertices (kScanBaseCaseMaxVertices).
+VERTEX_LIMITS: dict[str, tuple[int, str]] = {
+    "paper-faithful": (
+        1 << 17,
+        "paper-faithful runs the scan Dijkstra base case (Alg 8 l.5, Lemma 3.2): Theta(N^2) "
+        "vertex scans, refused by the runner above n = 2^17 (paper-faithful-d1 has no limit)",
+    ),
+}
 BUILDS = ("release", "release-diag")
 GRAPH_SEED = 1
 
@@ -143,6 +156,14 @@ def _shapes(graph_type: str, degrees: Sequence[int]) -> list[tuple[str, str]]:
     return [(str(d), fmt.format(d=d, half=max(1, d // 2))) for d in degrees]
 
 
+def _exclusion(job: Job) -> str | None:
+    """Reason why `job` is left out of the plan, or None if it is runnable."""
+    limit = VERTEX_LIMITS.get(job.algorithm)
+    if limit is not None and job.n > limit[0]:
+        return limit[1]
+    return None
+
+
 def build_jobs(
     profile: str,
     *,
@@ -151,6 +172,33 @@ def build_jobs(
     graph_types: Sequence[str] | None = None,
     sizes: Sequence[int] | None = None,
     builds: Sequence[str] | None = None,
+) -> list[Job]:
+    """Runnable jobs of the profile, shuffled with `order_seed`."""
+    jobs = _all_jobs(profile, order_seed, algorithms, graph_types, sizes, builds)
+    return [j for j in jobs if _exclusion(j) is None]
+
+
+def excluded_jobs(
+    profile: str,
+    *,
+    order_seed: int,
+    algorithms: Sequence[str] | None = None,
+    graph_types: Sequence[str] | None = None,
+    sizes: Sequence[int] | None = None,
+    builds: Sequence[str] | None = None,
+) -> list[tuple[Job, str]]:
+    """Jobs of the profile that build_jobs leaves out, each with the reason (VERTEX_LIMITS)."""
+    jobs = _all_jobs(profile, order_seed, algorithms, graph_types, sizes, builds)
+    return [(j, why) for j in jobs if (why := _exclusion(j)) is not None]
+
+
+def _all_jobs(
+    profile: str,
+    order_seed: int,
+    algorithms: Sequence[str] | None,
+    graph_types: Sequence[str] | None,
+    sizes: Sequence[int] | None,
+    builds: Sequence[str] | None,
 ) -> list[Job]:
     if profile not in PROFILES:
         raise ValueError(f"unknown profile {profile!r}; allowed: {list(PROFILES)}")
@@ -213,20 +261,30 @@ def main(argv: list[str] | None = None) -> int:
     def split(s: str | None) -> list[str] | None:
         return [x for x in s.split(",") if x] if s else None
 
+    selection = {
+        "order_seed": args.order_seed,
+        "algorithms": split(args.algorithms),
+        "graph_types": split(args.graph_types),
+        "sizes": [int(x) for x in split(args.sizes) or []] or None,
+        "builds": split(args.builds),
+    }
     try:
-        jobs = build_jobs(
-            args.profile,
-            order_seed=args.order_seed,
-            algorithms=split(args.algorithms),
-            graph_types=split(args.graph_types),
-            sizes=[int(x) for x in split(args.sizes) or []] or None,
-            builds=split(args.builds),
-        )
+        jobs = build_jobs(args.profile, **selection)
+        excluded = excluded_jobs(args.profile, **selection)
     except ValueError as exc:
         print(f"bench.plan: {exc}", file=sys.stderr)
         return 2
     for j in jobs:
         print("\t".join(str(v) for v in j))
+    reasons: dict[str, list[Job]] = {}
+    for j, why in excluded:
+        reasons.setdefault(why, []).append(j)
+    for why, js in reasons.items():
+        sizes = ",".join(str(n) for n in sorted({j.n for j in js}))
+        print(
+            f"bench.plan: excluded {len(js)} job(s) (n = {sizes}): {why}",
+            file=sys.stderr,
+        )
     return 0
 
 

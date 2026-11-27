@@ -170,6 +170,18 @@ def test_baseline_algorithms_have_baseline_mode():
     assert errors_of(synthetic_record(algorithm="paper", mode="paper-faithful")) == []
 
 
+@pytest.mark.parametrize("algorithm", ["paper-faithful", "paper-faithful-d1"])
+def test_mode_a_entry_names_are_paper_faithful(algorithm):
+    # Names of include/sssp/paper.hpp algorithm_name (registered by the C++ runner).
+    assert schema.ALGORITHM_MODES[algorithm] == "paper-faithful"
+    assert algorithm not in schema.BASELINE_ALGORITHMS
+    assert errors_of(synthetic_record(algorithm=algorithm, mode="paper-faithful")) == []
+    errs = errors_of(synthetic_record(algorithm=algorithm, mode="baseline"))
+    assert any("mode" in e for e in errs)
+    errs = errors_of(synthetic_record(algorithm=algorithm, mode="paper-experimental"))
+    assert any("mode" in e for e in errs)
+
+
 def test_radix_heap_only_with_integer_weights():
     errs = errors_of(synthetic_record(algorithm="dijkstra-radix", weight_type="double"))
     assert any("weight_type" in e for e in errs)

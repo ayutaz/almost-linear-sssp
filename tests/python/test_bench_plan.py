@@ -124,3 +124,55 @@ def test_cli_prints_tab_separated_jobs():
     assert len(lines) == len(plan.build_jobs("smoke", order_seed=3))
     fields = lines[0].split("\t")
     assert len(fields) == len(plan.Job._fields)
+
+
+PAPER = ("paper-faithful", "paper-faithful-d1")
+
+
+def test_mode_a_entry_is_planned_under_its_registered_names():
+    assert set(PAPER) <= set(plan.BENCH_ALGORITHMS)
+    assert "paper" not in plan.BENCH_ALGORITHMS  # reserved schema name, no implementation
+    jobs = plan.build_jobs("smoke", order_seed=1)
+    for a in PAPER:
+        mine = [j for j in jobs if j.algorithm == a]
+        # smoke sizes are within every limit: both sizes, both graph types, both builds
+        assert {j.n for j in mine} == set(plan.PROFILES["smoke"].sizes), a
+        assert {j.graph_type for j in mine} == set(plan.PROFILES["smoke"].graph_types), a
+        assert {j.build for j in mine} == set(plan.BUILDS), a
+
+
+def test_vertex_limits_exclude_infeasible_jobs_with_a_reason():
+    limit, reason = plan.VERTEX_LIMITS["paper-faithful"]
+    assert reason  # the exclusion is explained in the plan itself
+    assert set(plan.VERTEX_LIMITS) == {"paper-faithful"}  # the heap variant has no limit
+    for profile in plan.PROFILES:
+        jobs = plan.build_jobs(profile, order_seed=1)
+        scan = {j.n for j in jobs if j.algorithm == "paper-faithful"}
+        heap = {j.n for j in jobs if j.algorithm == "paper-faithful-d1"}
+        assert scan == {n for n in plan.PROFILES[profile].sizes if n <= limit}, profile
+        assert heap == set(plan.PROFILES[profile].sizes), profile
+        excluded = plan.excluded_jobs(profile, order_seed=1)
+        assert bool(excluded) == (max(plan.PROFILES[profile].sizes) > limit), profile
+        for job, why in excluded:
+            assert job.algorithm == "paper-faithful" and job.n > limit
+            assert why == reason
+    assert plan.excluded_jobs("smoke", order_seed=1) == []
+
+
+def test_cli_reports_excluded_jobs_on_stderr():
+    res = subprocess.run(
+        [sys.executable, "-m", "bench.plan", "standard", "--order-seed", "3"],
+        cwd=SCRIPTS,
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0, res.stderr
+    n_excluded = len(plan.excluded_jobs("standard", order_seed=3))
+    assert n_excluded > 0
+    assert f"excluded {n_excluded} job(s)" in res.stderr
+    assert "paper-faithful" in res.stderr
+    planned = [line.split("\t") for line in res.stdout.splitlines()]
+    algo, n = plan.Job._fields.index("algorithm"), plan.Job._fields.index("n")
+    limit = plan.VERTEX_LIMITS["paper-faithful"][0]
+    assert not [f for f in planned if f[algo] == "paper-faithful" and int(f[n]) > limit]
+    assert [f for f in planned if f[algo] == "paper-faithful-d1" and int(f[n]) > limit]
