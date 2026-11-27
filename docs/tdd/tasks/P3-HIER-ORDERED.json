@@ -1,0 +1,54 @@
+{
+ "id": "P3-HIER-ORDERED",
+ "spec": "Def 4.1/4.2 data types (state graph D, projection pi, rooted forest H with heights and links, c0, seeded sources and initial offers) and validate_ordered_hierarchy reporting each violated condition H1-H6 (plus structural and seed-feasibility errors) with its location",
+ "paper_ref": "Sec 4 Def 4.1 (l.646-658), Def 4.2 (l.659-672)",
+ "files": {
+  "impl": [
+   "src/paper/hierarchy/ordered_hierarchy.hpp",
+   "src/paper/hierarchy/ordered_hierarchy.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/hierarchy/test_ordered_hierarchy_validate.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "unit:*Def 4.1*",
+    "unit:H1*",
+    "unit:H2*",
+    "unit:H3*",
+    "unit:H4*",
+    "unit:H5*",
+    "unit:H6*",
+    "unit:Def 4.2*"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'error|FAILED' | head -5; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/hierarchy/ordered_hierarchy.hpp' file not found (Def 4.1/4.2 types and checker absent)",
+   "timestamp": "2026-11-27T10:38:44+09:00",
+   "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_ordered_hierarchy_validate.cpp.o \ntests/unit/paper/hierarchy/test_ordered_hierarchy_validate.cpp:12:10: fatal error: 'paper/hierarchy/ordered_hierarchy.hpp' file not found\n1 error generated."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests in test_ordered_hierarchy_validate.cpp (37 cases incl. uint64_t/double)"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:41:52+09:00",
+   "output_tail": "      Start 20: unit:H3: a cycle of light arcs between children is reported at the parent - std::uint64_t\n34/43 Test #22: unit:H3: arcs of length equal to the height are not light - std::uint64_t ...................   Passed    0.01 sec\n      Start 17: unit:H2: a NaN height is reported\n35/43 Test #41: unit:Def 4.2: initial offers must be finite and feasible - double ...........................   Passed    0.02 sec\n      Start  9: unit:H1: an arc shorter than every physical walk is reported at that arc - double\n36/43 Test  #5: unit:integer distance addition detects overflow .............................................   Passed    0.01 sec\n37/43 Test #36: unit:H6: a link that claims a backing state arc must match that arc - std::uint64_t .........   Passed    0.01 sec\n38/43 Test  #4: unit:weight traits define infinity per weight type ..........................................   Passed    0.01 sec\n39/43 Test  #3: unit:CSR rejects invalid input with clear errors ............................................   Passed    0.02 sec\n40/43 Test  #1: unit:CSR stores both orientations of every undirected edge ..................................   Passed    0.02 sec\n41/43 Test  #9: unit:H1: an arc shorter than every physical walk is reported at that arc - double ...........   Passed    0.01 sec\n42/43 Test #17: unit:H2: a NaN height is reported ...........................................................   Passed    0.02 sec\n43/43 Test #20: unit:H3: a cycle of light arcs between children is reported at the parent - std::uint64_t ...   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 43\n\nLabel Time Summary:\nunit    =   0.67 sec*proc (43 tests)\n\nTotal Test time (real) =   0.09 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug && /opt/homebrew/opt/llvm/bin/clang-tidy -p build/debug --quiet --extra-arg=-isysroot$(xcrun --show-sdk-path) src/paper/hierarchy/ordered_hierarchy.cpp",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:43:12+09:00",
+   "output_tail": "      Start 36: unit:H6: a link that claims a backing state arc must match that arc - std::uint64_t\n      Start  4: unit:weight traits define infinity per weight type\n      Start  1: unit:CSR stores both orientations of every undirected edge\n35/43 Test  #5: unit:integer distance addition detects overflow .............................................   Passed    0.02 sec\n36/43 Test #30: unit:H5: a link longer than c0 times the height is reported - std::uint64_t .................   Passed    0.03 sec\n      Start  9: unit:H1: an arc shorter than every physical walk is reported at that arc - double\n37/43 Test #22: unit:H3: arcs of length equal to the height are not light - std::uint64_t ...................   Passed    0.01 sec\n38/43 Test #17: unit:H2: a NaN height is reported ...........................................................   Passed    0.02 sec\n39/43 Test #43: unit:library exposes version and target paper ...............................................   Passed    0.02 sec\n40/43 Test #36: unit:H6: a link that claims a backing state arc must match that arc - std::uint64_t .........   Passed    0.01 sec\n41/43 Test  #4: unit:weight traits define infinity per weight type ..........................................   Passed    0.01 sec\n42/43 Test  #9: unit:H1: an arc shorter than every physical walk is reported at that arc - double ...........   Passed    0.01 sec\n43/43 Test  #1: unit:CSR stores both orientations of every undirected edge ..................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 43\n\nLabel Time Summary:\nunit    =   0.78 sec*proc (43 tests)\n\nTotal Test time (real) =   0.63 sec"
+  }
+ ],
+ "commit": "36a860e"
+}

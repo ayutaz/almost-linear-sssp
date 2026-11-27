@@ -1,0 +1,40 @@
+{
+ "id": "P3-HIER-LOCAL-BASE",
+ "spec": "Alg 4 base case: one native state per vertex, both orientations of every nonloop edge as arcs, MST after keeping a lightest edge per vertex pair, equal-weight MST edges merged simultaneously into one node of that height with the MST edges as links (c0 = 1); output satisfies Def 4.1, has no light arcs, exact bottleneck heights; rejects zero weights",
+ "paper_ref": "Sec 2 l.286-290; Alg 4 l.2-5; Lemma 3.5; Lemma 5.10 (base case)",
+ "files": {
+  "impl": [
+   "src/paper/local/base_case.hpp",
+   "src/paper/local/base_case.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/local/test_local_base_case.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "unit:base case*"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'error|FAILED' | head -5; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/local/base_case.hpp' file not found (Alg 4 base case absent)",
+   "timestamp": "2026-11-27T10:47:47+09:00",
+   "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_local_base_case.cpp.o \ntests/unit/paper/local/test_local_base_case.cpp:15:10: fatal error: 'paper/local/base_case.hpp' file not found\n1 error generated."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "unit:base case* (9 cases incl. uint64_t/double",
+    " 300 random seeds each)"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:49:01+09:00",
+   "output_tail": "      Start 55: unit:base case keeps parallel arcs but links through a lightest edge per pair\n49/58 Test #20: unit:H3: a cycle of light arcs between children is reported at the parent - std::uint64_t .........   Passed    0.17 sec\n      Start 56: unit:base case rejects zero weights (zero components are contracted by the caller)\n50/58 Test #18: unit:H2: a child higher than its parent is reported at the child - std::uint64_t ..................   Passed    0.84 sec\n      Start 57: unit:base case records path counters in Diagnostics\n51/58 Test #54: unit:base case on a disconnected graph gives one tree per component ...............................   Passed    0.05 sec\n52/58 Test #53: unit:base case on a single vertex is one leaf root ................................................   Passed    0.07 sec\n53/58 Test #55: unit:base case keeps parallel arcs but links through a lightest edge per pair .....................   Passed    0.05 sec\n54/58 Test #51: unit:base case output satisfies Definition 4.1 with c0 = 1 and no light arcs - std::uint64_t ......   Passed    0.09 sec\n55/58 Test #52: unit:base case output satisfies Definition 4.1 with c0 = 1 and no light arcs - double .............   Passed    0.09 sec\n56/58 Test #57: unit:base case records path counters in Diagnostics ...............................................   Passed    0.05 sec\n57/58 Test #56: unit:base case rejects zero weights (zero components are contracted by the caller) ................   Passed    0.08 sec\n58/58 Test #49: unit:base case merges equal-weight MST edges simultaneously - std::uint64_t .......................   Passed    0.18 sec\n\n100% tests passed, 0 tests failed out of 58\n\nLabel Time Summary:\nunit    =  11.90 sec*proc (58 tests)\n\nTotal Test time (real) =   1.57 sec"
+  }
+ ],
+ "commit": "a7a50e8"
+}
