@@ -1,0 +1,52 @@
+{
+ "id": "P3-MODEL-RANDOM",
+ "spec": "Seeded platform-independent 64-bit word generator (SplitMix64); uniform integer in 0..h-1 from ceil(log2 h) bits by rejection (never modulo), h = 1 returns 0 without drawing; Fisher-Yates permutation and shuffle built on it; deterministic for a fixed seed",
+ "paper_ref": "Sec 2, randomness (txt l.307-310)",
+ "files": {
+  "impl": [
+   "src/paper/model/random.hpp",
+   "src/paper/model/random.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/model/test_random.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "SplitMix64 matches the published reference sequence",
+    "uniform_below(1) is zero and draws no bits",
+    "uniform_below rejects outcomes at least h instead of reducing modulo h",
+    "random_permutation returns a permutation and is deterministic"
+   ],
+   "command": "cmake --build --preset debug 2>&1 && ctest --preset debug -R random",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/model/random.hpp' file not found (feature absent)",
+   "timestamp": "2026-11-27T10:41:01+09:00",
+   "output_tail": "-- Google Benchmark version: v1.9.4, normalized to 1.9.4\n-- Enabling additional flags: -DINCLUDE_DIRECTORIES=build/debug/_deps/benchmark-src/include\n-- Performing Test HAVE_THREAD_SAFETY_ATTRIBUTES -- success\n-- Performing Test HAVE_STD_REGEX -- success\n-- Performing Test HAVE_GNU_POSIX_REGEX -- failed to compile\n-- Performing Test HAVE_POSIX_REGEX -- success\n-- Performing Test HAVE_STEADY_CLOCK -- success\n-- Performing Test HAVE_PTHREAD_AFFINITY -- failed to compile\n-- Configuring done (0.4s)\n-- Generating done (0.0s)\n-- Build files have been written to: build/debug\n[0/4] Re-checking globbed directories...\n[1/5] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_random.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_random.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -Itests -Isrc -Iinclude -Ibuild/debug/_deps/catch2-src/src/catch2/.. -Ibuild/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_random.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_random.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_random.cpp.o -c tests/unit/paper/model/test_random.cpp\ntests/unit/paper/model/test_random.cpp:15:10: fatal error: 'paper/model/random.hpp' file not found\n   15 | #include \"paper/model/random.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "SplitMix64 matches the published reference sequence",
+    "generator is deterministic under a fixed seed",
+    "next_bits returns the c most significant bits of the next word",
+    "uniform_below(1) is zero and draws no bits",
+    "uniform_below rejects outcomes at least h instead of reducing modulo h",
+    "uniform_below stays in range for arbitrary h",
+    "each rejection attempt succeeds with probability above one half",
+    "chi-square on small ranges is consistent with uniformity",
+    "random_permutation returns a permutation and is deterministic",
+    "random_permutation is uniform over all orders of four elements",
+    "random_shuffle permutes a span in place"
+   ],
+   "command": "cmake --build --preset debug 2>&1 && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:41:38+09:00",
+   "output_tail": "      Start 45: unit:uniform_below(1) is zero and draws no bits\n44/53 Test #16: unit:comparisons order every finite length below infinity - double ................   Passed    0.01 sec\n      Start 42: unit:SplitMix64 matches the published reference sequence\n45/53 Test #13: unit:infinity flag absorbs addition - std::uint64_t ...............................   Passed    0.01 sec\n      Start 50: unit:random_permutation returns a permutation and is deterministic\n46/53 Test #15: unit:comparisons order every finite length below infinity - std::uint64_t .........   Passed    0.02 sec\n47/53 Test #46: unit:uniform_below rejects outcomes at least h instead of reducing modulo h .......   Passed    0.02 sec\n48/53 Test #22: unit:mul_pow2 on integers is exact and detects overflow ...........................   Passed    0.02 sec\n49/53 Test #44: unit:next_bits returns the c most significant bits of the next word ...............   Passed    0.02 sec\n50/53 Test #42: unit:SplitMix64 matches the published reference sequence ..........................   Passed    0.01 sec\n51/53 Test #45: unit:uniform_below(1) is zero and draws no bits ...................................   Passed    0.02 sec\n52/53 Test #50: unit:random_permutation returns a permutation and is deterministic ................   Passed    0.01 sec\n53/53 Test #41: unit:Mode B thresholds follow injected parameters exactly .........................   Passed    0.19 sec\n\n100% tests passed, 0 tests failed out of 53\n\nLabel Time Summary:\nunit    =   1.33 sec*proc (53 tests)\n\nTotal Test time (real) =   0.62 sec"
+  }
+ ],
+ "commit": "ab559fe"
+}
