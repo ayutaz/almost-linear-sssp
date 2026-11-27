@@ -10,7 +10,7 @@
       "clang-tidy on src/paper/outer/scales_numeric.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -38,5 +38,5 @@
       "output_tail": "[1/4] Processing file ./src/paper/primitives/mst.cpp.\n[4/4] Processing file ./src/paper/primitives/merge_events.cpp.\n[4/4] Processing file ./src/paper/owner/aux_metric.cpp.\n[1/4] Processing file ./src/verify/verify.cpp.\n[3/4] Processing file ./src/core/version.cpp.\n[4/4] Processing file ./src/experimental/paper_experimental/local_assembly.cpp.\n[2/4] Processing file ./src/paper/hierarchy/normalize.cpp.\n[2/4] Processing file ./src/paper/owner/owner_distances.cpp.\n[3/4] Processing file ./src/paper/local/base_case.cpp.\n[2/4] Processing file ./src/paper/primitives/search.cpp.\n[3/4] Processing file ./src/paper/primitives/split_findmin.cpp.\n[2/4] Processing file ./tools/sssp_bench_runner.cpp.\n[4/4] Processing file ./src/paper/local/local_hierarchy.cpp.\n[3/4] Processing file ./src/paper/hierarchy/ordered_hierarchy.cpp.\n[4/4] Processing file ./src/paper/sssp.cpp.\n[3/4] Processing file ./tools/sssp_gen.cpp.\n[3/4] Processing file ./src/paper/pivots/estimate.cpp.\n[4/4] Processing file ./src/paper/hierarchy/reference_hierarchy.cpp.\n[4/4] Processing file ./tools/sssp_run.cpp.\n[4/4] Processing file ./src/paper/pivots/name_routes.cpp."
     }
   ],
-  "commit": null
+  "commit": "4c4061c"
 }
