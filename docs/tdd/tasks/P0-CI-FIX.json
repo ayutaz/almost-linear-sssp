@@ -1,0 +1,62 @@
+{
+  "id": "P0-CI-FIX",
+  "spec": "CI builds with clang 22 and runs on GitHub macOS VMs: Google Benchmark (third-party) is built without its own -Werror/-pedantic-errors and its headers are SYSTEM for our targets, while our own -Werror stays; bench.envinfo reports efficiency_cores=0 when hw.nperflevels is 1 (no perflevel1), and null only when the core split cannot be determined",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      "cmake/Dependencies.cmake",
+      "scripts/bench/envinfo.py"
+    ],
+    "tests": [
+      "tests/python/test_bench_envinfo.py"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "clang 22 ci-release build of the FetchContent Google Benchmark target"
+      ],
+      "command": "cmake --build build/clang22-ci-release --target benchmark",
+      "exit_code": 1,
+      "reason": "clang 22 diagnoses __COUNTER__ in benchmark.h:1461 as a C2y extension; Google Benchmark's own CMakeLists adds -Werror (BENCHMARK_ENABLE_WERROR default ON) and an unconditional -pedantic-errors to the third-party build, so the dependency fails before any of our code is compiled (reproduces ci/ci-release ubuntu-26.04 in run 45929909889)",
+      "timestamp": "2026-11-27T11:56:02+09:00",
+      "output_tail": "In file included from ./build/clang22-ci-release/_deps/benchmark-src/src/benchmark_api_internal.h:11:\n./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:30: error: '__COUNTER__' is a C2y extension [-Werror,-Wc2y-extensions]\n 1461 | #if defined(__COUNTER__) && (__COUNTER__ + 1 == __COUNTER__ + 0)\n      |                              ^\n./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:49: error: '__COUNTER__' is a C2y extension [-Werror,-Wc2y-extensions]\n 1461 | #if defined(__COUNTER__) && (__COUNTER__ + 1 == __COUNTER__ + 0)\n      |                                                 ^\n2 errors generated.\n[18/21] Building CXX object _deps/benchmark-build/src/CMakeFiles/benchmark.dir/benchmark_register.cc.o\nFAILED: [code=1] _deps/benchmark-build/src/CMakeFiles/benchmark.dir/benchmark_register.cc.o \n/opt/homebrew/opt/llvm/bin/clang++ -DBENCHMARK_STATIC_DEFINE -DHAVE_POSIX_REGEX -DHAVE_STD_REGEX -DHAVE_STEADY_CLOCK -DHAVE_THREAD_SAFETY_ATTRIBUTES -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -I./build/clang22-ci-release/_deps/benchmark-src/include -I./build/clang22-ci-release/_deps/benchmark-src/src -Wall  -Wextra  -Wshadow  -Wfloat-equal  -Wold-style-cast  -Wconversion  -Werror  -Wsuggest-override  -pedantic  -pedantic-errors  -Wshorten-64-to-32  -fstrict-aliasing  -Wno-deprecated-declarations  -Wno-deprecated  -Wstrict-aliasing  -Wthread-safety -O3 -DNDEBUG -std=c++17 -arch arm64 -fvisibility=hidden -fvisibility-inlines-hidden -MD -MT _deps/benchmark-build/src/CMakeFiles/benchmark.dir/benchmark_register.cc.o -MF _deps/benchmark-build/src/CMakeFiles/benchmark.dir/benchmark_register.cc.o.d -o _deps/benchmark-build/src/CMakeFiles/benchmark.dir/benchmark_register.cc.o -c ./build/clang22-ci-release/_deps/benchmark-src/src/benchmark_register.cc\nIn file included from ./build/clang22-ci-release/_deps/benchmark-src/src/benchmark_register.cc:39:\n./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:30: error: '__COUNTER__' is a C2y extension [-Werror,-Wc2y-extensions]\n 1461 | #if defined(__COUNTER__) && (__COUNTER__ + 1 == __COUNTER__ + 0)\n      |                              ^\n./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:49: error: '__COUNTER__' is a C2y extension [-Werror,-Wc2y-extensions]\n 1461 | #if defined(__COUNTER__) && (__COUNTER__ + 1 == __COUNTER__ + 0)\n      |                                                 ^\n2 errors generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_darwin_cpu_core_split_from_sysctl[single-level-vm]"
+      ],
+      "command": "uv run pytest tests/python/test_bench_envinfo.py -q -k core_split",
+      "exit_code": 1,
+      "reason": "bench.envinfo reads efficiency_cores only from hw.perflevel1.physicalcpu; a macOS arm64 VM (GitHub macos-26 runner) reports hw.nperflevels=1 and has no perflevel1, so efficiency_cores is null instead of 0 (the CI failure of test_collect_reports_perf_levels_on_macos)",
+      "timestamp": "2026-11-27T11:58:22+09:00",
+      "output_tail": "        [\n            (SYSCTL_APPLE_SILICON, 12, 4),\n            (SYSCTL_SINGLE_PERFLEVEL, 3, 0),\n            (SYSCTL_NO_PERFLEVELS, None, None),\n            # two levels reported but perflevel1 unreadable: unknown, not zero\n            ({**SYSCTL_APPLE_SILICON, \"hw.perflevel1.physicalcpu\": None}, 12, None),\n        ],\n        ids=[\"two-levels\", \"single-level-vm\", \"no-perflevels\", \"perflevel1-unreadable\"],\n    )\n    def test_darwin_cpu_core_split_from_sysctl(monkeypatch, answers, perf, efficiency):\n        monkeypatch.setattr(envinfo.sys, \"platform\", \"darwin\")\n        monkeypatch.setattr(envinfo, \"_sysctl\", lambda name: answers.get(name))\n        cpu = envinfo._cpu()\n        assert cpu[\"perf_cores\"] == perf\n>       assert cpu[\"efficiency_cores\"] == efficiency\nE       assert None == 0\n\ntests/python/test_bench_envinfo.py:163: AssertionError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_envinfo.py::test_darwin_cpu_core_split_from_sysctl[single-level-vm]"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "clang 22 ci-release clean build (Google Benchmark + all targets)",
+        "ctest on the clang 22 ci-release build",
+        "tests/python/test_bench_envinfo.py"
+      ],
+      "command": "sh -c 'set -e; cmake --build build/clang22-ci-release --clean-first -j 6 > build/clang22-ci-release-green.log 2>&1; ctest --test-dir build/clang22-ci-release -j 8 --output-on-failure > build/clang22-ci-release-ctest.log 2>&1; tail -3 build/clang22-ci-release-ctest.log; uv run pytest tests/python/test_bench_envinfo.py -q'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:59:49+09:00",
+      "output_tail": "unit            =  36.68 sec*proc (741 tests)\n\nTotal Test time (real) =   8.08 sec\n..............                                                           [100%]"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "tests/python/test_bench_envinfo.py"
+      ],
+      "command": "uv run pytest tests/python/test_bench_envinfo.py -q",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:06:36+09:00",
+      "output_tail": "..............                                                           [100%]"
+    }
+  ],
+  "commit": "045074c"
+}

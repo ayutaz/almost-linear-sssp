@@ -36,20 +36,26 @@ TIMING_METRICS = ("graph_gen", "preprocess", "sssp", "tree", "end_to_end", "veri
 SPEEDUP_METRICS = ("sssp", "end_to_end")
 STATUS_COLS = ("ok", "timeout", "memory_limit", "error")
 
-# Fixed colour per algorithm (identity follows the entity, never its rank); markers are the
-# secondary encoding so that series are distinguishable without colour.
-ALGO_COLORS = {
-    "dijkstra-binary": "#257de0",
-    "dijkstra-4ary": "#f47230",
-    "dijkstra-fibonacci": "#00b894",
-    "dijkstra-radix": "#f2a600",
-    "paper": "#ee7fac",
-    "paper-experimental": "#008a17",
-    "paper-optimized": "#6a4ce2",
-}
-OTHER_COLOR = "#ec4647"
-MARKERS = ("o", "s", "^", "D", "v", "P", "X", "*")
 INK, INK2, GRID, AXIS = "#191919", "#666666", "#e7e7e7", "#c2c2c2"
+# Fixed colour per algorithm (identity follows the entity, never its rank); markers are the
+# secondary encoding so that series are distinguishable without colour. The eight hues are the
+# categorical palette's slots in order; it has no ninth hue, so names beyond eight (the
+# Bellman-Ford oracle; "paper", reserved for the outer construction and not run yet) fold into
+# the neutral OTHER_COLOR. paper-faithful takes the slot that "paper" held (both are Mode A);
+# paper-faithful-d1 sits on violet, the hue best separated from it (OKLab dE 29 normal vision,
+# 21 under protan simulation).
+ALGO_COLORS = {
+    "dijkstra-binary": "#257de0",  # 1 blue
+    "dijkstra-4ary": "#f47230",  # 2 orange
+    "dijkstra-fibonacci": "#00b894",  # 3 aqua
+    "dijkstra-radix": "#f2a600",  # 4 yellow
+    "paper-faithful": "#ee7fac",  # 5 magenta
+    "paper-experimental": "#008a17",  # 6 green
+    "paper-faithful-d1": "#6a4ce2",  # 7 violet
+    "paper-optimized": "#ec4647",  # 8 red
+}
+OTHER_COLOR = INK2
+MARKERS = ("o", "s", "^", "D", "v", "P", "X", "*")
 
 
 # ---------------------------------------------------------------- loading

@@ -164,6 +164,22 @@ def _os_string() -> str:
     return f"{platform.system()} {platform.release()}"
 
 
+def _darwin_efficiency_cores() -> int | None:
+    """E-core count from the ``hw.perflevel*`` sysctls (perflevel0 = performance cores).
+
+    ``hw.nperflevels`` is the number of core types. 1 means there are no efficiency cores
+    (macOS arm64 VMs such as GitHub-hosted runners expose only perflevel0), so the count is 0.
+    It is null when it cannot be determined: no perflevel sysctls (Intel Macs), perflevel1
+    unreadable although two levels are reported, or more than two levels (no P/E split).
+    """
+    levels = _sysctl_int("hw.nperflevels")
+    if levels == 1:
+        return 0
+    if levels == 2:
+        return _sysctl_int("hw.perflevel1.physicalcpu")
+    return None
+
+
 def _cpu() -> dict[str, Any]:
     if sys.platform == "darwin":
         return {
@@ -171,7 +187,7 @@ def _cpu() -> dict[str, Any]:
             "logical_cores": _sysctl_int("hw.logicalcpu"),
             "physical_cores": _sysctl_int("hw.physicalcpu"),
             "perf_cores": _sysctl_int("hw.perflevel0.physicalcpu"),
-            "efficiency_cores": _sysctl_int("hw.perflevel1.physicalcpu"),
+            "efficiency_cores": _darwin_efficiency_cores(),
         }
     try:
         return parse_proc_cpuinfo(Path("/proc/cpuinfo").read_text(encoding="utf-8"))
