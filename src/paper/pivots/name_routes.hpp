@@ -77,7 +77,9 @@ struct RouteNames {
   unsigned p_log2 = 0;              ///< P = 2^p_log2
   /// Counters "name_routes.*" (representatives, trials, accepted_rounds, rejected_trials,
   /// max_trials_per_round, max_consecutive_rejections, terminal_edges, dictionary_records,
-  /// dictionary_size, retry_cap_hits) plus the summed "estimate.*" counters of every trial.
+  /// dictionary_size, retry_cap_hits, ilog_table_entries) plus the summed "estimate.*" counters
+  /// of every trial. ilog_table_entries: build steps of the one logarithm table over 1..|U| that
+  /// serves the sample draws of every trial (0 if no trial runs or SSSP_DIAGNOSTICS=0).
   Diagnostics diag;
 };
 
@@ -115,15 +117,29 @@ std::optional<T> median_prune(std::span<const T> keys, Pred feasible, OpCounters
 
 /// Alg 5 l.6: moves a uniformly random k-element subset of `items` (in uniformly random order)
 /// to items[0..k) by a partial Fisher-Yates shuffle: position i receives a uniform element of
-/// i..n-1 (uniform_below, Sec 2). Throws std::invalid_argument if k > items.size().
+/// i..n-1 (uniform_below, Sec 2 l.307-308). The draw ranges n, n-1, ... change at every step, so
+/// their bit counts ceil(log2 h) are read from `lg`, a table over 1..K with K >= n (Sec 2
+/// l.303-304; Q-51 decision (b)); the bits drawn are those of the word logarithm. Throws
+/// std::invalid_argument if k > items.size(), and std::out_of_range (before moving anything) if
+/// k >= 1, n >= 2 and lg.range() < n.
 template <class T>
-void partial_shuffle(std::span<T> items, std::size_t k, model::WordRng& rng) {
+void partial_shuffle(std::span<T> items, std::size_t k, model::WordRng& rng,
+                     const model::IlogTable& lg) {
   if (k > items.size()) throw std::invalid_argument("partial_shuffle: k exceeds the item count");
   for (std::size_t i = 0; i < k; ++i) {
-    const auto j = i + static_cast<std::size_t>(model::uniform_below(rng, items.size() - i));
+    const auto j = i + static_cast<std::size_t>(model::uniform_below(rng, items.size() - i, lg));
     using std::swap;
     swap(items[i], items[j]);
   }
+}
+
+/// As above with a table over 1..items.size() built for this call (O(n) word operations). A
+/// caller that shuffles repeatedly within one range builds the table once and passes it.
+template <class T>
+void partial_shuffle(std::span<T> items, std::size_t k, model::WordRng& rng) {
+  if (k > items.size()) throw std::invalid_argument("partial_shuffle: k exceeds the item count");
+  const model::IlogTable lg(items.size());
+  partial_shuffle(items, k, rng, lg);
 }
 
 /// Output invariants of Definition 6.1 / Lemma 6.8 against reference distances `dist` of G_P
