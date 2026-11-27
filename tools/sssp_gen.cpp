@@ -53,6 +53,8 @@ template <class T>
 T parse_number(std::string_view flag, std::string_view text) {
   T value{};
   const auto* end = text.data() + text.size();
+  // from_chars receives the explicit range [data(), data() + size()); no terminator is needed.
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
   const auto [ptr, ec] = std::from_chars(text.data(), end, value);
   if (ec != std::errc{} || ptr != end) {
     throw UsageError("invalid value for " + std::string(flag) + ": '" + std::string(text) + "'");
