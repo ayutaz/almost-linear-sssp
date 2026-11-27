@@ -1,0 +1,77 @@
+{
+  "id": "P3-OWNERDECOMP-OVERFLOW",
+  "spec": "owner_decomposition (Sec 5.1) never throws std::overflow_error for an auxiliary tree distance: the reduced-graph test w <= D_T(u,v) is decided exactly (128-bit root distances for integers) and R_v saturates at infinity() when it does not fit",
+  "paper_ref": "Sec 5.1 l.962-966 (reduced graph, Lemma 3.9), l.986-988 (R_v)",
+  "files": {
+    "impl": [
+      "src/paper/local/owner_decomposition.hpp",
+      "src/paper/local/owner_decomposition.cpp",
+      "src/paper/owner/calendars.cpp",
+      "src/paper/owner/calendars.hpp",
+      "src/paper/owner/aux_metric.cpp",
+      "src/paper/owner/aux_metric.hpp"
+    ],
+    "tests": [
+      "tests/regression/test_owner_decomposition_overflow.cpp",
+      "tests/regression/cases/20261127-owner-decomposition-overflow.json",
+      "tests/unit/paper/local/test_owner_decomposition_range.cpp",
+      "tests/differential/paper/test_local_overflow_vs_exact.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_regression_tests && ctest --preset debug -j4 -R \"owner-decomposition-overflow\"'",
+      "exit_code": 8,
+      "reason": "owner_decomposition throws std::overflow_error('integer distance overflow') for root distances / R_v that reach the sentinel although every source distance fits (3 of 5 regression tests fail; the premise test and the 2^61 path pass)",
+      "timestamp": "2026-11-27T16:08:39+09:00",
+      "output_tail": "===============================================================================\ntest cases: 1 | 1 failed\nassertions: 1 | 1 failed\n\n\n5/5 Test #1176: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix) ...   Passed    0.01 sec\n\n20% tests passed, 4 tests failed out of 5\n\nLabel Time Summary:\nregression    =   0.05 sec*proc (5 tests)\n\nTotal Test time (real) =   0.54 sec\n\nThe following tests FAILED:\n\t1172 - regression:20261127-owner-decomposition-overflow: every distance of the input fits (Failed) regression\n\t1173 - regression:20261127-owner-decomposition-overflow: path of 2^63 and 2^63 - 1 with b = 2 (Failed) regression\n\t1174 - regression:20261127-owner-decomposition-overflow: the same path with b = 3 (R_2 does not fit) (Failed) regression\n\t1175 - regression:20261127-owner-decomposition-overflow: path of four edges of 2^62 with b = 2 (Failed) regression\nErrors while running CTest"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_regression_tests && ctest --preset debug -j4 -R \"owner-decomposition-overflow\"'",
+      "exit_code": 8,
+      "reason": "re-minimised (the 3-vertex case of the previous RED was not a valid input: a baseline may raise on it, so its premise test failed for the wrong reason). Now owner_decomposition throws std::overflow_error('integer distance overflow') for root distances / R_v that reach the sentinel although every source distance and tentative length fits: 3 failures expected (b = 2, b = 5, four edges of 2^62); the premise test and the 2^61 path pass",
+      "timestamp": "2026-11-27T16:09:51+09:00",
+      "output_tail": "  integer distance overflow\n\n===============================================================================\ntest cases: 1 | 1 failed\nassertions: 2 | 1 passed | 1 failed\n\n\n\n40% tests passed, 3 tests failed out of 5\n\nLabel Time Summary:\nregression    =   0.10 sec*proc (5 tests)\n\nTotal Test time (real) =   0.04 sec\n\nThe following tests FAILED:\n\t1173 - regression:20261127-owner-decomposition-overflow: path of 2^63 - 1, 2^62, 2^62 with b = 2 (Failed) regression\n\t1174 - regression:20261127-owner-decomposition-overflow: the same path with b = 5 (R_3 does not fit) (Failed) regression\n\t1175 - regression:20261127-owner-decomposition-overflow: path of four edges of 2^62 with b = 2 (Failed) regression\nErrors while running CTest"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_differential_tests && ctest --preset debug -j4 -R \"four edges of 2\\^62 at the root\"'",
+      "exit_code": 8,
+      "reason": "end to end at the paper's size: local_hierarchy (Mode A, k = 209953) throws std::overflow_error('integer distance overflow') from owner_decomposition on a path whose first four edges are 2^62 (source 2, every distance fits)",
+      "timestamp": "2026-11-27T16:09:57+09:00",
+      "output_tail": "  REQUIRE_NOTHROW( lh = sssp::paper::local_hierarchy(g, &diag) )\ndue to unexpected exception with message:\n  integer distance overflow\n\n===============================================================================\ntest cases: 1 | 1 failed\nassertions: 2 | 1 passed | 1 failed\n\n\n\n0% tests passed, 1 tests failed out of 1\n\nLabel Time Summary:\ndifferential-slow    =   0.11 sec*proc (1 test)\n\nTotal Test time (real) =   0.12 sec\n\nThe following tests FAILED:\n\t1073 - differential:Alg 4 Mode A at k = 209953: four edges of 2^62 at the root of the MST (Failed) differential-slow\nErrors while running CTest"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_unit_tests 2>&1 | grep -E \"error:|FAILED|ninja: build stopped\" ; exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "unit tests of the range of the arithmetic do not compile: sssp::paper::TreeLength (128-bit root distance type) does not exist and OwnerDecomposition::root_distance is std::vector<W>",
+      "timestamp": "2026-11-27T16:10:02+09:00",
+      "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_owner_decomposition_range.cpp.o \n./tests/unit/paper/local/test_owner_decomposition_range.cpp:67:46: error: no member named 'TreeLength' in namespace 'sssp::paper'\n./tests/unit/paper/local/test_owner_decomposition_range.cpp:67:57: error: unexpected type name 'U64': expected expression\n./tests/unit/paper/local/test_owner_decomposition_range.cpp:68:46: error: no member named 'TreeLength' in namespace 'sssp::paper'\n./tests/unit/paper/local/test_owner_decomposition_range.cpp:68:63: error: expected '(' for function-style cast or type construction\n./tests/unit/paper/local/test_owner_decomposition_range.cpp:70:7: error: static assertion failed due to requirement 'std::is_same_v<std::vector<unsigned long long, std::allocator<unsigned long long>>, std::vector<unsigned __int128, std::allocator<unsigned __int128>>>': std::is_same_v<decltype(OwnerDecomposition<U64>{}.root_distance), std::vector<U128>>\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -LE slow && ctest --preset debug -j4 -R \"four edges of 2\\^62 at the root\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T16:13:54+09:00",
+      "output_tail": "100% tests passed, 0 tests failed out of 1174\n\nLabel Time Summary:\ndifferential    =  57.24 sec*proc (80 tests)\nintegration     =   0.99 sec*proc (7 tests)\nproperty        = 137.35 sec*proc (86 tests)\nregression      =   0.15 sec*proc (11 tests)\nunit            = 119.97 sec*proc (990 tests)\n\nTotal Test time (real) = 102.29 sec\nTest project ./build/debug\n    Start 1081: differential:Alg 4 Mode A at k = 209953: four edges of 2^62 at the root of the MST\n1/1 Test #1081: differential:Alg 4 Mode A at k = 209953: four edges of 2^62 at the root of the MST ...   Passed    2.78 sec\n\n100% tests passed, 0 tests failed out of 1\n\nLabel Time Summary:\ndifferential-slow    =   2.78 sec*proc (1 test)\n\nTotal Test time (real) =   2.79 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -LE slow && ctest --preset debug -j4 -R \"four edges of 2\\^62 at the root\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T16:15:58+09:00",
+      "output_tail": "100% tests passed, 0 tests failed out of 1175\n\nLabel Time Summary:\ndifferential    =  58.14 sec*proc (80 tests)\nintegration     =   0.80 sec*proc (7 tests)\nproperty        = 138.88 sec*proc (86 tests)\nregression      =   0.13 sec*proc (11 tests)\nunit            = 119.66 sec*proc (991 tests)\n\nTotal Test time (real) =  84.08 sec\nTest project ./build/debug\n    Start 1082: differential:Alg 4 Mode A at k = 209953: four edges of 2^62 at the root of the MST\n1/1 Test #1082: differential:Alg 4 Mode A at k = 209953: four edges of 2^62 at the root of the MST ...   Passed    2.77 sec\n\n100% tests passed, 0 tests failed out of 1\n\nLabel Time Summary:\ndifferential-slow    =   2.77 sec*proc (1 test)\n\nTotal Test time (real) =   2.78 sec"
+    }
+  ],
+  "commit": null
+}
