@@ -1,0 +1,50 @@
+{
+  "id": "P3-ATOM-REPLACE",
+  "spec": "Capping Alg 4 on a replaceable atom gives one root, heights <= c and root links < 2c (Lemma 5.13); substituting every atom of a partition hierarchy installs old exits on every copy and redirects entries to the native copy, validates Def 4.1 and keeps Evaluate's per-vertex minima (Lemma 5.14-5.15)",
+  "paper_ref": "Sec 5.5, Def 5.11-5.12, Lemma 5.13-5.15 (l.1302-1364)",
+  "files": {
+    "impl": [
+      "src/paper/local/atom_replacement.hpp",
+      "src/paper/local/atom_replacement.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/local/test_atom_replacement.cpp",
+      "tests/unit/paper/local/atom_test_support.hpp",
+      "tests/property/paper/test_atom_replacement_property.cpp",
+      "tests/differential/paper/test_atom_replacement_vs_dijkstra.cpp"
+    ],
+    "covers": [
+      "src/paper/local/local_hierarchy.cpp",
+      "src/paper/hierarchy/evaluate.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"cap:|substitute:|atom substitution\"'",
+      "exit_code": 1,
+      "reason": "missing header paper/local/atom_replacement.hpp: cap_local_hierarchy, substitute_atoms, redirect_offers, PartitionHierarchy and ReplaceableAtom (Sec 5.5) do not exist yet",
+      "timestamp": "2026-11-27T12:46:54+09:00",
+      "output_tail": "/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_atom_replacement_property.cpp.o -MF tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_atom_replacement_property.cpp.o.d -o tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_atom_replacement_property.cpp.o -c ./tests/property/paper/test_atom_replacement_property.cpp\n./tests/property/paper/test_atom_replacement_property.cpp:24:10: fatal error: 'paper/local/atom_replacement.hpp' file not found\n   24 | #include \"paper/local/atom_replacement.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[2/7] Building CXX object tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_atom_replacement_vs_dijkstra.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_atom_replacement_vs_dijkstra.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_atom_replacement_vs_dijkstra.cpp.o -MF tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_atom_replacement_vs_dijkstra.cpp.o.d -o tests/CMakeFiles/sssp_differential_tests.dir/differential/paper/test_atom_replacement_vs_dijkstra.cpp.o -c ./tests/differential/paper/test_atom_replacement_vs_dijkstra.cpp\n./tests/differential/paper/test_atom_replacement_vs_dijkstra.cpp:25:10: fatal error: 'paper/local/atom_replacement.hpp' file not found\n   25 | #include \"paper/local/atom_replacement.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[3/7] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_atom_replacement.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_atom_replacement.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_atom_replacement.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_atom_replacement.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_atom_replacement.cpp.o -c ./tests/unit/paper/local/test_atom_replacement.cpp\n./tests/unit/paper/local/test_atom_replacement.cpp:22:10: fatal error: 'paper/local/atom_replacement.hpp' file not found\n   22 | #include \"paper/local/atom_replacement.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:54:39+09:00",
+      "output_tail": "        Start 933: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n926/933 Test #932: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.02 sec\n927/933 Test #933: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.06 sec\n928/933 Test #925: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.90 sec\n929/933 Test #921: property:name_routes: Mode A certificates against Bellman-Ford, measured acceptance .....................................................................   Passed    1.25 sec\n930/933 Test #834: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ...................................................................   Passed    7.19 sec\n931/933 Test #926: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.52 sec\n932/933 Test #891: property:Lemmas 7.1 and 7.2 on seeded graph families - double ...........................................................................................   Passed   11.76 sec\n933/933 Test #890: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed   60.60 sec\n\n100% tests passed, 0 tests failed out of 933\n\nLabel Time Summary:\ndifferential    =  22.02 sec*proc (59 tests)\nintegration     =   0.58 sec*proc (6 tests)\nproperty        =  99.45 sec*proc (47 tests)\nregression      =   0.13 sec*proc (6 tests)\nunit            = 113.32 sec*proc (815 tests)\n\nTotal Test time (real) =  79.69 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:57:04+09:00",
+      "output_tail": "        Start 874: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances\n926/933 Test #870: differential:every baseline rejects an invalid source with std::out_of_range - std::uint64_t ............................................................   Passed    0.02 sec\n927/933 Test #930: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.02 sec\n928/933 Test #875: differential:double overflow: large but finite sums are not reported ....................................................................................   Passed    0.02 sec\n929/933 Test #931: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.01 sec\n930/933 Test #869: differential:overflow: Bellman-Ford and Dijkstra differ by design (uint64) ..............................................................................   Passed    0.03 sec\n931/933 Test #868: differential:every generator family is covered by the differential test .................................................................................   Passed    0.02 sec\n932/933 Test #874: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances ............................................................   Passed    0.02 sec\n933/933 Test #890: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  114.57 sec\n\n100% tests passed, 0 tests failed out of 933\n\nLabel Time Summary:\ndifferential    =  44.77 sec*proc (59 tests)\nintegration     =   1.17 sec*proc (6 tests)\nproperty        = 196.51 sec*proc (47 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 245.68 sec*proc (815 tests)\n\nTotal Test time (real) = 118.42 sec"
+    }
+  ],
+  "commit": null
+}
