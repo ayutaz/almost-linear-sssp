@@ -1,0 +1,41 @@
+{
+  "id": "P4-OVERFLOW-E2E",
+  "kind": "test-only",
+  "test_only_reason": "end-to-end verification of the merged fixes P3-EVAL-ARITH-FIX, P3-CHILDORDER-OVERFLOW and P3-OWNERDECOMP-OVERFLOW; no new behaviour",
+  "spec": "Mode A paper_sssp and local_hierarchy->evaluate return the exact distances (verified by verify_sssp against the exact reference) on uint64 inputs whose auxiliary quantities leave 64 bits, and throw std::overflow_error when a distance reaches the sentinel",
+  "paper_ref": "Sec 4.1-4.3 (Alg 3), Sec 5.1-5.4 (Alg 4, Lemma 5.10), Sec 8.3 (Alg 8); deviations D-23 to D-30",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/differential/paper/test_overflow_e2e_vs_exact.cpp"
+    ],
+    "covers": [
+      "src/paper/hierarchy/evaluate.*",
+      "src/paper/hierarchy/normalize.*",
+      "src/paper/hierarchy/child_order.*",
+      "src/paper/local/owner_decomposition.*",
+      "src/paper/local/local_hierarchy.*",
+      "src/paper/sssp.*"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"P4-OVERFLOW-E2E|regression:|overflow|Overflow\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:00:37+09:00",
+      "output_tail": "      Start 1364: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix)\n48/53 Test #1363: regression:20261127-owner-decomposition-overflow: path of four edges of 2^62 with b = 2 ..................   Passed    0.01 sec\n      Start 1365: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n49/53 Test #1359: regression:generator, connect_components and connected_components output is pinned for fixed seeds .......   Passed    0.05 sec\n      Start 1366: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n50/53 Test #1364: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix) .....   Passed    0.02 sec\n51/53 Test #1365: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle .........   Passed    0.02 sec\n52/53 Test #1366: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ...........   Passed    0.07 sec\n53/53 Test #1162: differential:P4-OVERFLOW-E2E: heavy-prefix path k = 209953, Mode A radial branch, Evaluate ...............   Passed   19.80 sec\n\n100% tests passed, 0 tests failed out of 53\n\nLabel Time Summary:\ndifferential         =   0.73 sec*proc (13 tests)\ndifferential-slow    =  19.80 sec*proc (1 test)\nproperty             =   0.04 sec*proc (1 test)\nregression           =   0.46 sec*proc (23 tests)\nunit                 =   0.45 sec*proc (15 tests)\n\nTotal Test time (real) =  20.01 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"P4-OVERFLOW-E2E|regression:|overflow|Overflow|Alg 4 Mode A at k = 209953\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:10:37+09:00",
+      "output_tail": "55/60 Test #1297: property:Alg 4 Mode A at k = 209953: random tree, tied weights ...........................................   Passed    6.93 sec\n      Start 1300: property:Alg 4 Mode A at k = 209953: clustered with heavy bridges\n56/60 Test #1298: property:Alg 4 Mode A at k = 209953: grid, exponential weights ...........................................   Passed    8.93 sec\n      Start 1301: property:Alg 4 Mode A at k = 209953: sparse multigraph, quarter-integer doubles\n57/60 Test #1299: property:Alg 4 Mode A at k = 209953: spider, uniform weights .............................................   Passed    5.81 sec\n58/60 Test #1300: property:Alg 4 Mode A at k = 209953: clustered with heavy bridges ........................................   Passed    7.89 sec\n59/60 Test #1162: differential:P4-OVERFLOW-E2E: heavy-prefix path k = 209953, Mode A radial branch, Evaluate ...............   Passed   17.49 sec\n60/60 Test #1301: property:Alg 4 Mode A at k = 209953: sparse multigraph, quarter-integer doubles ..........................   Passed   11.26 sec\n\n100% tests passed, 0 tests failed out of 60\n\nLabel Time Summary:\ndifferential         =   0.67 sec*proc (13 tests)\ndifferential-slow    =  20.36 sec*proc (2 tests)\nproperty             =   0.04 sec*proc (1 test)\nproperty-slow        =  46.91 sec*proc (6 tests)\nregression           =   0.35 sec*proc (23 tests)\nunit                 =   0.42 sec*proc (15 tests)\n\nTotal Test time (real) =  25.28 sec"
+    }
+  ],
+  "commit": "230e664"
+}

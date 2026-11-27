@@ -131,6 +131,7 @@ struct NormalizedHierarchy {
   /// gap_next[i] = g(i, j) for the child j ranked immediately after i under the same parent
   /// (Lemma 4.4 / 4.5): an upper bound, in either direction, on a physical walk between
   /// pi(rep[i]) and pi(rep[j]). 0 for the last child of a node and for roots.
+  /// WeightTraits<W>::infinity() if g(i, j) does not fit W (saturated, D-26).
   /// g(j, i) = g(i, j): the gap to the previous sibling is gap_next of that sibling.
   std::vector<W> gap_next;
 
