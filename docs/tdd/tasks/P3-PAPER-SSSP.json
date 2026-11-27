@@ -1,0 +1,62 @@
+{
+  "id": "P3-PAPER-SSSP",
+  "spec": "paper_sssp contracts zero-edge components (Alg 8 l.2), evaluates N > L_N^64 on the contracted size with saturating arithmetic, takes the recorded base case (scan Dijkstra for paper-faithful, binary heap for paper-faithful-d1) for every N < 2^64 and restores original distances and a tight first-discovery tree (Lemma 8.5); the unimplemented outer construction throws instead of being replaced",
+  "paper_ref": "Sec 8.3, Algorithm 8 l.2-7 and l.8 (branch), Theorem 1, Lemma 8.5; Sec 2 txt l.284-288",
+  "files": {
+    "impl": [
+      "include/sssp/paper.hpp",
+      "src/paper/sssp.hpp",
+      "src/paper/sssp.cpp"
+    ],
+    "tests": [
+      "tests/differential/paper/test_paper_sssp_differential.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "paper algorithm names",
+        "Mode A never takes the outer construction for N < 2^64",
+        "the missing outer construction throws instead of being replaced by a search",
+        "paper_sssp: hand example with zero classes, loops and an unreachable part",
+        "paper_sssp: all-zero graph contracts to one vertex",
+        "paper_sssp rejects an invalid source",
+        "paper_sssp equals Bellman-Ford and Dijkstra on every generator family",
+        "paper-faithful-d1 at N = 90000 with zero edges equals baseline Dijkstra"
+      ],
+      "command": "bash -c 'cmake --build --preset debug --target sssp_differential_tests 2>&1 | tail -5 && exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/sssp.hpp' file not found (paper_sssp, PaperVariant/PaperOptions, algorithm names, takes_outer_construction and the outer_construction stub do not exist yet)",
+      "timestamp": "2026-11-27T11:10:54+09:00",
+      "output_tail": "./tests/differential/paper/test_paper_sssp_differential.cpp:23:10: fatal error: 'paper/sssp.hpp' file not found\n   23 | #include \"paper/sssp.hpp\"\n      |          ^~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "paper_sssp*",
+        "paper algorithm names",
+        "Mode A never takes the outer construction for N < 2^64",
+        "the missing outer construction throws instead of being replaced by a search",
+        "paper-faithful-d1*"
+      ],
+      "command": "bash -c 'cmake --build --preset debug 2>&1 && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:19:17+09:00",
+      "output_tail": "        Start 523: differential:paper algorithm names\n552/559 Test #476: unit:split-findmin: double keys reject NaN - sssp::paper::SplitFindminRef<double> .......................................................................   Passed    0.02 sec\n553/559 Test #237: unit:signed pair addition is componentwise and negation swaps - std::uint64_t ...........................................................................   Passed    0.02 sec\n554/559 Test #254: unit:SplitMix64 matches the published reference sequence ................................................................................................   Passed    0.02 sec\n555/559 Test #559: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.01 sec\n556/559 Test #205: unit:reference hierarchy of a state graph without arcs is a forest of leaves ............................................................................   Passed    0.01 sec\n557/559 Test #380: unit:mst_three_pass accepts a CsrGraph - double .........................................................................................................   Passed    0.03 sec\n558/559 Test #523: differential:paper algorithm names ......................................................................................................................   Passed    0.01 sec\n559/559 Test #511: unit:verify reports integer overflow on a tree edge .....................................................................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 559\n\nLabel Time Summary:\ndifferential    =   2.68 sec*proc (17 tests)\nintegration     =   0.56 sec*proc (6 tests)\nproperty        =  12.98 sec*proc (21 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  77.51 sec*proc (514 tests)\n\nTotal Test time (real) =  11.74 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "paper_sssp*",
+        "paper-faithful-d1*"
+      ],
+      "command": "bash -c 'cmake --build --preset ci 2>&1 && ctest --preset ci'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:21:36+09:00",
+      "output_tail": "        Start 531: differential:paper_sssp equals Bellman-Ford and Dijkstra on every generator family - std::uint64_t\n554/559 Test #528: differential:paper_sssp: all-zero graph contracts to one vertex - std::uint64_t .........................................................................   Passed    0.01 sec\n        Start 532: differential:paper_sssp equals Bellman-Ford and Dijkstra on every generator family - double\n555/559 Test #529: differential:paper_sssp: all-zero graph contracts to one vertex - double ................................................................................   Passed    0.01 sec\n        Start 533: differential:paper-faithful-d1 at N = 90000 with zero edges equals baseline Dijkstra\n556/559 Test #530: differential:paper_sssp rejects an invalid source .......................................................................................................   Passed    0.01 sec\n557/559 Test #533: differential:paper-faithful-d1 at N = 90000 with zero edges equals baseline Dijkstra ....................................................................   Passed    0.18 sec\n558/559 Test #532: differential:paper_sssp equals Bellman-Ford and Dijkstra on every generator family - double .............................................................   Passed    0.31 sec\n559/559 Test #531: differential:paper_sssp equals Bellman-Ford and Dijkstra on every generator family - std::uint64_t ......................................................   Passed    0.32 sec\n\n100% tests passed, 0 tests failed out of 559\n\nLabel Time Summary:\ndifferential    =   2.47 sec*proc (17 tests)\nintegration     =   0.53 sec*proc (6 tests)\nproperty        =  12.00 sec*proc (21 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  68.57 sec*proc (514 tests)\n\nTotal Test time (real) =  23.28 sec"
+    }
+  ],
+  "commit": "298e25b"
+}
