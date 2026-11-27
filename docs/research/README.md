@@ -1,6 +1,6 @@
 # Analysis Documents for the Paper (docs/research/)
 
-English | [日本語](README.ja.md)
+**English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
 The subject is arXiv 2611.34911v1, "Linear Single-Source Shortest Path, Almost". The paper itself cannot be redistributed, so fetch it into `.cache/paper/` (not tracked by git) with `scripts/fetch_paper.sh`. The documents here paraphrase and explain the paper; they do not reproduce its text. Line numbers `l.NNN` refer to `.cache/paper/2611.34911v1.txt`.
 
