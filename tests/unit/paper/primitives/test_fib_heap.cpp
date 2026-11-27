@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "paper/primitives/fib_heap.hpp"
+#include "sssp/result.hpp"
 
 using sssp::paper::FibHeap;
 using Heap = FibHeap<std::uint64_t>;
@@ -178,7 +179,11 @@ TEST_CASE("paper FibHeap counts key comparisons", "[paper][fib_heap]") {
   h.insert(1, 2);
   h.insert(2, 1);
   (void)h.extract_min();
+#if SSSP_DIAGNOSTICS
   REQUIRE(h.comparisons() > 0);
+#else
+  REQUIRE(h.comparisons() == 0);  // counting is compiled out in timed builds
+#endif
 }
 
 TEST_CASE("paper FibHeap matches an ordered-set model under random operations with discards",

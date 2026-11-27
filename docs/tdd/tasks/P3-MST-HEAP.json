@@ -41,6 +41,28 @@
    "exit_code": 0,
    "timestamp": "2026-11-27T10:39:05+09:00",
    "output_tail": "ninja: no work to do.\n100% tests passed, 0 tests failed out of 10\n100% tests passed, 0 tests failed out of 79"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "paper FibHeap counts key comparisons"
+   ],
+   "command": "set -o pipefail; cmake --build --preset release -j8 2>&1 | tail -1 && ctest --preset release -R 'paper FibHeap counts key comparisons' 2>&1 | grep -E 'tests passed|Failed|REQUIRE|with expansion|^  [0-9]'",
+   "exit_code": 8,
+   "reason": "regression: with SSSP_DIAGNOSTICS=0 (release preset) SSSP_COUNT is compiled out, so comparisons() stays 0 and the test's comparisons() > 0 fails; the test must state the expected counter in both builds",
+   "timestamp": "2026-11-27T10:49:52+09:00",
+   "output_tail": "ninja: no work to do.\n1/1 Test #62: unit:paper FibHeap counts key comparisons ...***Failed    0.01 sec\n  REQUIRE( h.comparisons() > 0 )\nwith expansion:\n  0 > 0\n0% tests passed, 1 tests failed out of 1\n\t 62 - unit:paper FibHeap counts key comparisons (Failed) unit"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "paper FibHeap counts key comparisons",
+    "full suite in debug and release"
+   ],
+   "command": "set -o pipefail; cmake --build --preset release -j8 2>&1 | tail -1 && ctest --preset release 2>&1 | grep -E 'tests passed|Failed' && cmake --build --preset debug -j8 2>&1 | tail -1 && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:50:13+09:00",
+   "output_tail": "[3/4] Linking CXX executable tests/sssp_unit_tests\n100% tests passed, 0 tests failed out of 120\n[3/4] Linking CXX executable tests/sssp_unit_tests\n100% tests passed, 0 tests failed out of 128"
   }
  ],
  "commit": null
