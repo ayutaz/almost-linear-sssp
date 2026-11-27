@@ -1,63 +1,63 @@
 {
- "id": "P2-DIFF-REGULAR-SWITCH",
- "spec": "random_regular(n, d, kSwitchToSimple) returns a simple, exactly d-regular graph for every n*d even, d < n (include/sssp/generators.hpp); regression 20261127-regular-switch-dead-end: (n, d, seed) = (3, 2, 20) starts from three self-loops and the switching loop can never leave that state.",
- "paper_ref": null,
- "files": {
-  "impl": [
-   "src/graph/generators.cpp",
-   "include/sssp/generators.hpp"
+  "id": "P2-DIFF-REGULAR-SWITCH",
+  "spec": "random_regular(n, d, kSwitchToSimple) returns a simple, exactly d-regular graph for every n*d even, d < n (include/sssp/generators.hpp); regression 20261127-regular-switch-dead-end: (n, d, seed) = (3, 2, 20) starts from three self-loops and the switching loop can never leave that state.",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      "src/graph/generators.cpp",
+      "include/sssp/generators.hpp"
+    ],
+    "tests": [
+      "tests/regression/test_regular_switch_dead_end.cpp",
+      "tests/regression/cases/20261127-regular-switch-dead-end.json",
+      "tests/unit/graph/test_generators.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "regression:20261127-regular-switch-dead-end: *"
+      ],
+      "command": "ctest --preset debug -R 'regression:20261127-regular-switch'",
+      "exit_code": 8,
+      "reason": "random_regular throws 'switching did not converge' for n=3 d=2 seed=20 (the configuration model gives {0,0},{1,1},{2,2}; every swap of two self-loops proposes a double edge and is rejected). Recorded with the [!shouldfail] tag removed; the committed test carries [!shouldfail] until the generator is fixed, and the fix commit must remove it (Catch2 then requires the test to pass).",
+      "timestamp": "2026-11-27T10:45:59+09:00",
+      "output_tail": "  REQUIRE_NOTHROW( g = regular_switch(n, d, seed) )\ndue to unexpected exception with messages:\n  n=3 d=2 seed=20\n  random_regular: switching did not converge\n\n===============================================================================\ntest cases:   1 |   0 passed | 1 failed\nassertions: 139 | 138 passed | 1 failed\n\n\n\n0% tests passed, 2 tests failed out of 2\n\nLabel Time Summary:\nregression    =   0.03 sec*proc (2 tests)\n\nTotal Test time (real) =   1.51 sec\n\nThe following tests FAILED:\n\t229 - regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle (Failed) regression\n\t230 - regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 (Failed) regression\nErrors while running CTest"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "unit:random regular switching succeeds for every small dense (n, d) and many seeds",
+        "unit:random regular switching is deterministic, also when it has to start over"
+      ],
+      "command": "ctest --preset debug -R 'unit:random regular switching'",
+      "exit_code": 8,
+      "reason": "Unit tests for the contract on every n <= 12, d < n, n*d even x seeds 1..300 and for determinism: the generator throws 'switching did not converge' (first failure n=3 d=2 seed=20, the three-self-loop dead end), so both new tests fail for the intended reason.",
+      "timestamp": "2026-11-27T11:03:38+09:00",
+      "output_tail": "-------------------------------------------------------------------------------\ntests/unit/graph/test_generators.cpp:224\n...............................................................................\ntests/unit/graph/test_generators.cpp:246: FAILED:\n  REQUIRE( ok )\nwith expansion:\n  false\nwith message:\n  n=3 d=2 seed=20 threw=1\n===============================================================================\ntest cases: 1 | 1 failed\nassertions: 1 | 1 failed\n0% tests passed, 2 tests failed out of 2\nLabel Time Summary:\nunit    =   0.03 sec*proc (2 tests)\nTotal Test time (real) =   0.02 sec\nThe following tests FAILED:\n\t 94 - unit:random regular switching succeeds for every small dense (n, d) and many seeds (Failed) unit\n\t 95 - unit:random regular switching is deterministic, also when it has to start over (Failed) unit\nErrors while running CTest"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "regression:20261127-regular-switch-dead-end: *",
+        "unit:random regular switching succeeds for every small dense (n, d) and many seeds",
+        "unit:random regular switching is deterministic, also when it has to start over"
+      ],
+      "command": "cmake --build --preset debug && ctest --preset debug",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:10:11+09:00",
+      "output_tail": "549/558 Test #547: property:three-pass MST on a large sparse graph runs all passes within bounds - double ..................................................................   Passed    0.19 sec\n        Start 552: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds\n550/558 Test #550: property:split-findmin property: dyadic work stays within the Lemma 3.10 bounds .........................................................................   Passed    0.15 sec\n        Start 553: property:split-findmin property: blocked work per record shrinks with the blocking depth\n551/558 Test #553: property:split-findmin property: blocked work per record shrinks with the blocking depth ................................................................   Passed    0.13 sec\n552/558 Test #543: property:forest queries agree with binary lifting on deep and degenerate shapes .........................................................................   Passed    0.93 sec\n553/558 Test #542: property:forest queries agree with binary lifting on random forests .....................................................................................   Passed    1.08 sec\n554/558 Test #551: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.94 sec\n555/558 Test #530: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................................................................   Passed    1.34 sec\n556/558 Test #544: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    1.26 sec\n557/558 Test #545: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    1.27 sec\n558/558 Test #552: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.70 sec\n100% tests passed, 0 tests failed out of 558\nLabel Time Summary:\ndifferential    =   2.04 sec*proc (27 tests)\nintegration     =   0.54 sec*proc (6 tests)\nproperty        =  12.83 sec*proc (21 tests)\nregression      =   0.11 sec*proc (5 tests)\nunit            =  74.71 sec*proc (499 tests)\nTotal Test time (real) =  16.87 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "command": "cmake --build --preset debug && ctest --preset debug",
+      "exit_code": 0,
+      "reason": "Switching loop extracted into switch_to_simple(); clang-format; header and docs/design/graph_library.md updated. Mutation check: restoring the pre-fix src/graph/generators.cpp makes both regression tests and both new unit tests fail again.",
+      "timestamp": "2026-11-27T11:19:05+09:00",
+      "output_tail": "549/558 Test #461: unit:split-findmin: double keys reject NaN - sssp::paper::SplitFindminRef<double> .......................................................................   Passed    0.04 sec\n        Start 223: unit:word floor_log2 and ceil_log2 match definitions at power-of-two boundaries\n550/558 Test #462: unit:split-findmin: double keys reject NaN - sssp::paper::DyadicSplitFindmin<double> ....................................................................   Passed    0.04 sec\n        Start 243: unit:EdgeKey ties broken by index - std::uint64_t\n551/558 Test #227: unit:infinity flag absorbs addition - std::uint64_t .....................................................................................................   Passed    0.03 sec\n552/558 Test #226: unit:word logarithms are usable in constant expressions .................................................................................................   Passed    0.04 sec\n553/558 Test  #55: unit:binary-heap Dijkstra: single vertex ................................................................................................................   Passed    0.05 sec\n554/558 Test #243: unit:EdgeKey ties broken by index - std::uint64_t .......................................................................................................   Passed    0.03 sec\n555/558 Test #223: unit:word floor_log2 and ceil_log2 match definitions at power-of-two boundaries .........................................................................   Passed    0.04 sec\n556/558 Test #233: unit:weights convert to and from the shared infinity sentinel - std::uint64_t ...........................................................................   Passed    0.05 sec\n557/558 Test #435: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::OneLevelBlockedSplitFindmin<double> ....................   Passed    0.11 sec\n558/558 Test #204: unit:every violation kind maps to its Def 4.1 condition .................................................................................................   Passed    0.13 sec\n100% tests passed, 0 tests failed out of 558\nLabel Time Summary:\ndifferential    =   6.16 sec*proc (27 tests)\nintegration     =   1.20 sec*proc (6 tests)\nproperty        =  31.28 sec*proc (21 tests)\nregression      =   0.30 sec*proc (5 tests)\nunit            = 218.74 sec*proc (499 tests)\nTotal Test time (real) =  35.28 sec"
+    }
   ],
-  "tests": [
-   "tests/regression/test_regular_switch_dead_end.cpp",
-   "tests/regression/cases/20261127-regular-switch-dead-end.json",
-   "tests/unit/graph/test_generators.cpp"
-  ]
- },
- "phase": "REFACTOR",
- "events": [
-  {
-   "phase": "RED",
-   "tests": [
-    "regression:20261127-regular-switch-dead-end: *"
-   ],
-   "command": "ctest --preset debug -R 'regression:20261127-regular-switch'",
-   "exit_code": 8,
-   "reason": "random_regular throws 'switching did not converge' for n=3 d=2 seed=20 (the configuration model gives {0,0},{1,1},{2,2}; every swap of two self-loops proposes a double edge and is rejected). Recorded with the [!shouldfail] tag removed; the committed test carries [!shouldfail] until the generator is fixed, and the fix commit must remove it (Catch2 then requires the test to pass).",
-   "timestamp": "2026-11-27T10:45:59+09:00",
-   "output_tail": "  REQUIRE_NOTHROW( g = regular_switch(n, d, seed) )\ndue to unexpected exception with messages:\n  n=3 d=2 seed=20\n  random_regular: switching did not converge\n\n===============================================================================\ntest cases:   1 |   0 passed | 1 failed\nassertions: 139 | 138 passed | 1 failed\n\n\n\n0% tests passed, 2 tests failed out of 2\n\nLabel Time Summary:\nregression    =   0.03 sec*proc (2 tests)\n\nTotal Test time (real) =   1.51 sec\n\nThe following tests FAILED:\n\t229 - regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle (Failed) regression\n\t230 - regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 (Failed) regression\nErrors while running CTest"
-  },
-  {
-   "phase": "RED",
-   "tests": [
-    "unit:random regular switching succeeds for every small dense (n, d) and many seeds",
-    "unit:random regular switching is deterministic, also when it has to start over"
-   ],
-   "command": "ctest --preset debug -R 'unit:random regular switching'",
-   "exit_code": 8,
-   "reason": "Unit tests for the contract on every n <= 12, d < n, n*d even x seeds 1..300 and for determinism: the generator throws 'switching did not converge' (first failure n=3 d=2 seed=20, the three-self-loop dead end), so both new tests fail for the intended reason.",
-   "timestamp": "2026-11-27T11:03:38+09:00",
-   "output_tail": "-------------------------------------------------------------------------------\ntests/unit/graph/test_generators.cpp:224\n...............................................................................\ntests/unit/graph/test_generators.cpp:246: FAILED:\n  REQUIRE( ok )\nwith expansion:\n  false\nwith message:\n  n=3 d=2 seed=20 threw=1\n===============================================================================\ntest cases: 1 | 1 failed\nassertions: 1 | 1 failed\n0% tests passed, 2 tests failed out of 2\nLabel Time Summary:\nunit    =   0.03 sec*proc (2 tests)\nTotal Test time (real) =   0.02 sec\nThe following tests FAILED:\n\t 94 - unit:random regular switching succeeds for every small dense (n, d) and many seeds (Failed) unit\n\t 95 - unit:random regular switching is deterministic, also when it has to start over (Failed) unit\nErrors while running CTest"
-  },
-  {
-   "phase": "GREEN",
-   "tests": [
-    "regression:20261127-regular-switch-dead-end: *",
-    "unit:random regular switching succeeds for every small dense (n, d) and many seeds",
-    "unit:random regular switching is deterministic, also when it has to start over"
-   ],
-   "command": "cmake --build --preset debug && ctest --preset debug",
-   "exit_code": 0,
-   "timestamp": "2026-11-27T11:10:11+09:00",
-   "output_tail": "549/558 Test #547: property:three-pass MST on a large sparse graph runs all passes within bounds - double ..................................................................   Passed    0.19 sec\n        Start 552: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds\n550/558 Test #550: property:split-findmin property: dyadic work stays within the Lemma 3.10 bounds .........................................................................   Passed    0.15 sec\n        Start 553: property:split-findmin property: blocked work per record shrinks with the blocking depth\n551/558 Test #553: property:split-findmin property: blocked work per record shrinks with the blocking depth ................................................................   Passed    0.13 sec\n552/558 Test #543: property:forest queries agree with binary lifting on deep and degenerate shapes .........................................................................   Passed    0.93 sec\n553/558 Test #542: property:forest queries agree with binary lifting on random forests .....................................................................................   Passed    1.08 sec\n554/558 Test #551: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.94 sec\n555/558 Test #530: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................................................................   Passed    1.34 sec\n556/558 Test #544: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    1.26 sec\n557/558 Test #545: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    1.27 sec\n558/558 Test #552: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.70 sec\n100% tests passed, 0 tests failed out of 558\nLabel Time Summary:\ndifferential    =   2.04 sec*proc (27 tests)\nintegration     =   0.54 sec*proc (6 tests)\nproperty        =  12.83 sec*proc (21 tests)\nregression      =   0.11 sec*proc (5 tests)\nunit            =  74.71 sec*proc (499 tests)\nTotal Test time (real) =  16.87 sec"
-  },
-  {
-   "phase": "REFACTOR",
-   "command": "cmake --build --preset debug && ctest --preset debug",
-   "exit_code": 0,
-   "reason": "Switching loop extracted into switch_to_simple(); clang-format; header and docs/design/graph_library.md updated. Mutation check: restoring the pre-fix src/graph/generators.cpp makes both regression tests and both new unit tests fail again.",
-   "timestamp": "2026-11-27T11:19:05+09:00",
-   "output_tail": "549/558 Test #461: unit:split-findmin: double keys reject NaN - sssp::paper::SplitFindminRef<double> .......................................................................   Passed    0.04 sec\n        Start 223: unit:word floor_log2 and ceil_log2 match definitions at power-of-two boundaries\n550/558 Test #462: unit:split-findmin: double keys reject NaN - sssp::paper::DyadicSplitFindmin<double> ....................................................................   Passed    0.04 sec\n        Start 243: unit:EdgeKey ties broken by index - std::uint64_t\n551/558 Test #227: unit:infinity flag absorbs addition - std::uint64_t .....................................................................................................   Passed    0.03 sec\n552/558 Test #226: unit:word logarithms are usable in constant expressions .................................................................................................   Passed    0.04 sec\n553/558 Test  #55: unit:binary-heap Dijkstra: single vertex ................................................................................................................   Passed    0.05 sec\n554/558 Test #243: unit:EdgeKey ties broken by index - std::uint64_t .......................................................................................................   Passed    0.03 sec\n555/558 Test #223: unit:word floor_log2 and ceil_log2 match definitions at power-of-two boundaries .........................................................................   Passed    0.04 sec\n556/558 Test #233: unit:weights convert to and from the shared infinity sentinel - std::uint64_t ...........................................................................   Passed    0.05 sec\n557/558 Test #435: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::OneLevelBlockedSplitFindmin<double> ....................   Passed    0.11 sec\n558/558 Test #204: unit:every violation kind maps to its Def 4.1 condition .................................................................................................   Passed    0.13 sec\n100% tests passed, 0 tests failed out of 558\nLabel Time Summary:\ndifferential    =   6.16 sec*proc (27 tests)\nintegration     =   1.20 sec*proc (6 tests)\nproperty        =  31.28 sec*proc (21 tests)\nregression      =   0.30 sec*proc (5 tests)\nunit            = 218.74 sec*proc (499 tests)\nTotal Test time (real) =  35.28 sec"
-  }
- ],
- "commit": null
+  "commit": "2a6815d"
 }
