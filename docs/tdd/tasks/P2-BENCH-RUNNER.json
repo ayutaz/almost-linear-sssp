@@ -13,7 +13,7 @@
    "tests/python/test_bench_runner_integration.py"
   ]
  },
- "phase": "REFACTOR",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -103,5 +103,5 @@
    "output_tail": "100% tests passed, 0 tests failed out of 320\nAll checks passed!\n52 files already formatted\n274 passed in 25.87s\n[1/6] Processing file src/bench_runner/cli.cpp.\n[2/6] Processing file src/bench_runner/json.cpp.\n[3/6] Processing file src/bench_runner/record.cpp.\n[4/6] Processing file src/bench_runner/registry.cpp.\n[5/6] Processing file src/bench_runner/runner.cpp.\n[6/6] Processing file tools/sssp_bench_runner.cpp."
   }
  ],
- "commit": null
+ "commit": "5998c95"
 }
