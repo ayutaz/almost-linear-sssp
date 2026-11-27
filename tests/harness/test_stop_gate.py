@@ -122,6 +122,19 @@ def test_failed_tests_block(repo, run_hook):
     assert "lint" not in reason
 
 
+def test_timed_out_check_does_not_block(repo, run_hook):
+    """A light check that ran out of time is inconclusive, not a failure."""
+    _clean(repo)
+    _fail_check(repo)
+    path = repo / ".tdd" / "runtime" / "last_check.json"
+    data = json.loads(path.read_text())
+    data["categories"]["cpp-test"].update(status="timeout", exit_code=124)
+    path.write_text(json.dumps(data))
+    res = run_hook("stop_gate", _payload(), repo)
+    assert res.code == 0, res.stderr
+    assert not _blocked(res)
+
+
 def test_red_task_blocks(repo, run_hook):
     write_task(repo, {"id": "T-RED", "events": [RED_EVENT]})
     write_task(repo, {"id": "T-OK", "phase": "GREEN", "events": [RED_EVENT, GREEN_EVENT]})

@@ -95,7 +95,7 @@ hook 全部是**只使用标准库、兼容 Python 3.9 的脚本**,即使没有 
 ### 3.4 PostToolUse(`Edit|Write|MultiEdit`,timeout 200 秒)
 
 - 格式化只针对目标文件:C++ 用 clang-format(按 `TDD_CLANG_FORMAT` -> `/opt/homebrew/opt/llvm/bin/clang-format` -> PATH 的顺序)执行 `-i --style=file`,Python 用 ruff(按 `TDD_RUFF` -> `.venv/bin/ruff` -> PATH -> `uv run ruff` 的顺序)执行 `format` 和 `check`。
-- 轻量检查只在 C++ 发生变更、且 `build/<preset>/build.ninja` 已经存在(已 configure)时运行。类别对于 `tests/<cat>/...` 是该 cat,对于 `src/`、`include/`、`tools/` 是 `unit`。执行 `cmake --build build/<preset> --target sssp_<cat>_tests`,然后执行 `ctest --test-dir build/<preset> -L ^<cat>$ -LE bench --output-on-failure --timeout 60`。**绝不运行基准测试的 target、`all` 和基准测试用的脚本。**
+- 轻量检查只在 C++ 发生变更、且 `build/<preset>/build.ninja` 已经存在(已 configure)时运行。类别对于 `tests/<cat>/...` 是该 cat,对于 `src/`、`include/`、`tools/` 是 `unit`。执行 `cmake --build build/<preset> --target sssp_<cat>_tests`,然后执行 `ctest --test-dir build/<preset> -L ^<cat>$ -LE bench -j <jobs> --output-on-failure --timeout 60`。`<jobs>` 为 `TDD_POSTCHECK_JOBS` > `post_check.jobs`(默认 4)。不是正整数的值会被忽略,改用下一个来源(最后为 4)。**绝不运行基准测试的 target、`all` 和基准测试用的脚本。**
 - 整体的超时为 `TDD_POSTCHECK_TIMEOUT`(秒)> `post_check.timeout_sec`(默认 120)。由于 build 目录与并行的 agent 共用,所以用 `flock` 对 `.tdd/runtime/postcheck.lock` 加排他锁,等待 10 秒(`TDD_POSTCHECK_LOCK_WAIT`)仍拿不到就标记为 skipped。`TDD_POSTCHECK=0` 可以关闭构建和测试。
 - 结果保存到 `.tdd/runtime/last_check.json`,只有在失败、超时、格式化错误或 ruff 有指摘时才通过 `additionalContext` 通知。繁重的检查交给 `make verify`。
 
@@ -107,7 +107,7 @@ hook 全部是**只使用标准库、兼容 Python 3.9 的脚本**,即使没有 
 
 ### 3.5 PreCompact(无 matcher,timeout 30 秒)
 
-把以下内容汇总成 Markdown:已完成的任务、进行中的任务和 phase、未解决的问题(last_check 中的 fail/timeout、是否存在 `.tdd/runtime/stop_gate_unresolved.md`、TASKS.md 中的 BLOCKED 行)、每个任务的下一条命令、最后一次 commit,以及 `docs/PAPER_MAPPING.md`(如果没有则用 `PAPER_MAPPING.ja.md`)的前 10 行。只改写 `docs/PROGRESS.md` 中 `<!-- AUTO:precompact -->` 到 `<!-- /AUTO -->` 之间的部分(块外手写的部分不会改动。如果没有块则追加到末尾,如果没有文件则创建),并把同样的内容也保存到 `.tdd/runtime/precompact_snapshot.md`。向 stdout 输出对摘要的简短指示(纯文本)。
+把以下内容汇总成 Markdown:已完成的任务、进行中的任务和 phase、未解决的问题(last_check 中的 `fail`,以 `Failing check` 列出;是否存在 `.tdd/runtime/stop_gate_unresolved.md`、TASKS.md 中的 BLOCKED 行)、超时的检查(last_check 中的 `timeout`。超时不代表通过或失败,因此不放入 `Failing check`,而是列在专门的标题 `Inconclusive checks (timed out; not a test failure)` 之下;Stop gate 也不会因此阻止)、每个任务的下一条命令、最后一次 commit,以及 `docs/PAPER_MAPPING.md`(如果没有则用 `PAPER_MAPPING.ja.md`)的前 10 行。只改写 `docs/PROGRESS.md` 中 `<!-- AUTO:precompact -->` 到 `<!-- /AUTO -->` 之间的部分(块外手写的部分不会改动。如果没有块则追加到末尾,如果没有文件则创建),并把同样的内容也保存到 `.tdd/runtime/precompact_snapshot.md`。向 stdout 输出对摘要的简短指示(纯文本)。
 
 ### 3.6 Stop(无 matcher,timeout 30 秒)
 

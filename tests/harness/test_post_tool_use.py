@@ -347,6 +347,70 @@ def test_timeout_records_timeout_and_hook_returns_in_time(run_hook, repo, fake):
     assert "timeout" in r.context.lower() or "タイムアウト" in r.context
 
 
+def _ctest_jobs(fake: dict[str, Any]) -> str:
+    """The value passed to ctest ``-j`` (exactly one ctest call, one ``-j``)."""
+    ct = calls_of(fake, "ctest")
+    assert len(ct) == 1, ct
+    args = ct[0]
+    assert args.count("-j") == 1, args
+    return args[args.index("-j") + 1]
+
+
+def _post_check_cfg(repo: Path, **post_check: Any) -> None:
+    cfg = {"enforce": False, "post_check": dict({"enabled": True}, **post_check)}
+    (repo / ".tdd/config.json").write_text(json.dumps(cfg))
+
+
+def test_ctest_runs_in_parallel_with_four_jobs_by_default(run_hook, repo, fake):
+    configured(repo)
+    r = go(run_hook, repo, fake, "src/core/a.cpp")
+    assert r.code == 0
+    assert _ctest_jobs(fake) == "4"
+    # The recorded reproduction command carries the same -j.
+    assert " -j 4" in last_check(repo)["categories"]["unit"]["command"]
+
+
+def test_ctest_jobs_from_config(run_hook, repo, fake):
+    configured(repo)
+    _post_check_cfg(repo, jobs=7)
+    r = go(run_hook, repo, fake, "src/core/a.cpp")
+    assert r.code == 0
+    assert _ctest_jobs(fake) == "7"
+
+
+def test_ctest_jobs_env_overrides_config(run_hook, repo, fake):
+    configured(repo)
+    _post_check_cfg(repo, jobs=7)
+    r = go(run_hook, repo, fake, "src/core/a.cpp", extra={"TDD_POSTCHECK_JOBS": "2"})
+    assert r.code == 0
+    assert _ctest_jobs(fake) == "2"
+
+
+@pytest.mark.parametrize("bad", ["abc", "0", "-3", "1.5", ""])
+def test_invalid_ctest_jobs_env_falls_back_to_default(run_hook, repo, fake, bad):
+    configured(repo)
+    r = go(run_hook, repo, fake, "src/core/a.cpp", extra={"TDD_POSTCHECK_JOBS": bad})
+    assert r.code == 0
+    assert _ctest_jobs(fake) == "4"
+
+
+@pytest.mark.parametrize("bad", ["many", 0, -2, 2.5, True, None, [3]])
+def test_invalid_ctest_jobs_config_falls_back_to_default(run_hook, repo, fake, bad):
+    configured(repo)
+    _post_check_cfg(repo, jobs=bad)
+    r = go(run_hook, repo, fake, "src/core/a.cpp")
+    assert r.code == 0
+    assert _ctest_jobs(fake) == "4"
+
+
+def test_invalid_ctest_jobs_env_does_not_hide_valid_config(run_hook, repo, fake):
+    configured(repo)
+    _post_check_cfg(repo, jobs=6)
+    r = go(run_hook, repo, fake, "src/core/a.cpp", extra={"TDD_POSTCHECK_JOBS": "x"})
+    assert r.code == 0
+    assert _ctest_jobs(fake) == "6"
+
+
 def test_other_categories_are_preserved(run_hook, repo, fake):
     configured(repo)
     rt = repo / ".tdd/runtime"

@@ -2,10 +2,14 @@
 """PreCompact hook: save a state snapshot before the context is compacted.
 
 Writes a Markdown snapshot (active tasks, TDD phase and next command, open
-failures, last commit, paper-mapping excerpt) into the ``<!-- AUTO:precompact -->``
-block of docs/PROGRESS.md and into .tdd/runtime/precompact_snapshot.md, then
+failures, timed-out checks, last commit, paper-mapping excerpt) into the
+``<!-- AUTO:precompact -->`` block of docs/PROGRESS.md and into
+.tdd/runtime/precompact_snapshot.md, then
 prints a short plain-text note that Claude Code uses as extra summary
 instructions.
+
+A ``timeout`` in last_check.json is inconclusive, not a failure: it is listed
+under its own heading, never as ``Failing check`` (the Stop gate agrees).
 
 Never blocks compaction: always exits 0 (exit 2 / ``decision: block`` would
 stop the compaction), and internal errors are only logged to stderr.
@@ -28,6 +32,7 @@ END = "<!-- /AUTO -->"
 STDOUT_LIMIT = 2000
 DONE_SHOW = 10
 TEST_CMD = "ctest --preset debug"
+INCONCLUSIVE_HEADING = "### Inconclusive checks (timed out; not a test failure)"
 
 
 # ------------------------------------------------------------------- collectors
@@ -41,16 +46,30 @@ def _impl_globs(task: dict[str, Any]) -> list[str]:
     return [str(x) for x in impl] if isinstance(impl, list) else []
 
 
-def _failures(root: Path) -> list[tuple[str, dict[str, Any]]]:
+def _checks_with_status(root: Path, status: str) -> list[tuple[str, dict[str, Any]]]:
     obj = _common.load_json(root / _common.RUNTIME_REL / "last_check.json", {})
     cats = obj.get("categories") if isinstance(obj, dict) else None
     if not isinstance(cats, dict):
         return []
     out = []
     for name, info in sorted(cats.items()):
-        if isinstance(info, dict) and info.get("status") in ("fail", "timeout"):
+        if isinstance(info, dict) and info.get("status") == status:
             out.append((str(name), info))
     return out
+
+
+def _failures(root: Path) -> list[tuple[str, dict[str, Any]]]:
+    """Checks that ran to the end and failed (the Stop gate blocks on these)."""
+    return _checks_with_status(root, "fail")
+
+
+def _timeouts(root: Path) -> list[tuple[str, dict[str, Any]]]:
+    """Checks cut off by the time budget: no verdict, so not failures."""
+    return _checks_with_status(root, "timeout")
+
+
+def _commands(checks: list[tuple[str, dict[str, Any]]]) -> str:
+    return ", ".join(f"{name}: {info.get('command', '')}" for name, info in checks)
 
 
 def _cells(line: str) -> list[str]:
@@ -154,6 +173,7 @@ def build_snapshot(root: Path, data: dict[str, Any]) -> tuple[str, str]:
     tasks = _common.load_tasks(root)
     active = _common.load_active(root)
     failures = _failures(root)
+    timeouts = _timeouts(root)
     unresolved = (root / ".tdd" / "runtime" / "stop_gate_unresolved.md").is_file()
     blocked = _blocked_lines(root)
     trigger = data.get("trigger")
@@ -204,6 +224,13 @@ def build_snapshot(root: Path, data: dict[str, Any]) -> tuple[str, str]:
     for ln in blocked:
         md.append(f"- TASKS.md: {ln}")
 
+    if timeouts:
+        md += ["", INCONCLUSIVE_HEADING, ""]
+        for name, info in timeouts:
+            reason = info.get("reason") or "time budget exceeded"
+            cmd = info.get("command", "")
+            md.append(f"- `{name}` ({reason}); re-run to get a verdict: `{cmd}`")
+
     md += ["", "### TDD state and next commands", ""]
     for tid in sorted(active):
         for cmd in _next_commands(tid, tasks.get(tid)):
@@ -234,9 +261,9 @@ def build_snapshot(root: Path, data: dict[str, Any]) -> tuple[str, str]:
     else:
         out.append("作業中タスク: なし")
     if failures:
-        out.append(
-            "未解決の失敗: " + ", ".join(f"{n}: {i.get('command', '')}" for n, i in failures)
-        )
+        out.append("未解決の失敗: " + _commands(failures))
+    if timeouts:
+        out.append("時間切れで結果が出ていないチェック(失敗ではない): " + _commands(timeouts))
     if unresolved:
         out.append("Stop gate 未解決レポート: .tdd/runtime/stop_gate_unresolved.md")
     out.append("詳細は docs/PROGRESS.md の AUTO ブロック(<!-- AUTO:precompact -->)を参照。")

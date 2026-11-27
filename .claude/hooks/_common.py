@@ -42,7 +42,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "check_progress_updated": True,
         "max_consecutive_blocks": 3,
     },
-    "post_check": {"enabled": True, "timeout_sec": 120, "preset": "debug"},
+    "post_check": {"enabled": True, "timeout_sec": 120, "preset": "debug", "jobs": 4},
 }
 
 LLVM_CLANG_FORMAT = "/opt/homebrew/opt/llvm/bin/clang-format"
