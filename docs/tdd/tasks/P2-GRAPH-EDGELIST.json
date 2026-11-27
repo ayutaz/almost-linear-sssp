@@ -12,7 +12,7 @@
       "tests/property/graph/test_edge_list_property.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -40,5 +40,5 @@
       "output_tail": "          Start 1030: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n1024/1031 Test   #47: unit:4-ary-heap Dijkstra: zero weights, multi-edges, self-loops, components .............................................................................   Passed    0.06 sec\n1025/1031 Test #1029: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.02 sec\n1026/1031 Test  #975: property:relabel_vertices equals the brute-force mapped edge list - std::uint64_t .......................................................................   Passed    0.03 sec\n1027/1031 Test #1027: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.01 sec\n1028/1031 Test #1026: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.02 sec\n1029/1031 Test  #974: property:connected_components equals the brute-force closure labelling - double .........................................................................   Passed    0.04 sec\n1030/1031 Test #1030: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.02 sec\n1031/1031 Test  #981: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  273.81 sec\n\n100% tests passed, 0 tests failed out of 1031\n\nLabel Time Summary:\ndifferential    = 180.46 sec*proc (69 tests)\nintegration     =   2.96 sec*proc (6 tests)\nproperty        = 552.10 sec*proc (64 tests)\nregression      =   0.24 sec*proc (6 tests)\nunit            = 667.52 sec*proc (886 tests)\n\nTotal Test time (real) = 275.98 sec"
     }
   ],
-  "commit": null
+  "commit": "3f6cd75"
 }
