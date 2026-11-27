@@ -16,7 +16,7 @@
 
 ### ci.yml
 
-- **matrix**: `os = [macos-26, ubuntu-26.04]` × `preset = [ci, ci-release]`（`fail-fast: false`）。
+- **matrix**: `os = [macos-26, ubuntu-26.04]` × `preset = [ci, ci-release]` × `shard = [labels, slow]`（`fail-fast: false`）。`slow` の shard は `slow` のラベルだけを別の runner で回す。これで、各ジョブが 45 分の上限に収まる。
 - **CTest はラベルごとに別ステップ**: `unit`、`integration`、`differential`、`property`、`regression`。
   - `-L '^unit$'` のように完全一致の正規表現で指定する。
   - `--no-tests=ignore` を付けるので、テストが0件のラベルでは失敗しない。
@@ -130,7 +130,7 @@
 
 ### concurrency、timeout、paths filter
 
-- `concurrency.group = <workflow>-<ref>`、`cancel-in-progress: true`。同じブランチや PR に新しい push が来たら、古い実行を止める。release だけは例外（上記）。
+- `concurrency.group = <workflow>-<ref>-<inputs.ref>`（benchmark は `<workflow>-<ref>-<inputs.runner>-<inputs.suite>`）、`cancel-in-progress: true`。`inputs` の部分があるので、並べて手動で起動した実行が互いを取り消さない。同じブランチや PR に新しい push が来たら、古い実行を止める。release だけは例外（上記）。
 - すべてのジョブに `timeout-minutes` を付ける（lint 25、ビルド 45、sanitizer 60、release 60、benchmark 90 / full 350）。
 - `ci.yml` と `sanitizer.yml` は `paths-ignore: docs/**, **/*.md, LICENSE, .gitignore`。ドキュメントだけの変更ではビルドしない。
   - **注意**: paths filter で workflow が起動しなかった PR では、必須チェックが「保留」のままになる。ブランチ保護で `ci result` を必須にするなら、「docs だけの PR はチェックを要求しない」設定にするか、paths filter をジョブ側の判定に移す。
@@ -162,6 +162,34 @@
    - Homebrew の llvm
    - PATH
    - `.profraw` の形式は LLVM の版ごとに違うので、コンパイラと同じ版のツールを使う必要がある。
+
+## タスクのブランチの検査を退避する
+
+CLAUDE.md（「Quality gate」）では、タスクのブランチの全体の検査を、手元の機械ではなく GitHub Actions で回してよい。道具は `scripts/ci/` にある。細かな手順は `git-workflow` の skill（`.claude/skills/git-workflow/SKILL.md`）にある。
+
+| 道具 | すること |
+|---|---|
+| `scripts/ci/offload.sh <name> [<sha>]` | public-safety の検査、`wip/<name>` への force を使わない push、`ci` と `sanitizer` の起動 |
+| `scripts/ci/wait.py <sha>... [--since ISO]` | 少ない API の呼び出しで、それらの実行を待つ。終了コードは、すべて `success` のときだけ 0 |
+| `scripts/ci/changed_tidy.sh <base>` | `<base>..HEAD` で変わった `src/` と `tools/` の `.cpp` に clang-tidy をかける。設定は `make tidy` と同じ（`build/<preset>/compile_commands.json`） |
+
+1. 手元では、最小の検査を回す。そのタスクのテスト、`make format-check`、`scripts/ci/changed_tidy.sh main`、`uv run python scripts/tdd.py check`。
+2. `scripts/ci/offload.sh <name>`
+   - main との merge base から変わったファイル（`<sha>` の時点の中身）に `scripts/check_public_safety.py` をかけ、コミットのメッセージにローカルのパスが無いかを確かめる。何か見つかれば、push の前に止まる。
+   - `wip/<name>` に force を使わずに push する。そのブランチがすでにあり、`<sha>` の祖先でなければ、代わりに `wip/<name>-<sha7>` に push する。
+   - push 先は `SSSP_REPO_URL`、無ければ `origin`。remote の追加や変更は一切しない。
+   - `ci` と `sanitizer` について、`gh workflow run <workflow>.yml --ref main -f os=ubuntu -f ref=<sha>` を回す。`--ref main` はワークフローの定義を main から取るため、`ref` は検査するコミット、`os=ubuntu` は macOS のジョブを外すため（macOS の runner は詰まりやすい）。
+   - `ref=... sha=... since=...` と、待つためのコマンドを出力する。`SSSP_DRY_RUN=1` にすると、push と起動のコマンドを回さずに表示する。
+3. `scripts/ci/wait.py <sha> --since <since>`
+   - 起動した実行の表題（`run-name`）は `<workflow> <sha> os=<os>`、たとえば `ci <sha> os=ubuntu`。表題の中の SHA で実行を照合する。
+   - 90 秒ごとに、ワークフローごとに1回だけ `gh run list` を呼び、すべての SHA をまとめて判定する。`gh run watch` を何本も同時に回したら、GitHub の API の上限（1時間に 5000 回）に達した。
+   - `--since` 以後に作られた実行だけを数える。これで、同じ SHA の古い実行（取り消されたものなど）を、新しい実行と取り違えない。
+   - SHA ごとに `<sha7> GREEN` か `<sha7> RED` を出力する。終了コードは、すべての実行が `success` なら 0、そうでなければ 1、時間切れ（`--timeout-min`、既定 240）かリポジトリが分からないときは 2。リポジトリは `SSSP_REPO`（`owner/name`）か `gh repo view` から取る。
+4. 両方が green になったら、`git merge --no-ff` でブランチを main に統合し、そのあと `wip/<name>` を消す。
+
+この流れには、次のワークフローの設定が要る。
+- `concurrency.group` に `inputs.ref`（benchmark では runner と suite）を入れる。入れないと、並べて起動した実行が互いを取り消す。
+- ビルドのジョブの matrix の `shard = [labels, slow]`（上の ci.yml を参照）。
 
 ## actionlint での検証
 
