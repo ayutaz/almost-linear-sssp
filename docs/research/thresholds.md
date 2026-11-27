@@ -1,6 +1,6 @@
 # Quantitative Analysis of Thresholds and Constants (arXiv 2611.34911v1)
 
-English | [日本語](thresholds.ja.md)
+**English** | [日本語](thresholds.ja.md) | [简体中文](thresholds.zh-CN.md)
 
 `L_N = ⌈log2(N+2)⌉` (Sec 2, l.284). In integers, `L_N = bit_length(N+1)` (verified to agree with `ceil(log2(N+2))` for N = 1..4999).
 All computations were done exactly with Python arbitrary-precision integers (binary search per band; the script lives in the scratchpad and is not kept in the repository).

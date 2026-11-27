@@ -1,6 +1,6 @@
 # 02 Analysis of Ordered Hierarchy Evaluation (Sec 4) and Local Hierarchies (Sec 5)
 
-English | [日本語](02_ordered_hierarchy_local.ja.md)
+**English** | [日本語](02_ordered_hierarchy_local.ja.md) | [简体中文](02_ordered_hierarchy_local.zh-CN.md)
 
 Subject: arXiv 2611.34911v1 "Linear Single-Source Shortest Path, Almost" (Gholami, Hajiaghayi)
 Scope: Sec 4 (Def 4.1–4.2, 4.1–4.3, Lemma 4.3–4.7, Alg 2 `Scan`, Alg 3 `Evaluate`) and

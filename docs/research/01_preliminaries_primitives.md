@@ -1,6 +1,6 @@
 # 01 Analysis of Preliminaries and Primitives (Sec 1–3)
 
-English | [日本語](01_preliminaries_primitives.ja.md)
+**English** | [日本語](01_preliminaries_primitives.ja.md) | [简体中文](01_preliminaries_primitives.zh-CN.md)
 
 - Target: arXiv 2611.34911v1 "Linear Single-Source Shortest Path, Almost" (Gholami, Hajiaghayi, 2026-11-25)
 - Scope: Section 1 (Introduction / Technical Overview), Section 2 (Preliminaries), Section 3 (Graph and Data-Structure Primitives, 3.1–3.5)

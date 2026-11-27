@@ -1,6 +1,6 @@
 # 論文の解析文書(docs/research/)
 
-[English](README.md) | 日本語
+[English](README.md) | **日本語** | [简体中文](README.zh-CN.md)
 
 対象は arXiv 2611.34911v1「Linear Single-Source Shortest Path, Almost」。論文の本体は再配布できないので、`.cache/paper/`(git の管理外)に `scripts/fetch_paper.sh` で取得する。ここにある文書は論文を言い換えて解説したもので、本文の転載はしていない。行番号 `l.NNN` は `.cache/paper/2611.34911v1.txt` のもの。
 
