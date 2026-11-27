@@ -97,16 +97,16 @@ Last updated: 2026-11-27T11:15+0900
 <!-- AUTO:precompact -->
 ## Automatic snapshot (PreCompact)
 
-- Generated: 2026-11-27T11:38:31+09:00
-- trigger: manual
+- Generated: 2026-11-27T12:08:08+09:00
+- trigger: auto
 
 ### Completed tasks
 
-- 56 tasks (last 10: P3-MST-HEAP, P3-MST-THREE-PASS, P3-NAME-ROUTES, P3-NORMALIZE, P3-OUTER-BASE, P3-PAPER-SSSP, P3-SEARCH-SELECT, P3-SFM-BLOCKED, P3-SFM-DYADIC, P3-SFM-REF)
+- 67 tasks (last 10: P3-NORMALIZE, P3-OUTER-BASE, P3-OWNER-DECOMP, P3-PAPER-SSSP, P3-RADIAL-STATES, P3-SEARCH-SELECT, P3-SFM-BLOCKED, P3-SFM-DYADIC, P3-SFM-REF, P3-THRESHOLD-JOINS)
 
 ### Active tasks
 
-- P0-HARNESS-PRECOMPACT: phase=GREEN, last event=GREEN, impl=.claude/hooks/pre_compact.py
+- none
 
 ### Open problems
 
@@ -114,13 +114,11 @@ Last updated: 2026-11-27T11:15+0900
 
 ### TDD state and next commands
 
-- P0-HARNESS-PRECOMPACT: `uv run python scripts/tdd.py refactor P0-HARNESS-PRECOMPACT -- ctest --preset debug`
-- P0-HARNESS-PRECOMPACT: `uv run python scripts/tdd.py done P0-HARNESS-PRECOMPACT`
 - Finally run `make verify`
 
 ### Last commit
 
-- 75f2d38 docs(mapping): record the Mode A entry and outer base case, decide Q-51 (28 seconds ago)
+- f583fd8 docs(tdd): close P3-EVALUATE; the portioned evaluator moves to P3-EVAL-PORTIONED (3 minutes ago)
 
 ### PAPER_MAPPING.md excerpt
 
