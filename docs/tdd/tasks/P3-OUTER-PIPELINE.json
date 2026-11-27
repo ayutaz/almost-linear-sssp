@@ -21,7 +21,7 @@
       "tests/regression/test_outer_pipeline_*.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -91,5 +91,5 @@
       "output_tail": "      Start 1144: differential:PL-11: unaligned block end to end (SC-7 input, corridor 2^60)\n24/30 Test  #635: unit:PL-9: the source may be a pivot, a plain nonpivot or inside an atom - std::uint64_t ................   Passed    0.04 sec\n      Start 1146: differential:PL-11 / Q-79: a path of four edges of 2^62 is rejected by Sec 5.1 (pinned)\n25/30 Test #1144: differential:PL-11: unaligned block end to end (SC-7 input, corridor 2^60) ..............................   Passed    0.03 sec\n      Start 1105: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - std::uint64_t\n26/30 Test #1146: differential:PL-11 / Q-79: a path of four edges of 2^62 is rejected by Sec 5.1 (pinned) .................   Passed    0.03 sec\n      Start 1106: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - double\n27/30 Test #1105: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - std::uint64_t ........   Passed    0.03 sec\n28/30 Test #1106: differential:Mode A outer branch: Alg 8 l.8-15 with the paper's constants (PL-2) - double ...............   Passed    0.02 sec\n29/30 Test #1203: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - double ..........   Passed   99.26 sec\n30/30 Test #1202: differential:PL-4: forced outer branch at N = 2000 on every generator family (seed 8) - std::uint64_t ...   Passed  101.15 sec\n\n100% tests passed, 0 tests failed out of 30\n\nLabel Time Summary:\ndifferential         =  41.18 sec*proc (17 tests)\ndifferential-slow    = 298.39 sec*proc (5 tests)\nunit                 =   1.20 sec*proc (8 tests)\n\nTotal Test time (real) = 101.83 sec"
     }
   ],
-  "commit": null
+  "commit": "1b53928"
 }
