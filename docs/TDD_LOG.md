@@ -5,6 +5,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 
 | Task | Phase | RED→GREEN | Paper | Commit | Spec |
 | :- | :- | -: | :- | :- | :- |
+| P0-BOOTSTRAP | DONE | 1 | none | f43dbc5 | scripts/bootstrap.sh checks clang++, cmake>=3.24, ninja, clang-format, clang-tidy, uv (required) and gh (optional) by command, fails when a required tool is missing or too old in both modes, and otherwise runs uv sync and configures the debug preset |
 | P0-CI-FIX-2 | DONE | 1 | - | 76f3930 | Google Benchmark (third-party: benchmark, benchmark_main) builds under its own unconditional -pedantic-errors with every clang 22.x, including apt clang 22.1.2 where -Wno-error=X does not downgrade -pedantic-errors diagnostics (that override only exists from clang 22.1.4, llvm-project #184756): the __COUNTER__ C2y-extension diagnostic is disabled outright (-Wno-c2y-extensions, added only when the compiler knows the flag) for those dependency targets, so their build emits no -Wc2y-extensions diagnostic at all; our own targets keep their warning set and -Werror |
 | P0-CI-FIX | DONE | 1 | - | 17257b4 | CI builds with clang 22 and runs on GitHub macOS VMs: Google Benchmark (third-party) is built without its own -Werror/-pedantic-errors and its headers are SYSTEM for our targets, while our own -Werror stays; bench.envinfo reports efficiency_cores=0 when hw.nperflevels is 1 (no perflevel1), and null only when the core split cannot be determined |
 | P0-FETCH-PAPER | DONE | 1 | - | - | Fetch arXiv 2611.34911v1 into gitignored .cache/paper with pinned SHA-256; reject mismatches |
@@ -103,6 +104,15 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P3-SFM-REF | DONE | 1 | Sec 3.5 (interface), Lemma 3.10/3.11 (reference for differential tests); research notes A8, A9, A10 | d6ea37f | Reference split-findmin (boundary set + segment tree, O(log k) per operation): split at a prescribed boundary (existing boundary rejected), decrease, query (min key and original index; ties by (inf flag, value, index)), interval_of / bounds with fresh IDs for both sides of a split; agrees with a naive model on exhaustive random sequences |
 | P3-THRESHOLD-JOINS | DONE | 1 | Sec 5.3 l.1109-1180, Lemma 5.8, Lemma 5.9 | b081d55 | Threshold components and joins: I0, O0 (min propagation in the macro-free block DAG, attaining macro edge kept), I*, O* (block-DAG order with two bottleneck sweeps on each block MST), theta = max(I*, O*), B0 = max(I0, O0); join records = block MST edges, state-to-owner joins at finite theta, corridor joins; I0/O0/I*/O* equal brute force, Lemma 5.8 bounds, Lemma 5.9 (union-find of joins <= W and < W restricted to states = SCCs of arcs <= W and < W) for every distinct W |
 | P3-WORD-OPS | DONE | 1 | Sec 2 l.301-308 (word operations, tabulated ilog, scan-stored block index/offset, uniform draws); Sec 3.5 Lemma 3.11 | ab6a8ec | Per-operation Mode A paths take integer logarithms from IlogTable (or a value computed once per range) instead of a shift loop, and the blocked split-findmin reads block index and offset from a scan-built BlockLayout instead of integer division; all results unchanged |
+
+## P0-BOOTSTRAP
+
+- Spec: scripts/bootstrap.sh checks clang++, cmake>=3.24, ninja, clang-format, clang-tidy, uv (required) and gh (optional) by command, fails when a required tool is missing or too old in both modes, and otherwise runs uv sync and configures the debug preset
+- Impl: `scripts/bootstrap.sh`
+- Tests: `tests/python/test_bootstrap.py`
+- RED (exit 1, 2026-11-27T13:36:46+09:00): old bootstrap.sh checks Linux tools via dpkg-query (absent in sandbox), never checks gh or a C++ compiler, ignores HOMEBREW_PREFIX, never configures the debug preset and continues past an old cmake; test_macos_install_mode_* deselected for RED because the old script would call the host's real Homebrew — `uv run pytest -q tests/python/test_bootstrap.py --deselect tests/python/test_bootstrap.py::test_macos_install_mode_brews_only_missing_formulae_then_configures`
+- GREEN (exit 0, 2026-11-27T13:41:14+09:00) — `uv run pytest -q tests/python`
+- REFACTOR (exit 0, 2026-11-27T13:43:05+09:00) — `uv run pytest -q tests/python`
 
 ## P0-CI-FIX-2
 
