@@ -13,7 +13,7 @@
       "tests/unit/paper/local/local_test_support.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -48,5 +48,5 @@
       "output_tail": "        Start 442: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t>\n540/547 Test #119: unit:edge-list writer output is the documented text .....................................................................................................   Passed    0.09 sec\n541/547 Test #118: unit:edge-list format reads empty graphs ................................................................................................................   Passed    0.07 sec\n542/547 Test #190: unit:H5: a link longer than c0 times the height is reported - std::uint64_t .............................................................................   Passed    0.11 sec\n543/547 Test  #77: unit:Counted statistics are per thread ..................................................................................................................   Passed    0.10 sec\n544/547 Test #442: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ............................   Passed    0.07 sec\n545/547 Test  #38: unit:Bellman-Ford handles zero-weight cycles without a parent cycle - U64 ...............................................................................   Passed    0.12 sec\n546/547 Test #259: unit:infinity flag absorbs addition - double ............................................................................................................   Passed    0.47 sec\n547/547 Test #216: unit:base case rejects zero weights (zero components are contracted by the caller) ......................................................................   Passed    0.14 sec\n\n100% tests passed, 0 tests failed out of 547\n\nLabel Time Summary:\ndifferential    =   5.03 sec*proc (4 tests)\nintegration     =   3.24 sec*proc (6 tests)\nproperty        =  61.06 sec*proc (27 tests)\nregression      =   0.14 sec*proc (1 test)\nunit            = 514.05 sec*proc (509 tests)\n\nTotal Test time (real) =  73.06 sec"
     }
   ],
-  "commit": null
+  "commit": "b081d55"
 }

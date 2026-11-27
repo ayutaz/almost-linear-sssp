@@ -13,7 +13,7 @@
       "tests/property/paper/test_local_owner_property.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -52,5 +52,5 @@
       "output_tail": "        Start 218: unit:local threshold uses the paper constants c = 2, e = 4 by default\n523/530 Test #223: unit:Alg 4 records path counters and accepts a null Diagnostics .........................................................................................   Passed    0.11 sec\n524/530 Test #228: unit:Alg 4 radial branch requires a connected input .....................................................................................................   Passed    0.10 sec\n525/530 Test #346: unit:mst_three_pass equals the Kruskal MST on a hand example - double ...................................................................................   Passed    0.22 sec\n526/530 Test #218: unit:local threshold uses the paper constants c = 2, e = 4 by default ...................................................................................   Passed    0.09 sec\n527/530 Test #166: unit:valid hand-built ordered hierarchy passes the Def 4.1 checker - std::uint64_t ......................................................................   Passed    0.22 sec\n528/530 Test #185: unit:H4: a cycle among roots is reported regardless of arc length - double ..............................................................................   Passed    0.31 sec\n529/530 Test #250: unit:double lengths reject invalid values and detect overflow ...........................................................................................   Passed    0.31 sec\n530/530 Test #408: unit:split-findmin: zero records are rejected - sssp::paper::OneLevelBlockedSplitFindmin<double> ........................................................   Passed    0.31 sec\n\n100% tests passed, 0 tests failed out of 530\n\nLabel Time Summary:\ndifferential    =   1.94 sec*proc (4 tests)\nintegration     =   1.00 sec*proc (6 tests)\nproperty        =  20.80 sec*proc (23 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            = 144.19 sec*proc (496 tests)\n\nTotal Test time (real) =  23.99 sec"
     }
   ],
-  "commit": null
+  "commit": "a8edb49"
 }

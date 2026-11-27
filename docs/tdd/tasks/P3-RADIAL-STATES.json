@@ -14,7 +14,7 @@
       "tests/unit/paper/local/local_test_support.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -59,5 +59,5 @@
       "output_tail": "        Start 219: unit:local threshold never wraps around for large exponents or sizes\n533/540 Test  #33: unit:Bellman-Ford on a single vertex - double ...........................................................................................................   Passed    0.04 sec\n534/540 Test #321: unit:growth_pass keeps the lightest parallel edge by (length, index) - double ...........................................................................   Passed    0.02 sec\n535/540 Test  #19: unit:Fibonacci heap performs a cascading cut when a marked node loses a second child ....................................................................   Passed    0.02 sec\n536/540 Test   #6: unit:binary heap counts key comparisons .................................................................................................................   Passed    0.02 sec\n537/540 Test #273: unit:LenOps without a counter sink performs the same operations .........................................................................................   Passed    0.02 sec\n538/540 Test #434: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindminRef<std::uint64_t> .........................   Passed    0.02 sec\n539/540 Test #319: unit:growth_pass leaves the quotient by the components of F - double ....................................................................................   Passed    0.02 sec\n540/540 Test #219: unit:local threshold never wraps around for large exponents or sizes ....................................................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 540\n\nLabel Time Summary:\ndifferential    =   2.91 sec*proc (4 tests)\nintegration     =   0.70 sec*proc (6 tests)\nproperty        =  28.74 sec*proc (25 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            = 129.29 sec*proc (504 tests)\n\nTotal Test time (real) =  20.25 sec"
     }
   ],
-  "commit": null
+  "commit": "cebfbaf"
 }
