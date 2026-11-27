@@ -220,6 +220,63 @@ TEST_CASE("random regular graph with switching is simple and exactly d-regular",
   }
 }
 
+TEST_CASE("random regular switching succeeds for every small dense (n, d) and many seeds",
+          "[graph][generators][regular]") {
+  // Contract (include/sssp/generators.hpp): kSwitchToSimple returns a simple, exactly d-regular
+  // graph whenever n*d is even and d < n. Small dense cases are where the configuration model
+  // most often starts from a state the swaps cannot repair (e.g. n=3, d=2: three self-loops).
+  for (std::size_t n = 1; n <= 12; ++n) {
+    for (std::size_t d = 0; d < n; ++d) {
+      if ((n * d) % 2 != 0) continue;
+      for (std::uint64_t seed = 1; seed <= 300; ++seed) {
+        EdgeList<std::uint64_t> g;
+        bool threw = false;
+        try {
+          g = sssp::gen::random_regular<std::uint64_t>(n, d, MultiEdgePolicy::kSwitchToSimple,
+                                                       opts(seed));
+        } catch (const std::exception&) {
+          threw = true;
+        }
+        bool ok = !threw && g.num_vertices == n && g.edges.size() * 2 == n * d && is_simple(g);
+        if (ok) {
+          for (auto deg : degrees(g)) ok = ok && deg == d;
+        }
+        if (!ok) {
+          INFO("n=" << n << " d=" << d << " seed=" << seed << " threw=" << threw);
+          REQUIRE(ok);
+        }
+      }
+    }
+  }
+}
+
+TEST_CASE("random regular switching is deterministic, also when it has to start over",
+          "[graph][generators][regular]") {
+  auto edges_of = [](std::size_t n, std::size_t d, std::uint64_t seed) {
+    const auto g = sssp::gen::random_regular<std::uint64_t>(n, d, MultiEdgePolicy::kSwitchToSimple,
+                                                            opts(seed));
+    std::vector<std::pair<Vertex, Vertex>> out;
+    for (const auto& e : g.edges) out.emplace_back(e.u, e.v);
+    return out;
+  };
+  // (3, 2, 20) is the regression case whose first configuration is three self-loops.
+  REQUIRE(edges_of(3, 2, 20) == edges_of(3, 2, 20));
+  for (std::uint64_t seed = 1; seed <= 100; ++seed) {
+    INFO("seed=" << seed);
+    REQUIRE(edges_of(6, 5, seed) == edges_of(6, 5, seed));
+  }
+  // No simple d-regular graph exists: still a clear invalid_argument.
+  REQUIRE_THROWS_AS(
+      sssp::gen::random_regular<std::uint64_t>(5, 3, MultiEdgePolicy::kSwitchToSimple, opts(1)),
+      std::invalid_argument);  // n*d odd
+  REQUIRE_THROWS_AS(
+      sssp::gen::random_regular<std::uint64_t>(6, 6, MultiEdgePolicy::kSwitchToSimple, opts(1)),
+      std::invalid_argument);  // d == n
+  REQUIRE_THROWS_AS(
+      sssp::gen::random_regular<std::uint64_t>(4, 7, MultiEdgePolicy::kSwitchToSimple, opts(1)),
+      std::invalid_argument);  // d > n
+}
+
 TEST_CASE("configuration model keeps or drops loops and multi-edges as requested",
           "[graph][generators][regular]") {
   const auto keep =

@@ -153,6 +153,20 @@ on every platform and standard library. The rules below make that hold.
   purpose: topology = 0, weights = 1, connecting edges = 2. With the same seed, the topology is
   therefore identical whatever the weight distribution and whether `W` is `uint64_t` or `double`.
 
+### Output changes between versions
+
+- **P2-DIFF-REGULAR-SWITCH (`random_regular`, `kSwitchToSimple`; `sssp_gen --type regular
+  --multi switch`).** Before this fix, some valid arguments threw "switching did not converge",
+  most often for small dense cases (d = n − 1, about 3–10% of seeds for n ≤ 12; e.g.
+  n = 3, d = 2, seed = 20). Those arguments now return a simple d-regular graph. The
+  generator starts over from a new configuration drawn from the same topology stream (see
+  §9). Every argument that succeeded before gives byte-identical output, because the first
+  configuration and its swaps use the stream exactly as before. We checked this by comparing
+  the old and new library on 74,955 argument sets: all three policies, n ≤ 16 × all valid d ×
+  seeds 1..200, and n ∈ {100, 1000, 5000} × d ∈ {2, 3, 4, 7, 10, 20} with and without
+  `connected`. The 74,778 sets that succeeded before give identical hashes. The other 177
+  used to throw and now succeed. `kKeep` and `kDrop` did not change.
+
 ## 5. Weight distributions (`WeightSpec`)
 
 `WeightSpec` has the fields `dist`, `lo` (default 1), `hi` (100), `mean` (10),
@@ -294,10 +308,17 @@ always produce byte-identical output.
 ## 9. Known limits
 
 - Generators need n < 2^32, the 32-bit `Vertex` type. Pair keys pack two vertices into 64 bits.
-- `chung_lu` needs m ≤ n(n−1)/4, so that redrawing duplicates terminates quickly. It throws
-  `std::runtime_error` after 1000 + 100·m rejected draws.
-- `random_regular` with `kSwitchToSimple` throws `std::invalid_argument` if the swaps do not
-  converge within 1000 + 100·(n·d/2) proposals. In practice they converge quickly for d ≪ n.
+- `chung_lu` needs m = round(n·avg_degree/2) ≤ ⌊⌊n(n−1)/2⌋ / 2⌋ (integer division), at most
+  half of all vertex pairs, so that redrawing duplicates terminates quickly. Otherwise it throws
+  `std::invalid_argument`. It throws `std::runtime_error` after 1000 + 100·m rejected draws.
+- `random_regular` with `kSwitchToSimple` throws `std::invalid_argument` when no simple
+  d-regular graph exists (n·d odd, or d ≥ n with d > 0). For valid arguments, the swaps may
+  not finish within 1000 + 100·(n·d/2) proposals. Some configurations can never be repaired,
+  for example three self-loops for n = 3, d = 2. When that happens, the generator draws a new
+  configuration from the same seeded stream and tries again. It throws `std::runtime_error`
+  only if 100 configurations fail. A single configuration failed for at most 31 of 300 seeds
+  per (n, d) with n ≤ 12, so this has not been observed. Dense cases (d close to n) are slow,
+  because most proposals are rejected.
 - `DimacsArcMode::kMergeReversePairs` keeps a hash table of unmatched arcs, so its memory grows
   in proportion to the number of arcs on large road networks.
 - `det_log` and `det_exp` are accurate to a few ulp, not correctly rounded. They are exactly
