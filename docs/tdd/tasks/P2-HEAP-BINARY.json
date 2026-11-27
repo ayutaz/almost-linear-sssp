@@ -1,0 +1,53 @@
+{
+ "id": "P2-HEAP-BINARY",
+ "spec": "Lazy-deletion binary min-heap of (key, value) entries with pre-reservable storage (no reallocation within capacity), key-only comparisons, comparison counter, out_of_range on empty top/pop",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/baseline/heaps/binary_heap.hpp"
+  ],
+  "tests": [
+   "tests/unit/baseline/heaps/test_binary_heap.cpp",
+   "tests/property/baseline/test_binary_heap_properties.cpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "binary heap pops entries in non-decreasing key order",
+    "binary heap keeps duplicate keys as separate entries",
+    "binary heap works with floating-point keys including zero",
+    "binary heap does not reallocate within reserved capacity",
+    "binary heap rejects top/pop on an empty heap",
+    "binary heap counts key comparisons",
+    "binary heap matches a sorted multiset (3 properties x 5 seeds)"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'error|FAILED' | head -5; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'baseline/heaps/binary_heap.hpp' file not found (heap not implemented yet)",
+   "timestamp": "2026-11-27T10:22:14+09:00",
+   "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_binary_heap.cpp.o \ntests/unit/baseline/heaps/test_binary_heap.cpp:7:10: fatal error: 'baseline/heaps/binary_heap.hpp' file not found\n1 error generated.\nFAILED: [code=1] tests/CMakeFiles/sssp_property_tests.dir/property/baseline/test_binary_heap_properties.cpp.o \ntests/property/baseline/test_binary_heap_properties.cpp:8:10: fatal error: 'baseline/heaps/binary_heap.hpp' file not found"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "binary heap unit + property tests"
+   ],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug -R 'binary heap' 2>&1 | tail -4",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:22:31+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\n[1/5] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_binary_heap.cpp.o\n[2/5] Building CXX object tests/CMakeFiles/sssp_property_tests.dir/property/baseline/test_binary_heap_properties.cpp.o\n[3/5] Linking CXX executable tests/sssp_unit_tests\n[4/5] Linking CXX executable tests/sssp_property_tests\nproperty    =   0.05 sec*proc (3 tests)\nunit        =   0.09 sec*proc (6 tests)\n\nTotal Test time (real) =   0.80 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "cmake --build --preset debug -j8 && ctest --preset debug 2>&1 | grep -E 'tests passed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:26:15+09:00",
+   "output_tail": "[0/2] Re-checking globbed directories...\n[1/7] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_radix_heap.cpp.o\n[2/7] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_dary_heap.cpp.o\n[3/7] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/baseline/heaps/test_fibonacci_heap.cpp.o\n[4/7] Linking CXX executable tests/sssp_unit_tests\n[5/7] Building CXX object tests/CMakeFiles/sssp_property_tests.dir/property/baseline/test_indexed_heap_properties.cpp.o\n[6/7] Linking CXX executable tests/sssp_property_tests\n100% tests passed, 0 tests failed out of 42"
+  }
+ ],
+ "commit": null
+}
