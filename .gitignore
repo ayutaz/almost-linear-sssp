@@ -24,3 +24,6 @@ htmlcov/
 .claude/state/
 # OS
 .DS_Store
+
+# Claude Code worktrees for parallel agents
+.claude/worktrees/
