@@ -36,6 +36,7 @@
 #include "paper/local/threshold_joins.hpp"
 #include "sssp/graph.hpp"
 #include "support/prng.hpp"
+#include "unit/paper/local/clustered_graphs.hpp"
 #include "unit/paper/local/local_test_support.hpp"
 
 using sssp::CsrGraph;
@@ -49,36 +50,6 @@ using sssp::paper::StateId;
 namespace lt = sssp::test::local;
 
 namespace {
-
-/// Clustered graph: clusters of 3..8 vertices with light edges (1..3, plus a few chords),
-/// joined in a random tree by heavy edges 2^U[54, 56], plus a few extra heavy edges. Path sums
-/// stay below 2^63 for n <= 64.
-std::vector<Edge<std::uint64_t>> clustered(std::size_t n, std::uint64_t seed) {
-  sssp::test::SplitMix64 rng(seed);
-  std::vector<Edge<std::uint64_t>> e;
-  std::vector<std::size_t> start{0};
-  while (start.back() < n)
-    start.push_back(std::min<std::size_t>(n, start.back() + 3 + rng.below(6)));
-  const std::size_t k = start.size() - 1;
-  for (std::size_t c = 0; c < k; ++c) {
-    for (std::size_t v = start[c] + 1; v < start[c + 1]; ++v) {
-      e.push_back({static_cast<Vertex>(start[c] + rng.below(v - start[c])), static_cast<Vertex>(v),
-                   rng.between(1, 3)});
-    }
-    if (start[c + 1] - start[c] >= 3) {
-      e.push_back({static_cast<Vertex>(start[c]), static_cast<Vertex>(start[c + 1] - 1),
-                   rng.between(1, 3)});
-    }
-  }
-  const auto heavy = [&] { return std::uint64_t{1} << rng.between(54, 56); };
-  const auto pick = [&](std::size_t c) {
-    return static_cast<Vertex>(start[c] + rng.below(start[c + 1] - start[c]));
-  };
-  for (std::size_t c = 1; c < k; ++c) e.push_back({pick(rng.below(c)), pick(c), heavy()});
-  for (std::size_t i = 0; i < k / 2; ++i)
-    e.push_back({pick(rng.below(k)), pick(rng.below(k)), heavy()});
-  return e;
-}
 
 /// Kosaraju SCC ids of the state arcs accepted by `keep`.
 template <class W, class Keep>
@@ -355,7 +326,7 @@ void sweep(Coverage& cov, bool with_clusters) {
       for (const std::size_t n : {32U, 40U, 64U}) {
         for (const std::size_t b : {2U, 3U, 5U, 8U}) {
           for (std::uint64_t seed = 1; seed <= 6; ++seed) {
-            const auto g = CsrGraph<W>::from_edges(n, clustered(n, seed * 31 + b));
+            const auto g = CsrGraph<W>::from_edges(n, lt::clustered(n, seed * 31 + b));
             INFO("clustered n=" << n << " b=" << b << " seed=" << seed);
             check_one(g, b, cov);
           }

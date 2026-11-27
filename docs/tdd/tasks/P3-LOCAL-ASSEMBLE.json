@@ -9,7 +9,8 @@
     ],
     "tests": [
       "tests/unit/paper/local/test_local_assemble.cpp",
-      "tests/property/paper/test_local_assemble_property.cpp"
+      "tests/property/paper/test_local_assemble_property.cpp",
+      "tests/unit/paper/local/clustered_graphs.hpp"
     ],
     "covers": [
       "src/paper/local/threshold_joins.cpp",
@@ -18,7 +19,7 @@
       "src/paper/hierarchy/ordered_hierarchy.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "REFACTOR",
   "events": [
     {
       "phase": "RED",
@@ -36,6 +37,14 @@
       "exit_code": 0,
       "timestamp": "2026-11-27T12:09:39+09:00",
       "output_tail": "        Start 853: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n846/853 Test #851: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.13 sec\n847/853 Test #852: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.15 sec\n848/853 Test #853: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.27 sec\n849/853 Test #845: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    1.02 sec\n850/853 Test #835: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    1.54 sec\n851/853 Test #834: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    1.55 sec\n852/853 Test #841: property:name_routes: Mode A certificates against Bellman-Ford, measured acceptance .....................................................................   Passed    1.50 sec\n853/853 Test #846: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    6.35 sec\n\n100% tests passed, 0 tests failed out of 853\n\nLabel Time Summary:\ndifferential    =   4.39 sec*proc (44 tests)\nintegration     =   0.72 sec*proc (6 tests)\nproperty        =  29.41 sec*proc (38 tests)\nregression      =   0.83 sec*proc (6 tests)\nunit            = 223.91 sec*proc (759 tests)\n\nTotal Test time (real) =  37.29 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:22:48+09:00",
+      "output_tail": "        Start 799: differential:paper_sssp: hand example with zero classes, loops and an unreachable part - std::uint64_t\n877/884 Test #798: differential:the missing outer construction throws instead of being replaced by a search ................................................................   Passed    0.01 sec\n878/884 Test #818: differential:baselines agree on generated graphs: tree - double .........................................................................................   Passed    0.02 sec\n879/884 Test #802: differential:paper_sssp: all-zero graph contracts to one vertex - double ................................................................................   Passed    0.01 sec\n880/884 Test #826: differential:overflow: Bellman-Ford and Dijkstra differ by design (uint64) ..............................................................................   Passed    0.01 sec\n881/884 Test #800: differential:paper_sssp: hand example with zero classes, loops and an unreachable part - double .........................................................   Passed    0.01 sec\n882/884 Test #801: differential:paper_sssp: all-zero graph contracts to one vertex - std::uint64_t .........................................................................   Passed    0.01 sec\n883/884 Test #799: differential:paper_sssp: hand example with zero classes, loops and an unreachable part - std::uint64_t ..................................................   Passed    0.01 sec\n884/884 Test #796: differential:paper algorithm names ......................................................................................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 884\n\nLabel Time Summary:\ndifferential    =  24.60 sec*proc (55 tests)\nintegration     =   0.65 sec*proc (6 tests)\nproperty        =  32.01 sec*proc (41 tests)\nregression      =   0.11 sec*proc (6 tests)\nunit            = 136.54 sec*proc (776 tests)\n\nTotal Test time (real) =  24.29 sec"
     }
   ],
   "commit": null
