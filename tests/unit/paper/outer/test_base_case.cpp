@@ -16,12 +16,14 @@
 #include <vector>
 
 #include "paper/outer/base_case.hpp"
+#include "paper/primitives/edge_pairs.hpp"
 #include "sssp/baseline.hpp"
 #include "sssp/generators.hpp"
 #include "sssp/graph.hpp"
 #include "sssp/graph_formats.hpp"
 #include "sssp/result.hpp"
 #include "sssp/verify.hpp"
+#include "support/prng.hpp"
 
 using sssp::CsrGraph;
 using sssp::Edge;
@@ -166,6 +168,54 @@ TEMPLATE_TEST_CASE("outer base case: lightest edge per vertex pair (Alg 8 l.5)",
     const auto r = run(v, g, 2);
     CHECK(r.dist == std::vector<W>{W{4}, W{1}, W{0}});
     CHECK(r.parent_edge == std::vector<EdgeId>{1, 5, kNoEdge});
+  }
+}
+
+TEMPLATE_TEST_CASE("outer base case searches exactly the lightest_edge_pairs survivors (Alg 8 l.5)",
+                   "[paper][outer][base_case][edge_pairs]", std::uint64_t, double) {
+  using W = TestType;
+  // Random multigraphs with loops, parallel edges, zero weights and many equal weights. The
+  // survivors of Alg 8 l.5 are those of the shared primitive (edge_pairs.hpp, checked there
+  // against a std::map reference); the search then runs on the survivors in increasing id order.
+  sssp::test::SplitMix64 rng(2611);
+  for (std::uint64_t seed = 1; seed <= 150; ++seed) {
+    const std::size_t n = 1 + rng.below(24);
+    const std::size_t m = rng.below(6 * n + 1);
+    const std::uint64_t max_w = seed % 2 == 0 ? 3 : 1000;
+    std::vector<Edge<W>> edges;
+    for (std::size_t i = 0; i < m; ++i) {
+      edges.push_back({static_cast<Vertex>(rng.below(n)), static_cast<Vertex>(rng.below(n)),
+                       static_cast<W>(rng.between(0, max_w))});
+    }
+    const auto g = make<W>(n, edges);
+    const auto pairs = sssp::paper::lightest_edge_pairs<W>(n, g.edges());
+    [[maybe_unused]] std::uint64_t non_loops = 0;  // read only with SSSP_DIAGNOSTICS
+    std::vector<Edge<W>> kept_edges;
+    for (const auto& e : edges) non_loops += e.u != e.v ? 1 : 0;
+    for (const EdgeId k : pairs.kept) kept_edges.push_back(edges[k]);
+    const auto h = make<W>(n, kept_edges);  // edge j of h is edge pairs.kept[j] of g
+    const auto s = static_cast<Vertex>(rng.below(n));
+    for (const Variant v : kVariants) {
+      INFO("seed " << seed << " n " << n << " m " << m << " " << expected_reason(v));
+      const auto r = run(v, g, s);
+      const auto on_kept = run(v, h, s);
+      CHECK(r.diag.counters.at("outer_base_pair_edges_kept") == pairs.kept.size());
+      CHECK(r.diag.counters.at("outer_base_pair_edges_removed") == m - pairs.kept.size());
+      require_single_record(r, v, n, m);
+      REQUIRE(r.dist == on_kept.dist);
+      REQUIRE(r.parent == on_kept.parent);
+      for (std::size_t x = 0; x < n; ++x) {
+        const EdgeId e = on_kept.parent_edge[x];
+        REQUIRE(r.parent_edge[x] == (e == kNoEdge ? kNoEdge : pairs.kept[e]));
+      }
+#if SSSP_DIAGNOSTICS
+      // l.5 compares lengths once per further edge of a pair group; the survivors alone have no
+      // parallel edges and no loops, so the difference is exactly that filter's cost.
+      CHECK(r.diag.ops.comparisons ==
+            on_kept.diag.ops.comparisons + (non_loops - pairs.kept.size()));
+#endif
+      REQUIRE(sssp::verify_sssp(g, s, r).ok);
+    }
   }
 }
 

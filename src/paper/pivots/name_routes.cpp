@@ -6,8 +6,8 @@
 //   N-2 Among parallel edges of equal least weight the representative is the least index.
 //   N-3 Loops are rejected: Definition 6.1 instances are loopless and Sec 6 lets the caller
 //       discard loops before forming the instance.
-//   N-4 The lightest edge per endpoint pair is selected here (stable radix sort, Lemma 3.1);
-//       the shared builder of task P3-EDGE-PAIRS does not exist yet.
+//   N-4 The representatives come from the shared primitive edge_pairs (in increasing edge id);
+//       U lists them in increasing (min, max) endpoint order (stable radix sort, Lemma 3.1).
 //   N-5 Dictionary records are sorted by (weight, record index) with a merge sort; equal
 //       weights are coalesced (Alg 5 l.16).
 //   N-6 (Q-40) The dictionary size is recorded ("name_routes.dictionary_size"); Lemma 6.8 states
@@ -25,6 +25,7 @@
 #include "paper/model/ilog.hpp"
 #include "paper/model/length.hpp"
 #include "paper/model/params.hpp"
+#include "paper/primitives/edge_pairs.hpp"
 
 namespace sssp::paper::pivots {
 namespace {
@@ -137,38 +138,20 @@ RouteNames<W> name_routes(const PivotRoutingInstance<W>& g, model::WordRng& rng,
   const model::LenOps<W> lops(&out.diag.ops);
   const auto len = [](W w) { return model::Len<W>::finite(w); };
 
-  // Alg 5 l.4: the least-weight representative of each distinct endpoint pair, by a stable
-  // counting sort of the integer pairs (min, max) (Lemma 6.8(3)). 【解釈】N-2, N-4: ties by the
-  // least index; selected here.
-  std::vector<std::uint32_t> ids(m);
-  std::iota(ids.begin(), ids.end(), 0U);
+  // Alg 5 l.4: the least-weight representative of each distinct endpoint pair (Lemma 6.8(3)), by
+  // the shared primitive (edge_pairs.hpp: two stable counting sorts of the integer pairs, Lemma
+  // 3.1, one counted length comparison per further edge of a pair). 【解釈】N-2: ties by the least
+  // index. Loops were rejected above, so every edge has a representative.
+  const LightestEdgePairs pairs = lightest_edge_pairs<W>(t, g.edges, &out.diag.ops);
+  const std::vector<EdgeId>& rep = pairs.representative;
+  // 【解釈】N-4: U is a set; it is listed in increasing (min, max) endpoint order (stable radix
+  // sort, Lemma 3.1), which fixes the samples a given seed draws (Alg 5 l.6).
   const std::array<std::size_t, 2> ranges{t, t};
-  const std::vector<std::uint32_t> by_pair =
-      radix_sort_stable(ids, ranges, [&](std::uint32_t o, std::size_t k) -> std::size_t {
+  std::vector<std::uint32_t> residual =  // U, as representative edge ids
+      radix_sort_stable(pairs.kept, ranges, [&](std::uint32_t o, std::size_t k) -> std::size_t {
         const auto& e = g.edges[o];
         return k == 0 ? std::min(e.u, e.v) : std::max(e.u, e.v);
       });
-  std::vector<std::uint32_t> rep(m);
-  std::vector<std::uint32_t> residual;  // U, as representative edge ids
-  for (std::size_t i = 0; i < m;) {
-    const auto& first = g.edges[by_pair[i]];
-    const Vertex lo = std::min(first.u, first.v);
-    const Vertex hi = std::max(first.u, first.v);
-    std::size_t k = i;
-    std::uint32_t best = by_pair[i];
-    while (k < m && std::min(g.edges[by_pair[k]].u, g.edges[by_pair[k]].v) == lo &&
-           std::max(g.edges[by_pair[k]].u, g.edges[by_pair[k]].v) == hi) {
-      const std::uint32_t o = by_pair[k];
-      if (lops.less(model::EdgeKey<W>{g.edges[o].weight, o},
-                    model::EdgeKey<W>{g.edges[best].weight, best})) {
-        best = o;
-      }
-      ++k;
-    }
-    for (std::size_t r = i; r < k; ++r) rep[by_pair[r]] = best;
-    residual.push_back(best);
-    i = k;
-  }
   cnt["name_routes.representatives"] += residual.size();
 
   std::vector<W> records;                        // dictionary records (unsorted)
