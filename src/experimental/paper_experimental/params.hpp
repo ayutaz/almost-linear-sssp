@@ -11,7 +11,15 @@
 //   local.threshold   k > c * L_k^e, paper c = 2, e = 4 (Sec 2 l.286, Alg 4 l.2)      D-7
 //   local.separator   b, paper L_k^4 (Sec 5.1 l.967)                                   D-7
 //   local.alignment   Sec 5.4 c = 10 / N^16 (paper) or the Lambda formulas             D-8
+//                     (ignored under D-11, see below)
 //   local.assembly    Sec 5.4 grid (paper) or the exact-height assembly                D-11
+//
+// The exact-height assembly (D-11) does not use the alignment. Both alignments stay selectable
+// with it (Q-61), but neither has any effect: local_branch accepts every k >= 2 under D-11
+// whatever the alignment (Q-60; the Sec 5.4 l.1206 precondition belongs to the paper's grid),
+// and parameter_log() writes the alignment value with the suffix " (ignored under D-11)". The
+// suffix does not change whether the entry deviates: the paper's alignment under D-11 is not a
+// deviation, the Lambda alignment keeps its D-8 tag (it is a non-paper setting, without effect).
 //   outer.threshold   N > c * L_N^e, paper c = 1, e = 64 (Sec 2 l.286, Alg 8 l.4)      D-7
 //   outer.separator   b, paper L_N^64 (Sec 7.1 l.1644)                                 D-7
 //   outer.sample_factor / residual_factor / p_log2   16t, 32t, P (Alg 5 l.3-6)         D-17
@@ -93,9 +101,11 @@ class SeparatorRule {
 /// Sec 5.4 alignment test and support: the paper's s_U >= sigma_U / N^10 with support
 /// [., N^16 sigma] (valid for k >= max(32, b + 1), Q-03 conservative variant), or deviation D-8:
 /// Lambda = 2N * 3hK^2 and support end 2(3hK^2)^2 N^3 sigma (claimed for N >= 2, b >= 1).
+/// Used by the grid assembly only; ignored under LocalAssembly::kExactHeight (Q-61).
 enum class LocalAlignment : std::uint8_t { kPaper, kLambda };
 
-/// Sec 5.4 grid assembly (paper), or the exact-height assembly of deviation D-11.
+/// Sec 5.4 grid assembly (paper), or the exact-height assembly of deviation D-11 (no
+/// alignment, N >= 2).
 enum class LocalAssembly : std::uint8_t { kGrid, kExactHeight };
 
 /// H of Sec 6.2 l.1491: the paper's least power of two >= (16t)^5, or D-9's least power of two
@@ -195,11 +205,14 @@ struct OuterDerived {
 
 /// Which branch Alg 4 takes on k vertices under these parameters. kUnsupported: the size test
 /// selects the radial construction but its preconditions do not hold (Sec 5.4 l.1206 for the
-/// paper's formulas, N >= 2 for D-8). The caller must treat such an input as a failure; it may
-/// not substitute another construction.
+/// paper's formulas with the grid, N >= 2 for D-8 and for D-11 under either alignment, Q-60;
+/// the same test as local_assembly_variant_applies). The caller must treat such an input as a
+/// failure; it may not substitute another construction.
 enum class LocalBranch : std::uint8_t { kBaseCase, kRadial, kUnsupported };
 
-/// One logged parameter. `deviation` is empty iff value == paper.
+/// One logged parameter. `deviation` is empty iff the chosen setting is the paper's, i.e. iff
+/// value == paper once a " (ignored under D-<n>)" suffix (a setting without effect, Q-61) is
+/// removed from value.
 struct ParamEntry {
   std::string key;
   std::string value;

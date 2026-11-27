@@ -2,6 +2,8 @@
 # Design notes: docs/design/ci.md
 name: sanitizer
 
+run-name: ${{ inputs.ref != '' && format('{0} {1} os={2}', github.workflow, inputs.ref, inputs.os) || github.event.pull_request.title || github.event.head_commit.message || github.workflow }}
+
 on:
   push:
     branches: [main]
@@ -15,12 +17,22 @@ on:
   schedule:
     - cron: "41 4 * * 1" # weekly, Monday 04:41 UTC
   workflow_dispatch:
+    inputs:
+      os:
+        description: "all = ubuntu + macOS; ubuntu = Linux jobs only (used for wip/ task branches to spare the macOS runner quota)"
+        type: choice
+        options: [all, ubuntu]
+        default: all
+      ref:
+        description: "commit to test instead of the dispatched ref (a wip/ branch SHA); lets main's workflow run on an older branch"
+        type: string
+        default: ""
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.ref }}
   cancel-in-progress: true
 
 env:
@@ -36,20 +48,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-26.04
-            # LeakSanitizer is part of ASan on Linux and is enabled explicitly.
-            asan_options: "detect_leaks=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
-          - os: macos-26
-            # Apple clang's ASan does NOT support LeakSanitizer on macOS (detect_leaks=1 is
-            # rejected/ignored there), so leaks are only checked by the Linux job.
-            asan_options: "detect_leaks=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+        # workflow_dispatch with os=ubuntu drops the macOS job (push events leave inputs empty).
+        os: [ubuntu-26.04, macos-26]
+        exclude:
+          - os: ${{ inputs.os == 'ubuntu' && 'macos-26' || 'none' }}
     env:
-      ASAN_OPTIONS: ${{ matrix.asan_options }}
+      # LeakSanitizer is part of ASan on Linux and is enabled explicitly there. Apple clang's ASan
+      # does NOT support LeakSanitizer on macOS (detect_leaks=1 is rejected/ignored), so leaks are
+      # only checked by the Linux job. (Selected by expression, not matrix.include, so that the
+      # os=ubuntu exclude cannot be undone by an include entry.)
+      ASAN_OPTIONS: ${{ format('detect_leaks={0}:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1', matrix.os == 'macos-26' && '0' || '1') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
 
       - name: Toolchain (Ubuntu, apt clang ${{ env.LLVM_MAJOR }})
         if: runner.os == 'Linux'

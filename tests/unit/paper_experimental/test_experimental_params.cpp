@@ -125,6 +125,111 @@ TEST_CASE("experimental params: constants that cannot be changed even in Mode B 
   }
 }
 
+TEST_CASE("experimental params: every fixed constant is rejected above and below the paper",
+          "[paper_experimental][params]") {
+  // Every field of LocalFixed, OuterFixed, EstimateFixed, CalendarFixed and HierarchyFixed,
+  // with the value the paper fixes (PAPER_MAPPING §2). Each field is moved one step down and one
+  // step up, and to the extremes 0 and UINT_MAX of its type. Every paper value is >= 1, so the
+  // downward direction exists for every field; the only direction the type cannot express is
+  // below 0, which is why 0 is the lowest value tried. The paper value itself must be accepted,
+  // which also checks that each setter writes the field it names.
+  struct Field {
+    const char* name;
+    unsigned paper;
+    std::function<void(pe::LocalParams&, pe::OuterParams&, pe::HierarchyFixed&, unsigned)> set;
+  };
+  const std::vector<Field> fields = {
+      {"local.shell_ratio_factor", 8,  // Sec 5.2 l.1029
+       [](auto& l, auto&, auto&, unsigned v) { l.fixed.shell_ratio_factor = v; }},
+      {"local.near_ratio_exponent", 2,  // Sec 5.2
+       [](auto& l, auto&, auto&, unsigned v) { l.fixed.near_ratio_exponent = v; }},
+      {"local.macro_exponent", 3,  // Sec 5.2 l.1021
+       [](auto& l, auto&, auto&, unsigned v) { l.fixed.macro_exponent = v; }},
+      {"local.align_exponent", 10,  // Sec 5.4 l.1206
+       [](auto& l, auto&, auto&, unsigned v) { l.fixed.align_exponent = v; }},
+      {"local.support_exponent", 16,  // Sec 5.4 l.1216
+       [](auto& l, auto&, auto&, unsigned v) { l.fixed.support_exponent = v; }},
+      {"outer.shell_ratio", 16,  // Sec 8.1 l.1977
+       [](auto&, auto& o, auto&, unsigned v) { o.fixed.shell_ratio = v; }},
+      {"outer.near_ratio", 256,  // Sec 8.1 l.1977
+       [](auto&, auto& o, auto&, unsigned v) { o.fixed.near_ratio = v; }},
+      {"outer.scale_factor_coeff", 2,  // Sec 8.2 l.2080
+       [](auto&, auto& o, auto&, unsigned v) { o.fixed.scale_factor_coeff = v; }},
+      {"outer.support_cube", 3,  // Sec 8.2
+       [](auto&, auto& o, auto&, unsigned v) { o.fixed.support_cube = v; }},
+      {"outer.band_factor", 4,  // Sec 6.2 l.1473
+       [](auto&, auto& o, auto&, unsigned v) { o.estimate.band_factor = v; }},
+      {"outer.window_exponent", 2,  // Sec 6.2 l.1490
+       [](auto&, auto& o, auto&, unsigned v) { o.estimate.window_exponent = v; }},
+      {"outer.grid_octaves_below", 7,  // Sec 7.3 l.1697
+       [](auto&, auto& o, auto&, unsigned v) { o.calendars.octaves_below = v; }},
+      {"outer.grid_octaves_above", 2,  // Sec 7.3 l.1697
+       [](auto&, auto& o, auto&, unsigned v) { o.calendars.octaves_above = v; }},
+      {"outer.width_offset", 5,  // Sec 7.3 l.1698
+       [](auto&, auto& o, auto&, unsigned v) { o.calendars.width_offset = v; }},
+      {"outer.overlap_factor", 4,  // Lemma 7.6
+       [](auto&, auto& o, auto&, unsigned v) { o.calendars.overlap_factor = v; }},
+      {"outer.crossing_factor", 16,  // Lemma 7.8
+       [](auto&, auto& o, auto&, unsigned v) { o.calendars.crossing_factor = v; }},
+      {"outer.atom_factor", 2,  // Lemma 7.5
+       [](auto&, auto& o, auto&, unsigned v) { o.calendars.atom_factor = v; }},
+      {"hierarchy.normalization_link_factor", 4,  // Sec 4.1
+       [](auto&, auto&, auto& h, unsigned v) { h.normalization_link_factor = v; }},
+  };
+  constexpr unsigned kUMax = std::numeric_limits<unsigned>::max();
+  for (const auto& f : fields) {
+    INFO(f.name);
+    REQUIRE(f.paper >= 1);  // the downward direction exists
+    {
+      pe::LocalParams local;
+      pe::OuterParams outer;
+      pe::HierarchyFixed hier;
+      f.set(local, outer, hier, f.paper);
+      CHECK_NOTHROW(pe::PaperParams(local, outer, hier));
+    }
+    for (const unsigned v : {f.paper - 1, f.paper + 1, 0U, kUMax}) {
+      INFO("value " << v);
+      pe::LocalParams local;
+      pe::OuterParams outer;
+      pe::HierarchyFixed hier;
+      f.set(local, outer, hier, v);
+      CHECK_THROWS_AS(pe::PaperParams(local, outer, hier), std::invalid_argument);
+      CHECK_THROWS_WITH(pe::PaperParams(local, outer, hier), ContainsSubstring(f.name));
+    }
+  }
+}
+
+TEST_CASE("experimental params: separator exponents above 64 are rejected",
+          "[paper_experimental][params]") {
+  // The paper's largest separator is the outer b = L^64 (Sec 7.1 l.1644); PaperParams documents
+  // "a separator exponent above 64" as outside the domain, for the local and the outer rule.
+  for (const unsigned e : {65U, 66U, 128U, std::numeric_limits<unsigned>::max()}) {
+    INFO("e = " << e);
+    pe::LocalParams l;
+    l.separator = pe::SeparatorRule::power_of_l(e);
+    CHECK_THROWS_AS(pe::PaperParams(l, pe::OuterParams{}), std::invalid_argument);
+    CHECK_THROWS_WITH(
+        pe::PaperParams(l, pe::OuterParams{}),
+        ContainsSubstring("local.separator") && ContainsSubstring("L^" + std::to_string(e)));
+    pe::OuterParams o;
+    o.separator = pe::SeparatorRule::power_of_l(e);
+    CHECK_THROWS_AS(pe::PaperParams(pe::LocalParams{}, o), std::invalid_argument);
+    CHECK_THROWS_WITH(
+        pe::PaperParams(pe::LocalParams{}, o),
+        ContainsSubstring("outer.separator") && ContainsSubstring("L^" + std::to_string(e)));
+  }
+  // The boundary: L^64 (the paper's outer b) and L^0 are accepted for both rules.
+  for (const unsigned e : {0U, 1U, 4U, 63U, 64U}) {
+    INFO("e = " << e);
+    pe::LocalParams l;
+    l.separator = pe::SeparatorRule::power_of_l(e);
+    CHECK_NOTHROW(pe::PaperParams(l, pe::OuterParams{}));
+    pe::OuterParams o;
+    o.separator = pe::SeparatorRule::power_of_l(e);
+    CHECK_NOTHROW(pe::PaperParams(pe::LocalParams{}, o));
+  }
+}
+
 TEST_CASE("experimental params: invalid tunable values are rejected",
           "[paper_experimental][params]") {
   {
@@ -307,6 +412,90 @@ TEST_CASE("experimental params: local branch decision per instance",
   const pe::PaperParams lambda(l, pe::OuterParams{});
   CHECK(lambda.local_branch(1) == pe::LocalBranch::kUnsupported);
   CHECK(lambda.local_branch(2) == pe::LocalBranch::kRadial);
+}
+
+TEST_CASE("experimental params: D-11 accepts the radial branch for k >= 2 under either alignment",
+          "[paper_experimental][params]") {
+  // Q-60 (lead, 2026-11-27): the exact-height assembly (D-11) does not use the alignment, so the
+  // Sec 5.4 l.1206 precondition k >= max(32, b + 1) of the paper's alignment does not apply; D-11
+  // needs N >= 2 only (local_assembly_variant_applies, local_assembly.hpp), like D-8.
+  for (const std::uint64_t b : {std::uint64_t{1}, std::uint64_t{3}, std::uint64_t{40}}) {
+    for (const auto alignment : {pe::LocalAlignment::kPaper, pe::LocalAlignment::kLambda}) {
+      INFO("b = " << b << " alignment " << static_cast<int>(alignment));
+      pe::LocalParams l;
+      l.threshold = {0, 0};  // every k >= 1 passes the size test
+      l.separator = pe::SeparatorRule::constant(b);
+      l.alignment = alignment;
+      l.assembly = pe::LocalAssembly::kExactHeight;
+      const pe::PaperParams p(l, pe::OuterParams{});
+      CHECK(p.local_branch(1) == pe::LocalBranch::kUnsupported);  // N >= 2 (D-11)
+      for (std::uint64_t k = 2; k <= 64; ++k) {
+        INFO("k = " << k);
+        CHECK(p.local_branch(k) == pe::LocalBranch::kRadial);
+      }
+    }
+  }
+  // The size test still decides first: k <= L_k takes the base case.
+  pe::LocalParams l;
+  l.threshold = {1, 1};
+  l.separator = pe::SeparatorRule::constant(3);
+  l.assembly = pe::LocalAssembly::kExactHeight;
+  const pe::PaperParams exact(l, pe::OuterParams{});
+  CHECK(exact.local_branch(3) == pe::LocalBranch::kBaseCase);  // 3 <= L_3 = 3
+  CHECK(exact.local_branch(4) == pe::LocalBranch::kRadial);
+  // The paper's alignment with the grid keeps the Sec 5.4 l.1206 precondition.
+  l.assembly = pe::LocalAssembly::kGrid;
+  const pe::PaperParams grid(l, pe::OuterParams{});
+  CHECK(grid.local_branch(4) == pe::LocalBranch::kUnsupported);
+  CHECK(grid.local_branch(31) == pe::LocalBranch::kUnsupported);
+  CHECK(grid.local_branch(32) == pe::LocalBranch::kRadial);
+}
+
+TEST_CASE("experimental params: the alignment is logged as ignored under D-11",
+          "[paper_experimental][params]") {
+  // Q-61 (lead): both alignments stay selectable with D-11, but D-11 does not use the alignment;
+  // the parameter log says so in the value. The paper's alignment under D-11 is not a deviation
+  // (the only deviation is the assembly); the Lambda alignment keeps its D-8 tag.
+  pe::LocalParams l;
+  l.assembly = pe::LocalAssembly::kExactHeight;
+  {
+    const pe::PaperParams p(l, pe::OuterParams{});
+    const auto log = by_key(p.parameter_log());
+    CHECK(log.at("local.alignment").value == "paper (ignored under D-11)");
+    CHECK(log.at("local.alignment").paper == "paper");
+    CHECK(log.at("local.alignment").deviation.empty());
+    const auto dev = p.deviations();
+    REQUIRE(dev.size() == 1);
+    CHECK(dev[0].key == "local.assembly");
+    CHECK(dev[0].deviation == "D-11");
+#if SSSP_DIAGNOSTICS
+    sssp::Diagnostics diag;
+    p.record(diag);
+    CHECK(diag.counters.at("params.local.alignment=paper (ignored under D-11)") == 1);
+    CHECK(diag.counters.count("params.local.alignment=paper") == 0);
+    CHECK(diag.counters.count("params.deviation.D-8.local.alignment") == 0);
+    CHECK(diag.counters.at("params.deviation.D-11.local.assembly") == 1);
+    CHECK(diag.counters.at("params.deviations") == 1);
+#endif
+  }
+  l.alignment = pe::LocalAlignment::kLambda;
+  {
+    const pe::PaperParams p(l, pe::OuterParams{});
+    const auto log = by_key(p.parameter_log());
+    CHECK(log.at("local.alignment").value == "lambda (ignored under D-11)");
+    CHECK(log.at("local.alignment").deviation == "D-8");
+#if SSSP_DIAGNOSTICS
+    sssp::Diagnostics diag;
+    p.record(diag);
+    CHECK(diag.counters.at("params.local.alignment=lambda (ignored under D-11)") == 1);
+    CHECK(diag.counters.at("params.deviation.D-8.local.alignment") == 1);
+#endif
+  }
+  // Under the grid the alignment is used: no suffix.
+  l.assembly = pe::LocalAssembly::kGrid;
+  CHECK(by_key(pe::PaperParams(l, pe::OuterParams{}).parameter_log()).at("local.alignment").value ==
+        "lambda");
+  CHECK(by_key(pe::PaperParams{}.parameter_log()).at("local.alignment").value == "paper");
 }
 
 TEST_CASE("experimental params: bridge to the shared local component",

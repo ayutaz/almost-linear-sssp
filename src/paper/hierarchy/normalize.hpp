@@ -36,6 +36,10 @@
 // [Supplement] A doubling that overflows the weight type is treated as "larger than every
 // representable height" (saturation): it only occurs when 4 S(C) or the next table entry
 // exceeds the largest finite value, where the comparison it feeds is then decided anyway.
+// [Deviation D-23, proposed] For the same reason a mass S(C) that does not fit W saturates at
+// WeightTraits<W>::infinity() (sat::add, the D-13 helper): S(C) is only an upper bound, the link
+// test 4 S(C) >= h(P) is then true as it is for the true value, and Evaluate uses S(C) only in
+// saturating sums (evaluate.hpp). Counter normalize_saturated_masses.
 //
 // [Interpretation, proposed Q-50] The contracted forest is returned as an OrderedHierarchy whose
 // node heights are the UNITS nu(C) and whose connection constant is 2 c0. With these heights,
@@ -89,6 +93,7 @@ struct NormalizedHierarchy {
   /// S(C): the certified mass (topmost original mass after contraction), an upper bound on the
   /// physical distance between any two states below C (Lemma 4.3). Evaluate's expiry is
   /// D0 + S(C) (Sec 4.3 l.791) and supplemental offers use S(i) (l.826).
+  /// WeightTraits<W>::infinity() if S(C) does not fit W (saturated, D-23).
   std::vector<W> mass;
   /// h of the surviving input node (the topmost member of a contracted group).
   std::vector<W> original_height;
