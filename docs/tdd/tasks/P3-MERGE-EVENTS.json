@@ -1,0 +1,58 @@
+{
+  "id": "P3-MERGE-EVENTS",
+  "spec": "build_merge_events: Kruskal merge forest over candidate edges by (weight, id) with each equal-weight class merged simultaneously: one node per new component joining >= 2 previous components, height = the class weight, children increasing, the class's forest edges as node edges (children - 1); node set equals the threshold-component reference, LCA height equals the minimax value (Lemma 3.5); the local base case builds its hierarchy from it",
+  "paper_ref": "Sec 2 l.288-290; Sec 3.3 (Lemma 3.6); Lemma 3.5; Alg 4 l.4; Sec 5.4 l.1198-1199",
+  "files": {
+    "impl": [
+      "src/paper/primitives/merge_events.hpp",
+      "src/paper/primitives/merge_events.cpp",
+      "src/paper/local/base_case.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/primitives/test_merge_events.cpp",
+      "tests/unit/paper/local/test_local_base_case.cpp"
+    ],
+    "covers": [
+      "src/paper/primitives/dsu.hpp",
+      "src/paper/primitives/edge_pairs.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug 2>&1 | grep -E \"error|FAILED\" | head -5; exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/primitives/merge_events.hpp' file not found (build_merge_events module absent)",
+      "timestamp": "2026-11-27T11:35:43+09:00",
+      "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_merge_events.cpp.o \n./tests/unit/paper/primitives/test_merge_events.cpp:18:10: fatal error: 'paper/primitives/merge_events.hpp' file not found\n1 error generated."
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"merge forest of the lightest edges per pair\"'",
+      "exit_code": 8,
+      "reason": "base case still builds its own merge tree: children ordered by its private DSU representative ({10, 3} vs merge forest {3, 10}); only the child order differs",
+      "timestamp": "2026-11-27T11:38:23+09:00",
+      "output_tail": "with message:\n  seed 1 n 9 m 32\n\n===============================================================================\ntest cases:  1 |  0 passed | 1 failed\nassertions: 38 | 37 passed | 1 failed\n\n\n\n0% tests passed, 2 tests failed out of 2\n\nLabel Time Summary:\nunit    =   0.04 sec*proc (2 tests)\n\nTotal Test time (real) =   0.03 sec\n\nThe following tests FAILED:\n\t307 - unit:base case hierarchy is the merge forest of the lightest edges per pair - std::uint64_t (Failed) unit\n\t308 - unit:base case hierarchy is the merge forest of the lightest edges per pair - double (Failed) unit\nErrors while running CTest"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:39:32+09:00",
+      "output_tail": "        Start 567: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::DyadicSplitFindmin<std::uint64_t>\n689/696 Test #462: unit:level ancestor test block size must lie in [2, 8] ..................................................................................................   Passed    0.02 sec\n690/696 Test #526: unit:split-findmin: k=1 is one interval that cannot be split - sssp::paper::SplitFindminRef<std::uint64_t> ..............................................   Passed    0.03 sec\n691/696 Test #544: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t> ...................   Passed    0.03 sec\n692/696 Test #597: unit:split-findmin: block-edge layouts of Lemma 3.11 give correct minima - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t> ......................   Passed    0.06 sec\n693/696 Test #495: unit:lightest_edge_per_pair keeps the (length, index)-least edge per pair - std::uint64_t ...............................................................   Passed    0.03 sec\n694/696 Test #555: unit:split-findmin: equal keys are resolved by original index - sssp::paper::DyadicSplitFindmin<double> .................................................   Passed    0.04 sec\n695/696 Test #567: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::DyadicSplitFindmin<std::uint64_t> ...................................   Passed    0.04 sec\n696/696 Test #496: unit:lightest_edge_per_pair keeps the (length, index)-least edge per pair - double ......................................................................   Passed    0.05 sec\n\n100% tests passed, 0 tests failed out of 696\n\nLabel Time Summary:\ndifferential    =   2.11 sec*proc (27 tests)\nintegration     =   0.58 sec*proc (6 tests)\nproperty        =  19.25 sec*proc (30 tests)\nregression      =   0.09 sec*proc (5 tests)\nunit            =  86.77 sec*proc (628 tests)\n\nTotal Test time (real) =  13.65 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:41:22+09:00",
+      "output_tail": "        Start 462: unit:level ancestor test block size must lie in [2, 8]\n689/696 Test #609: unit:Floyd-Warshall on a hand-computed graph ............................................................................................................   Passed    0.02 sec\n690/696 Test #611: unit:verify accepts a correct shortest-path tree - U64 ..................................................................................................   Passed    0.02 sec\n691/696 Test #561: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ............................   Passed    0.02 sec\n692/696 Test #571: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::DyadicSplitFindmin<double> ..........................................   Passed    0.02 sec\n693/696 Test #545: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindmin<std::uint64_t> ..................................   Passed    0.02 sec\n694/696 Test #477: unit:mst_three_pass equals the Kruskal MST on a hand example - std::uint64_t ............................................................................   Passed    0.02 sec\n695/696 Test #566: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::SplitFindminRef<std::uint64_t> ......................................   Passed    0.02 sec\n696/696 Test #462: unit:level ancestor test block size must lie in [2, 8] ..................................................................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 696\n\nLabel Time Summary:\ndifferential    =   2.58 sec*proc (27 tests)\nintegration     =   0.73 sec*proc (6 tests)\nproperty        =  24.74 sec*proc (30 tests)\nregression      =   0.12 sec*proc (5 tests)\nunit            = 111.17 sec*proc (628 tests)\n\nTotal Test time (real) =  17.45 sec"
+    }
+  ],
+  "commit": null
+}
