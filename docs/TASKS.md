@@ -42,7 +42,7 @@ implementation commits on `main` (not the merge commits).
 | P0-FETCH-PAPER | P1 | DONE | — | (planned as P0-PAPER-FETCH) `scripts/fetch_paper.sh` downloads v1 PDF to `.cache/paper/`, verifies the pinned SHA-256, extracts text when `pdftotext` exists; never writes inside tracked paths | docs/tdd/tasks/P0-FETCH-PAPER.json | b7c601a |
 | P0-PUBLIC-SAFETY | P0 | DONE | — | `scripts/check_public_safety.py` audits files to be committed for local absolute paths, e-mails, tokens, private keys, paper copies, large files | docs/tdd/tasks/P0-PUBLIC-SAFETY.json | b7c601a |
 | P0-FIX-TIDY-SDK | P1 | DONE | — | `make tidy` passes the macOS SDK sysroot to Homebrew clang-tidy so standard headers resolve | docs/tdd/tasks/P0-FIX-TIDY-SDK.json | 0d9a93e |
-| P0-BOOTSTRAP | P1 | IN_PROGRESS | — | `scripts/bootstrap.sh` checks toolchain (clang, cmake, ninja, uv, gh), runs `uv sync`, configures debug preset. The script exists (added in c92a729) but has no TDD evidence; acceptance not verified — Work started, not yet integrated into main. | docs/tdd/tasks/P0-BOOTSTRAP.json | — |
+| P0-BOOTSTRAP | P1 | DONE | — | `scripts/bootstrap.sh` checks toolchain (clang, cmake, ninja, uv, gh), runs `uv sync`, configures debug preset. Done (merged in 8befa6d): clang++ and gh are checked by command presence; gh is optional and only warns when missing; an old cmake stops the script with exit 1; `cmake --preset debug` runs after `uv sync`. Tested by the 21 tests of `tests/python/test_bootstrap.py`, which run the script against a PATH of fake tools only and never run the real brew or apt. The README in all three languages was updated to match (b201e01). | docs/tdd/tasks/P0-BOOTSTRAP.json | f43dbc5 |
 
 ## Phase 1 — Research
 
