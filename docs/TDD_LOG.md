@@ -23,6 +23,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P2-BELLMAN-FORD | DONE | 1 | - | 10b7145 | Round-based, queue-free Bellman-Ford oracle for uint64_t and double: exact distances, a shortest-path tree with parent edge ids, unreachable = infinity, integer overflow of a true distance throws, comparison/addition counters |
 | P2-BENCH-ANALYZE | REFACTOR | 2 | - | - | make report: read results/raw/*.jsonl, validate, write summary CSVs and figures of measured data only; print データなし and write nothing when there is no data |
 | P2-BENCH-ENVINFO | REFACTOR | 1 | - | - | Environment capture for benchmark records: OS, CPU brand, P/E cores, RAM, arch, compiler, CMake build type/flags/diagnostics, git SHA/dirty, power/thermal state; macOS and Linux parsers; JSON CLI |
+| P2-BENCH-NO-SILENT-FAIL | DONE | 1 | none | c9a6e04 | run_benchmarks.sh reports a failed end-of-run environment capture on stderr and in the summary and exits 1 (the thermal validity rule needs the end state); fetch_paper.sh warns and removes a stale text copy when pdftotext fails instead of discarding the failure |
 | P2-BENCH-PAPER-REGISTER | DONE | 1 | none | 703adb2 | sssp_bench_runner and sssp_run accept paper-faithful and paper-faithful-d1 (uint64 and double), records carry the paper FallbackRecord, paper-faithful (scan base case) is refused with exit 3 above a vertex limit, and the benchmark plan schedules both names only where they are runnable |
 | P2-BENCH-PLAN | REFACTOR | 2 | - | - | Benchmark job plan for smoke/standard/full: one single-algorithm job per (build, graph config, algorithm), seeded shuffled order, filters, TSV CLI |
 | P2-BENCH-RUNNER | DONE | 3 | - | 5998c95 | sssp_bench_runner implements docs/design/benchmark_runner_cli.md: generator-compatible graph options, seeded sources and per-round algorithm order, warmup/trials, steady_clock ns phases (graph_gen/preprocess/sssp/tree/end_to_end/verify, null when not separable), verification outside the timed span, env-json copy, isolated peak RSS in bytes, diagnostics-gated ops/counters, exit codes 0/1/2/3/5, and JSONL records that pass bench.schema validate |
@@ -276,6 +277,15 @@ Do not edit by hand; edit the evidence files and regenerate.
 - RED (exit 2, 2026-11-27T10:28:58+0900): ModuleNotFoundError: bench.envinfo does not exist yet (feature absent) — `uv run pytest tests/python/test_bench_envinfo.py`
 - GREEN (exit 0, 2026-11-27T10:31:25+0900) — `uv run pytest tests/python/test_bench_envinfo.py`
 - REFACTOR (exit 0, 2026-11-27T10:43:41+0900) — `bash -c uv run ruff check scripts/bench scripts/analyze_results.py tests/python && uv run ruff format --check scripts/bench scripts/analyze_results.py tests/python && shellcheck scripts/run_benchmarks.sh && uv run pytest tests/python`
+
+## P2-BENCH-NO-SILENT-FAIL
+
+- Spec: run_benchmarks.sh reports a failed end-of-run environment capture on stderr and in the summary and exits 1 (the thermal validity rule needs the end state); fetch_paper.sh warns and removes a stale text copy when pdftotext fails instead of discarding the failure
+- Impl: `scripts/run_benchmarks.sh`, `scripts/fetch_paper.sh`, `scripts/coverage.sh`, `scripts/bootstrap.sh`
+- Tests: `tests/python/test_bench_run_script.py`, `tests/python/test_fetch_paper.py`
+- RED (exit 1, 2026-11-27T12:47:09+09:00): run_benchmarks.sh swallows a failed end-of-run envinfo with '\|\| true' (exit 0, no message, no env_end_failed in the summary); fetch_paper.sh discards pdftotext failures with '2>/dev/null \|\| true' and leaves the stale .txt — `uv run pytest -q tests/python/test_bench_run_script.py tests/python/test_fetch_paper.py`
+- GREEN (exit 0, 2026-11-27T12:48:41+09:00) — `uv run pytest -q tests/python`
+- REFACTOR (exit 0, 2026-11-27T12:49:16+09:00) — `uv run pytest -q tests/python`
 
 ## P2-BENCH-PAPER-REGISTER
 
