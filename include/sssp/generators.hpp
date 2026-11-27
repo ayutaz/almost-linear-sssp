@@ -15,7 +15,12 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <span>
+#include <string>
 #include <string_view>
+
+#include "sssp/graph.hpp"
+#include "sssp/graph_formats.hpp"
 
 namespace sssp::gen {
 
@@ -148,5 +153,134 @@ W sample_weight(const WeightSpec& spec, Xoshiro256ss& rng);
 std::string_view to_string(WeightDist d) noexcept;
 /// Inverse of to_string; throws std::invalid_argument for an unknown name.
 WeightDist parse_weight_dist(std::string_view name);
+
+// ------------------------------------------------------------------ graph generators
+//
+// All generators return an EdgeList<W> (W = std::uint64_t or double) and are deterministic in
+// (parameters, options). Topology, weights and connecting edges use three independent PRNG
+// sub-streams derived from options.seed, so the same seed gives the same topology for every
+// weight distribution and for both weight types.
+
+struct GenOptions {
+  WeightSpec weights{};
+  std::uint64_t seed = 1;
+  /// If true, components are joined afterwards by connect_components (random tree over the
+  /// components, weights from `weights`). Generators that are connected by construction ignore it.
+  bool connected = false;
+};
+
+/// Erdős–Rényi G(n, m) with m = round(n * avg_degree / 2): m distinct pairs drawn uniformly
+/// (no self-loops, no multi-edges). Throws std::invalid_argument if m > n(n-1)/2.
+template <class W>
+EdgeList<W> erdos_renyi(std::size_t n, double avg_degree, const GenOptions& opt);
+template <class W>
+EdgeList<W> erdos_renyi_gnm(std::size_t n, std::size_t m, const GenOptions& opt);
+
+/// What the configuration model does with self-loops and multi-edges.
+enum class MultiEdgePolicy {
+  kKeep,            ///< keep them (degrees exact, self-loop counts 2, graph not simple)
+  kDrop,            ///< delete them (simple, degrees may fall below d)
+  kSwitchToSimple,  ///< remove them by degree-preserving double-edge swaps (simple, exactly d)
+};
+
+/// Random d-regular graph via the configuration model (random perfect matching of n*d stubs).
+/// Requires n*d even; kSwitchToSimple also requires d < n.
+template <class W>
+EdgeList<W> random_regular(std::size_t n, std::size_t d, MultiEdgePolicy policy,
+                           const GenOptions& opt);
+
+/// Barabási–Albert preferential attachment: a clique on m+1 vertices, then every new vertex
+/// attaches to m distinct existing vertices chosen with probability proportional to degree.
+/// Simple and connected; m * (n - m - 1) + m(m+1)/2 edges. Requires 1 <= m < n.
+template <class W>
+EdgeList<W> barabasi_albert(std::size_t n, std::size_t m, const GenOptions& opt);
+
+/// rows x cols 4-neighbour grid; vertex (r, c) has id r * cols + c.
+template <class W>
+EdgeList<W> grid_2d(std::size_t rows, std::size_t cols, const GenOptions& opt);
+
+struct RoadLikeOptions {
+  double jitter = 0.3;            ///< each grid point moves by U[-jitter, jitter] per axis (< 0.5)
+  double keep_probability = 0.9;  ///< each grid edge survives with this probability
+  double shortcut_probability = 0.15;  ///< per vertex: add one local shortcut
+  int shortcut_radius = 2;             ///< shortcut target within this Chebyshev radius
+  double integer_scale = 1000.0;       ///< integer weights: round(length * scale), at least 1
+};
+
+/// Road-network-like graph: a perturbed grid with randomly removed streets and local
+/// shortcuts, weighted by Euclidean length of the perturbed points (options.weights is ignored).
+/// Always connected (removed streets are restored as needed). Simple.
+template <class W>
+EdgeList<W> road_like(std::size_t rows, std::size_t cols, const RoadLikeOptions& road,
+                      const GenOptions& opt);
+
+/// Uniformly random labelled tree on n vertices (random Prüfer sequence).
+template <class W>
+EdgeList<W> random_tree(std::size_t n, const GenOptions& opt);
+
+/// Chung–Lu style scale-free graph: expected-degree weights w_i ∝ (i + 1)^(-1/(exponent-1))
+/// (power-law degree tail with the given exponent > 2), m = round(n * avg_degree / 2) distinct
+/// pairs, endpoints drawn independently ∝ w (self-loops and duplicates are re-drawn).
+template <class W>
+EdgeList<W> chung_lu(std::size_t n, double avg_degree, double exponent, const GenOptions& opt);
+
+/// Decrease-key adversary for Dijkstra on k+1 vertices (source 0, v_i = i):
+///   {0, 1} weight 1, {0, i} weight 2k for i > 1, {i, j} weight 2(j - i) - 1 for 1 <= i < j.
+/// Rationale: dist(v_j) = j (chain of weight-1 edges; every edge {i,j} costs >= |j - i|), so
+/// vertices are settled in order 1, 2, ..., k, and settling v_i lowers the tentative distance of
+/// every v_j (j > i) from j + (j - i) to j + (j - i - 1). Hence a heap-based Dijkstra performs
+/// exactly k(k-1)/2 = Theta(m) decrease-keys — the worst case for binary heaps (O(m log n)) and
+/// the case Fibonacci heaps are designed for.
+template <class W>
+EdgeList<W> adversarial_decrease_key(std::size_t k);
+
+/// Long-shortest-path adversary on n vertices: path {i, i+1} with weight 1 plus decoy skip edges
+/// {i, i+2} with weight 3 (> 2). The shortest path from 0 to n-1 has n-1 hops, so any method
+/// that bounds hop count, uses few rounds of Bellman–Ford, or recursion depth proportional to
+/// path length is stressed, while every decoy is relaxed and rejected.
+template <class W>
+EdgeList<W> adversarial_long_path(std::size_t n);
+
+/// Joins all connected components: components are ordered by smallest vertex, and component
+/// i > 0 is linked to a uniformly random earlier component by an edge between uniformly random
+/// members (a random tree over components). Appends exactly (components - 1) edges.
+template <class W>
+void connect_components(EdgeList<W>& g, const WeightSpec& weights, std::uint64_t seed);
+
+/// Number of connected components (isolated vertices count).
+template <class W>
+std::size_t count_components(const EdgeList<W>& g);
+
+// ------------------------------------------------------------------ generic entry point
+
+/// Parameters for generate(); each type reads the fields listed in generator_catalog().
+struct GraphSpec {
+  std::string type = "er";
+  std::size_t n = 1000;     ///< vertices (grid/road: rows = cols = floor(sqrt(n)) if unset)
+  double avg_degree = 4.0;  ///< er, chung_lu
+  std::size_t degree = 3;   ///< regular
+  std::size_t attach = 2;   ///< ba
+  std::size_t rows = 0;     ///< grid, road
+  std::size_t cols = 0;     ///< grid, road
+  double exponent = 2.5;    ///< chung_lu
+  MultiEdgePolicy multi = MultiEdgePolicy::kSwitchToSimple;  ///< regular
+  RoadLikeOptions road{};
+  GenOptions options{};
+};
+
+struct GeneratorInfo {
+  std::string_view name;
+  std::string_view description;
+  std::string_view parameters;
+};
+
+std::span<const GeneratorInfo> generator_catalog() noexcept;
+
+/// Dispatches on spec.type; throws std::invalid_argument for an unknown type.
+/// adversarial_decrease_key uses k = n - 1.
+template <class W>
+EdgeList<W> generate(const GraphSpec& spec);
+
+MultiEdgePolicy parse_multi_edge_policy(std::string_view name);
 
 }  // namespace sssp::gen
