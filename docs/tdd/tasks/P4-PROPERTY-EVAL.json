@@ -1,0 +1,31 @@
+{
+  "id": "P4-PROPERTY-EVAL",
+  "kind": "test-only",
+  "test_only_reason": "verification of the existing Evaluate (Alg 2-3); no new behaviour",
+  "spec": "Seeded property tests with Catch2 generators and deterministic shrinking check the Evaluate invariants I1-I8 (research notes 02 sec 2.8) plus the hook-observable parts the I1-I8 checker leaves out (backward-rank offers >= nominal b, cursor order, per-node emission slots, nothing pending at the end) on shrinkable state-graph and base-case hierarchies, uint64 and exact dyadic double",
+  "paper_ref": "Sec 4.3 Alg 2 l.2-12, Alg 3 l.3-11, Lemma 4.6 (l.885-920), Lemma 4.5",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/property/paper/test_evaluate_invariants_property.cpp"
+    ],
+    "covers": [
+      "src/paper/hierarchy/evaluate.cpp",
+      "src/paper/hierarchy/evaluate.hpp",
+      "src/paper/hierarchy/normalize.cpp",
+      "src/paper/hierarchy/child_order.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R evaluate'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:54:22+09:00",
+      "output_tail": "      Start 1358: regression:20261127-evaluate-relax-overflow: an overflowing relaxation on a non-shortest walk\n46/53 Test #1357: regression:20261127-evaluate-mass-overflow: a distance of 2^64 still throws std::overflow_error ....................................   Passed    0.08 sec\n47/53 Test #1358: regression:20261127-evaluate-relax-overflow: an overflowing relaxation on a non-shortest walk ......................................   Passed    0.02 sec\n48/53 Test #1207: property:evaluate invariants: I1-I8 and Scan order on seeded base-case hierarchies - double ........................................   Passed    2.40 sec\n49/53 Test #1205: property:evaluate invariants: I1-I8 and Scan order on seeded state-graph hierarchies - double ......................................   Passed    5.53 sec\n50/53 Test #1204: property:evaluate invariants: I1-I8 and Scan order on seeded state-graph hierarchies - std::uint64_t ...............................   Passed    5.68 sec\n51/53 Test #1057: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ..............................................   Passed   13.58 sec\n52/53 Test #1291: property:evaluate invariants: larger seeded hierarchies [slow] - std::uint64_t .....................................................   Passed   24.10 sec\n53/53 Test #1292: property:evaluate invariants: larger seeded hierarchies [slow] - double ............................................................   Passed   23.85 sec\n\n100% tests passed, 0 tests failed out of 53\n\nLabel Time Summary:\ndifferential     =  34.73 sec*proc (18 tests)\nproperty         =  19.11 sec*proc (10 tests)\nproperty-slow    =  47.95 sec*proc (2 tests)\nregression       =   0.36 sec*proc (8 tests)\nunit             =   0.77 sec*proc (15 tests)\n\nTotal Test time (real) =  36.52 sec"
+    }
+  ],
+  "commit": "f1a3619"
+}
