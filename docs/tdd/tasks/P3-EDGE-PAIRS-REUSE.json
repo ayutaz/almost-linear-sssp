@@ -17,7 +17,7 @@
       "tests/unit/paper/primitives/test_edge_pairs.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -45,5 +45,5 @@
       "output_tail": "        Start 803: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances\n844/851 Test #291: unit:H2: an internal node with a single child is reported - double ......................................................................................   Passed    0.02 sec\n845/851 Test #802: differential:double overflow: every baseline throws on an unrepresentable distance ......................................................................   Passed    0.01 sec\n846/851 Test #285: unit:H1: an arc shorter than every physical walk is reported at that arc - std::uint64_t ................................................................   Passed    0.02 sec\n847/851 Test #774: differential:paper_sssp: all-zero graph contracts to one vertex - double ................................................................................   Passed    0.01 sec\n848/851 Test #798: differential:overflow: Bellman-Ford and Dijkstra differ by design (uint64) ..............................................................................   Passed    0.01 sec\n849/851 Test #803: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances ............................................................   Passed    0.01 sec\n850/851 Test #773: differential:paper_sssp: all-zero graph contracts to one vertex - std::uint64_t .........................................................................   Passed    0.02 sec\n851/851 Test #799: differential:every baseline rejects an invalid source with std::out_of_range - std::uint64_t ............................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 851\n\nLabel Time Summary:\ndifferential    =   3.79 sec*proc (44 tests)\nintegration     =   0.61 sec*proc (6 tests)\nproperty        =  27.05 sec*proc (36 tests)\nregression      =   0.11 sec*proc (6 tests)\nunit            = 143.23 sec*proc (759 tests)\n\nTotal Test time (real) =  21.89 sec"
     }
   ],
-  "commit": null
+  "commit": "8197b01"
 }
