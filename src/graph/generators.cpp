@@ -335,6 +335,54 @@ EdgeList<W> erdos_renyi(std::size_t n, double avg_degree, const GenOptions& opt)
   return erdos_renyi_gnm<W>(n, rounded_edge_count(n, avg_degree), opt);
 }
 
+namespace {
+
+/// Degree-preserving double-edge swaps until no self-loop or multi-edge remains. Returns false
+/// (pairs then hold a degree-preserving but possibly non-simple multigraph) if the proposal
+/// budget 1000 + 100 * pairs.size() runs out. Some configurations cannot be repaired by these
+/// swaps at all, e.g. n = 3, d = 2 with three self-loops {0,0},{1,1},{2,2}: every proposal is
+/// the double edge {a,b},{a,b} and is rejected (regression 20261127-regular-switch-dead-end).
+bool switch_to_simple(std::vector<Pair>& pairs, Xoshiro256ss& rng) {
+  std::unordered_map<std::uint64_t, std::size_t> mult;
+  for (const auto& [a, b] : pairs) ++mult[pair_key(a, b)];
+  auto bad = [&](const Pair& p) {
+    return p.first == p.second || mult[pair_key(p.first, p.second)] > 1;
+  };
+  const std::size_t max_rounds = 1000 + 100 * pairs.size();
+  std::size_t rounds = 0;
+  for (bool dirty = true; dirty;) {
+    dirty = false;
+    for (std::size_t i = 0; i < pairs.size(); ++i) {
+      if (!bad(pairs[i])) continue;
+      dirty = true;
+      if (++rounds >= max_rounds) return false;
+      const auto j = static_cast<std::size_t>(rng.uniform_below(pairs.size()));
+      if (j == i) continue;
+      auto [a, b] = pairs[i];
+      auto [c, e] = pairs[j];
+      if (rng.bernoulli(0.5)) std::swap(c, e);
+      // proposal: {a,b},{c,e} -> {a,c},{b,e}
+      if (a == c || b == e) continue;
+      const auto k1 = pair_key(a, c), k2 = pair_key(b, e);
+      if (k1 == k2 || mult[k1] > 0 || mult[k2] > 0) continue;
+      --mult[pair_key(a, b)];
+      --mult[pair_key(c, e)];
+      ++mult[k1];
+      ++mult[k2];
+      pairs[i] = {a, c};
+      pairs[j] = {b, e};
+    }
+  }
+  return true;
+}
+
+/// kSwitchToSimple draws at most this many configurations before giving up. For every n <= 12
+/// a configuration failed to switch for at most 31 of 300 seeds (d = n - 1 is the worst case),
+/// so all of them failing is not expected in practice.
+constexpr std::size_t kMaxRegularConfigurations = 100;
+
+}  // namespace
+
 template <class W>
 EdgeList<W> random_regular(std::size_t n, std::size_t d, MultiEdgePolicy policy,
                            const GenOptions& opt) {
@@ -348,12 +396,29 @@ EdgeList<W> random_regular(std::size_t n, std::size_t d, MultiEdgePolicy policy,
   std::vector<Vertex> stubs;
   stubs.reserve(n * d);
   for (std::size_t v = 0; v < n; ++v) stubs.insert(stubs.end(), d, static_cast<Vertex>(v));
-  for (std::size_t i = stubs.size(); i > 1; --i) {  // Fisher–Yates
-    std::swap(stubs[i - 1], stubs[rng.uniform_below(i)]);
-  }
   std::vector<Pair> pairs;
   pairs.reserve(stubs.size() / 2);
-  for (std::size_t i = 0; i + 1 < stubs.size(); i += 2) pairs.emplace_back(stubs[i], stubs[i + 1]);
+  // kSwitchToSimple: when the swaps get stuck, start over from a fresh configuration drawn from
+  // the same random stream, so the result is still a function of the arguments. The first
+  // configuration and its swaps consume the stream exactly as before restarts existed, so every
+  // argument that succeeded without a restart still yields the same graph.
+  for (std::size_t configuration = 1;; ++configuration) {
+    for (std::size_t i = stubs.size(); i > 1; --i) {  // Fisher–Yates
+      std::swap(stubs[i - 1], stubs[rng.uniform_below(i)]);
+    }
+    pairs.clear();
+    for (std::size_t i = 0; i + 1 < stubs.size(); i += 2) {
+      pairs.emplace_back(stubs[i], stubs[i + 1]);
+    }
+    if (policy != MultiEdgePolicy::kSwitchToSimple || pairs.empty() ||
+        switch_to_simple(pairs, rng)) {
+      break;
+    }
+    if (configuration >= kMaxRegularConfigurations) {
+      throw std::runtime_error("random_regular: switching did not converge for " +
+                               std::to_string(kMaxRegularConfigurations) + " configurations");
+    }
+  }
 
   if (policy == MultiEdgePolicy::kDrop) {
     std::unordered_set<std::uint64_t> seen;
@@ -362,38 +427,6 @@ EdgeList<W> random_regular(std::size_t n, std::size_t d, MultiEdgePolicy policy,
       if (a != b && seen.insert(pair_key(a, b)).second) kept.emplace_back(a, b);
     }
     pairs = std::move(kept);
-  } else if (policy == MultiEdgePolicy::kSwitchToSimple && !pairs.empty()) {
-    // Degree-preserving double-edge swaps until no self-loop or multi-edge remains.
-    std::unordered_map<std::uint64_t, std::size_t> mult;
-    for (const auto& [a, b] : pairs) ++mult[pair_key(a, b)];
-    auto bad = [&](const Pair& p) {
-      return p.first == p.second || mult[pair_key(p.first, p.second)] > 1;
-    };
-    const std::size_t max_rounds = 1000 + 100 * pairs.size();
-    std::size_t rounds = 0;
-    for (bool dirty = true; dirty;) {
-      dirty = false;
-      for (std::size_t i = 0; i < pairs.size(); ++i) {
-        if (!bad(pairs[i])) continue;
-        dirty = true;
-        check(++rounds < max_rounds, "random_regular: switching did not converge");
-        const auto j = static_cast<std::size_t>(rng.uniform_below(pairs.size()));
-        if (j == i) continue;
-        auto [a, b] = pairs[i];
-        auto [c, e] = pairs[j];
-        if (rng.bernoulli(0.5)) std::swap(c, e);
-        // proposal: {a,b},{c,e} -> {a,c},{b,e}
-        if (a == c || b == e) continue;
-        const auto k1 = pair_key(a, c), k2 = pair_key(b, e);
-        if (k1 == k2 || mult[k1] > 0 || mult[k2] > 0) continue;
-        --mult[pair_key(a, b)];
-        --mult[pair_key(c, e)];
-        ++mult[k1];
-        ++mult[k2];
-        pairs[i] = {a, c};
-        pairs[j] = {b, e};
-      }
-    }
   }
   return finish<W>(n, pairs, opt);
 }

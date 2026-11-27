@@ -187,7 +187,12 @@ enum class MultiEdgePolicy {
 };
 
 /// Random d-regular graph via the configuration model (random perfect matching of n*d stubs).
-/// Requires n*d even; kSwitchToSimple also requires d < n.
+/// Requires n*d even; kSwitchToSimple also requires d < n (std::invalid_argument otherwise: no
+/// simple d-regular graph exists). kSwitchToSimple returns a simple, exactly d-regular graph for
+/// every such (n, d): if the swaps cannot repair a configuration within 1000 + 100 * (n*d/2)
+/// proposals (e.g. n = 3, d = 2 starting from three self-loops), it draws a new configuration
+/// from the same seeded stream and tries again. Only after 100 such configurations it throws
+/// std::runtime_error (never observed). Same arguments, same output.
 template <class W>
 EdgeList<W> random_regular(std::size_t n, std::size_t d, MultiEdgePolicy policy,
                            const GenOptions& opt);
@@ -224,6 +229,10 @@ EdgeList<W> random_tree(std::size_t n, const GenOptions& opt);
 /// Chung–Lu style scale-free graph: expected-degree weights w_i ∝ (i + 1)^(-1/(exponent-1))
 /// (power-law degree tail with the given exponent > 2), m = round(n * avg_degree / 2) distinct
 /// pairs, endpoints drawn independently ∝ w (self-loops and duplicates are re-drawn).
+/// Requires m <= q with q = floor(floor(n(n-1)/2) / 2) (integer division; at most half of all
+/// vertex pairs, so that re-drawing terminates quickly), i.e. avg_degree roughly <= (n-1)/2;
+/// throws std::invalid_argument otherwise, and std::runtime_error after 1000 + 100 * m rejected
+/// draws.
 template <class W>
 EdgeList<W> chung_lu(std::size_t n, double avg_degree, double exponent, const GenOptions& opt);
 
