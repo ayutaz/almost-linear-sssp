@@ -7,7 +7,7 @@
 输出记录的格式见 [benchmark_schema.zh-CN.md](benchmark_schema.zh-CN.md),测量步骤见
 [benchmark_protocol.zh-CN.md](benchmark_protocol.zh-CN.md)。
 
-图的指定方式与图生成器 `sssp_gen`(docs/design/graph_library.md)**使用相同的名称、相同的含义**。
+图的指定方式与图生成器 `sssp_gen`(docs/design/graph_library.zh-CN.md)**使用相同的名称、相同的含义**。
 运行器应链接生成器库(`sssp::gen`),并使用相同的选项解析。
 
 ## 1. 调用示例

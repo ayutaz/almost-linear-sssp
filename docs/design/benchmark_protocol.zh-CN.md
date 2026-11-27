@@ -10,7 +10,7 @@ Dijkstra 系基线进行比较时的测量步骤。这里**只写步骤和设定
 
 - 记录的 schema:[benchmark_schema.zh-CN.md](benchmark_schema.zh-CN.md)
 - 运行器的 CLI:[benchmark_runner_cli.zh-CN.md](benchmark_runner_cli.zh-CN.md)
-- 图生成器(图类型和权重分布的名称与定义):[graph_library.md](graph_library.md)
+- 图生成器(图类型和权重分布的名称与定义):[graph_library.zh-CN.md](graph_library.zh-CN.md)
 
 实现:`scripts/run_benchmarks.sh`(执行)、`scripts/bench/plan.py`(作业列表)、
 `scripts/bench/envinfo.py`(环境)、`scripts/bench/schema.py`(验证)、`scripts/bench/stats.py`(统计)、
@@ -58,7 +58,7 @@ Dijkstra 系基线进行比较时的测量步骤。这里**只写步骤和设定
 - 每次都会有 1 条 `FallbackRecord`(收缩后的顶点数 N 和边数)原样放入记录的 `fallback`
   (即使在诊断 OFF 的构建中也是如此)。报告时间时,必须并列给出这个 fallback 的占比。
   这些时间是"论文的预处理 + Dijkstra"的时间,不是论文外层构造的时间。
-- `double` 的验证使用 `Tolerance::for_path_hops(2(n − 1))`(numerics.md §3.2)。整数权重要求严格一致。
+- `double` 的验证使用 `Tolerance::for_path_hops(2(n − 1))`(numerics.zh-CN.md §3.2)。整数权重要求严格一致。
 - `paper-faithful` 的扫描型基底情形为 Θ(N²),因此运行器以退出码 3 拒绝 n > 2^17
   (不替换为其他算法)。计划不会生成这样的组合,并将被排除的数量和原因输出到标准错误
   (`plan.VERTEX_LIMITS`)。`paper-faithful-d1` 没有上限。
@@ -155,7 +155,7 @@ cmake --preset release-diag && cmake --build --preset release-diag
 1. **距离一致**:在所有顶点上与参考实现的距离进行比较。
    - 参考实现为 `dijkstra-binary`。对小规模的图也使用 `bellman-ford`,以检验参考实现本身。
    - `uint64`:完全一致。
-   - `double`:带容差的比较(同时使用相对误差和绝对误差)。容差值遵循 `docs/design/numerics.md`。
+   - `double`:带容差的比较(同时使用相对误差和绝对误差)。容差值遵循 `docs/design/numerics.zh-CN.md`。
    - 不可达的顶点在双方都必须是 infinity。
 2. **树的一致性**:对于起点以外的每个可达顶点 v,parent 边 (parent[v], v) 必须真实存在,
    `dist[parent[v]] + w(parent[v], v) = dist[v]` 必须成立(`double` 带容差),并且沿 parent 追溯必须回到起点。
@@ -322,7 +322,7 @@ Speedup = T(dijkstra-binary) / T(对象)
 
 ## 11. 图类型(`graph_type`)
 
-名称和定义遵循 `sssp_gen --type`(docs/design/graph_library.md §6)。
+名称和定义遵循 `sssp_gen --type`(docs/design/graph_library.zh-CN.md §6)。
 
 | `graph_type` | 含义 | d 的传递方式 | 备注 |
 |---|---|---|---|
@@ -343,7 +343,7 @@ Speedup = T(dijkstra-binary) / T(对象)
 
 ## 12. 权重分布(`weight_dist`)
 
-名称和定义遵循 `sssp_gen --weights`(docs/design/graph_library.md §5)。参数(`lo`、`hi`、`mean`、
+名称和定义遵循 `sssp_gen --weights`(docs/design/graph_library.zh-CN.md §5)。参数(`lo`、`hi`、`mean`、
 `zero_probability`、`wide_log2`)在配置档中使用生成器的默认值。
 
 | `weight_dist` | 含义 | 配置档中的权重类型 |
