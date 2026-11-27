@@ -1,0 +1,76 @@
+{
+  "id": "P3-OUTER-SCALES",
+  "spec": "Sec 8.2: from the outer states, new names, F, block scales, alignment, supports and grids, cutoffs t_U, atoms and classified join events yield a partition hierarchy (Def 5.12) whose atom substitution validates Def 4.1 with c0 <= 2",
+  "paper_ref": "Sec 8.2 l.2076-2104, Lemma 8.4 l.2105-2142",
+  "files": {
+    "impl": [
+      "src/paper/outer/scales.hpp",
+      "src/paper/outer/scales.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/outer/test_outer_scales.cpp",
+      "tests/unit/paper/outer/outer_scales_test_support.hpp",
+      "tests/property/paper/test_outer_scales_property.cpp"
+    ],
+    "covers": [
+      "src/paper/outer/scales_numeric.hpp",
+      "src/paper/outer/outer_states.hpp",
+      "src/paper/local/atom_replacement.hpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j4 --target sssp_unit_tests 2>&1 | tail -6'",
+      "exit_code": 1,
+      "reason": "missing header paper/outer/scales.hpp: build_outer_scales, outer_name_weights, exact F, median-pruned alignment, check_outer_scales do not exist yet (stages S0-S7)",
+      "timestamp": "2026-11-27T15:46:54+09:00",
+      "output_tail": "/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_outer_scales.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_outer_scales.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_outer_scales.cpp.o -c ./tests/unit/paper/outer/test_outer_scales.cpp\n./tests/unit/paper/outer/test_outer_scales.cpp:24:10: fatal error: 'paper/outer/scales.hpp' file not found\n   24 | #include \"paper/outer/scales.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j4 2>&1 | tail -2 && ./build/debug/tests/sssp_unit_tests \"[scales],[scales_numeric],[outer_states],[atom_replacement]\" 2>&1 | tail -4'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:53:17+09:00",
+      "output_tail": "[8/10] Linking CXX executable tests/sssp_property_tests\n[9/10] Linking CXX executable benchmarks/sssp_bench_driver_tests\nNo test cases matched '[atom_replacement]'\n===============================================================================\nAll tests passed (45177 assertions in 46 test cases)"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j4 --target sssp_property_tests 2>&1 | grep -E \"error\" | head -5; exit 1'",
+      "exit_code": 1,
+      "reason": "missing symbols build_outer_merge_plan / OuterMergePlan (stage S8 preparation: parts, outside arcs, classes in processing order); also the first run of the S0-S7 property checks",
+      "timestamp": "2026-11-27T15:55:48+09:00",
+      "output_tail": "./tests/property/paper/test_outer_scales_property.cpp:32:7: error: no member named 'SplitMix64' in namespace 'sssp'; did you mean 'sssp::test::SplitMix64'?\n./tests/property/paper/test_outer_scales_property.cpp:38:27: error: no member named 'build_outer_merge_plan' in namespace 'sssp::paper::outer'\n./tests/property/paper/test_outer_scales_property.cpp:42:27: error: no member named 'OuterMergePlan' in namespace 'sssp::paper::outer'\n./tests/property/paper/test_outer_scales_property.cpp:168:51: error: no template named 'OuterMergePlan'\n./tests/property/paper/test_outer_scales_property.cpp:329:17: error: use of undeclared identifier 'build_outer_merge_plan'"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "cmake --build --preset debug -j4 --target sssp_property_tests",
+      "exit_code": 1,
+      "reason": "missing symbol build_outer_partition (stage S8: partition hierarchy by class-wise merges, links and order through the shared assembly core; S9 substitution, Def 4.1 validation and Evaluate vs Bellman-Ford depend on it)",
+      "timestamp": "2026-11-27T16:02:15+09:00",
+      "output_tail": "./tests/property/paper/test_outer_scales_property.cpp:343:21: error: no matching function for call to 'build_outer_states'\n  343 |   const auto part = sssp::paper::outer::build_outer_partition(r.os, sc, &diag);\n      |                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n./tests/property/paper/test_outer_scales_property.cpp:432:3: note: in instantiation of function template specialization '(anonymous namespace)::check_partition<unsigned long long>' requested here\n  432 |   check_partition(r, local, cov);\n      |   ^\n./tests/property/paper/test_outer_scales_property.cpp:565:5: note: in instantiation of function template specialization '(anonymous namespace)::check_all<unsigned long long>' requested here\n  565 |     check_all(c, true, cov);\n      |     ^\n./src/paper/outer/outer_states.hpp:128:16: note: candidate function template not viable: requires at least 5 arguments, but 3 were provided\n  128 | OuterStates<W> build_outer_states(const CsrGraph<W>& g, const OwnerDecomposition<W>& od,\n      |                ^                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n  129 |                                   const owner::OuterEdgeClassification<W>& cls,\n      |                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n  130 |                                   const owner::AuxGraph<W>& aux, const std::vector<W>& scaled_j,\n      |                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n  131 |                                   Diagnostics* diag = nullptr);\n      |                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~\n3 errors generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j4 2>&1 | tail -1 && ./build/debug/tests/sssp_unit_tests \"[scales],[scales_numeric],[outer_states],[assembly_core],[assembly]\" 2>&1 | tail -2 && ./build/debug/tests/sssp_property_tests \"[outer_scales],[outer_states]\" 2>&1 | tail -2'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T16:28:20+09:00",
+      "output_tail": "[9/10] Linking CXX executable tests/sssp_differential_tests\nAll tests passed (45356 assertions in 51 test cases)\n\nAll tests passed (90038646 assertions in 9 test cases)"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j4 2>&1 | tail -1 && ./build/debug/tests/sssp_unit_tests \"[scales],[scales_numeric],[outer_states]\" 2>&1 | tail -2 && ./build/debug/tests/sssp_unit_tests \"*assembl*,*Support grid*,*ClassMerger*,*link_and_order*\" 2>&1 | tail -2 && ./build/debug/tests/sssp_property_tests \"[outer_scales],[outer_states]\" 2>&1 | tail -2'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T16:39:22+09:00",
+      "output_tail": "[10/11] Linking CXX executable tests/sssp_property_tests\nAll tests passed (45356 assertions in 51 test cases)\n\nAll tests passed (4888 assertions in 11 test cases)\n\nAll tests passed (90038646 assertions in 9 test cases)"
+    }
+  ],
+  "commit": null
+}
