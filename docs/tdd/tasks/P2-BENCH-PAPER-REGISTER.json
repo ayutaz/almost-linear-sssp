@@ -21,7 +21,7 @@
       "include/sssp/paper.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -58,5 +58,5 @@
       "output_tail": "714/716 Test #169: unit:ParseError message names the line and the problem ..................................................................................................   Passed    0.30 sec\n715/716 Test  #27: unit:radix heap enforces monotonicity and rejects invalid operations ....................................................................................   Passed    0.15 sec\n716/716 Test #196: unit:uniform_int weights are integers within [lo, hi] and hit both ends - double ........................................................................   Passed    0.35 sec\n\n100% tests passed, 0 tests failed out of 716\n\nLabel Time Summary:\ndifferential    =   7.90 sec*proc (42 tests)\nintegration     =   1.27 sec*proc (6 tests)\nproperty        =  37.72 sec*proc (30 tests)\nregression      =   1.11 sec*proc (6 tests)\nunit            = 206.23 sec*proc (632 tests)\n\nTotal Test time (real) =  34.03 sec\n........................................................................ [ 19%]\n........................................................................ [ 38%]\n........................................................................ [ 58%]\n........................................................................ [ 77%]\n........................................................................ [ 96%]\n............                                                             [100%]"
     }
   ],
-  "commit": null
+  "commit": "703adb2"
 }
