@@ -16,7 +16,7 @@
       "tests/property/paper_experimental/*.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -44,5 +44,5 @@
       "output_tail": "      Start  592: unit:Alg 7 on example A: root shortcut and padded family proposals - std::uint64_t\n60/66 Test  #603: unit:Alg 7 rejects lengths whose 2^7 multiple does not fit - double ..........................................   Passed    0.03 sec\n      Start  915: unit:D-8: Lambda = 2N * 3hK^2 and the support end 2(3hK^2)^2 N^3 sigma\n61/66 Test  #596: unit:Alg 7 on example C: two graph pieces and the direction rule - std::uint64_t .............................   Passed    0.03 sec\n      Start  893: unit:experimental params: every fixed constant is rejected above and below the paper\n62/66 Test  #601: unit:Alg 7 after the paper's outer separator (Mode A pipeline) - double ......................................   Passed    0.03 sec\n      Start  894: unit:experimental params: separator exponents above 64 are rejected\n63/66 Test  #592: unit:Alg 7 on example A: root shortcut and padded family proposals - std::uint64_t ...........................   Passed    0.03 sec\n64/66 Test  #915: unit:D-8: Lambda = 2N * 3hK^2 and the support end 2(3hK^2)^2 N^3 sigma .......................................   Passed    0.03 sec\n65/66 Test  #894: unit:experimental params: separator exponents above 64 are rejected ..........................................   Passed    0.03 sec\n66/66 Test  #893: unit:experimental params: every fixed constant is rejected above and below the paper .........................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 66\n\nLabel Time Summary:\ndifferential    =  82.12 sec*proc (9 tests)\nproperty        =  45.62 sec*proc (11 tests)\nunit            =   1.74 sec*proc (46 tests)\n\nTotal Test time (real) =  32.45 sec"
     }
   ],
-  "commit": null
+  "commit": "d93c71e"
 }
