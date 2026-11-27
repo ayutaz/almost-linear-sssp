@@ -4,7 +4,7 @@
    (``ruff format`` then ``ruff check``; findings are reported, not fixed).
 2. For C++ changes, run a light check of one test category:
    ``cmake --build build/<preset> --target sssp_<cat>_tests`` then
-   ``ctest -L ^<cat>$ -LE bench``. Benchmarks are never built or run.
+   ``ctest -L ^<cat>$ -LE bench -j <jobs>``. Benchmarks are never built or run.
 3. Store the result in ``.tdd/runtime/last_check.json`` (read by the Stop hook).
 
 The tool has already run, so this hook cannot block; problems are reported
@@ -36,6 +36,7 @@ TEST_CATEGORIES = ("unit", "integration", "differential", "property", "regressio
 UNIT_DIRS = ("src/", "include/", "tools/")
 FORMAT_TIMEOUT = 20.0
 LOCK_WAIT_DEFAULT = 10.0
+JOBS_DEFAULT = 4
 CONTEXT_TAIL_LINES = 12
 
 
@@ -172,6 +173,29 @@ def total_timeout(cfg: dict[str, Any]) -> float:
     return 120.0
 
 
+def _positive_int(raw: Any) -> int | None:
+    """``raw`` as a positive integer, or None (bools, floats, junk are rejected)."""
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, int):
+        return raw if raw > 0 else None
+    if isinstance(raw, str):
+        text = raw.strip()
+        if text.isascii() and text.isdigit():
+            val = int(text)
+            return val if val > 0 else None
+    return None
+
+
+def ctest_jobs(cfg: dict[str, Any]) -> int:
+    """``-j`` for ctest: ``TDD_POSTCHECK_JOBS`` > ``post_check.jobs`` > 4; invalid ones skipped."""
+    for raw in (os.environ.get("TDD_POSTCHECK_JOBS"), cfg.get("jobs")):
+        val = _positive_int(raw)
+        if val is not None:
+            return val
+    return JOBS_DEFAULT
+
+
 def lock_wait() -> float:
     with contextlib.suppress(TypeError, ValueError):
         return max(0.0, float(os.environ.get("TDD_POSTCHECK_LOCK_WAIT", "")))
@@ -193,7 +217,9 @@ def acquire_lock(path: Path, wait: float) -> Any:
             time.sleep(0.1)
 
 
-def run_check(root: Path, bdir: Path, cat: str, rel: str, budget: float) -> dict[str, Any]:
+def run_check(
+    root: Path, bdir: Path, cat: str, rel: str, budget: float, jobs: int = JOBS_DEFAULT
+) -> dict[str, Any]:
     start = time.monotonic()
     cmake = _common.which("cmake") or "cmake"
     ctest = _common.which("ctest") or "ctest"
@@ -206,6 +232,8 @@ def run_check(root: Path, bdir: Path, cat: str, rel: str, budget: float) -> dict
         f"^{cat}$",
         "-LE",
         "bench",
+        "-j",
+        str(jobs),
         "--output-on-failure",
         "--timeout",
         "60",
@@ -341,7 +369,7 @@ def handle(data: dict[str, Any]) -> list[str]:
     bdir = root / "build" / preset
     if not (bdir / "build.ninja").is_file():
         return notes
-    entry = run_check(root, bdir, cat, rel, total_timeout(cfg))
+    entry = run_check(root, bdir, cat, rel, total_timeout(cfg), ctest_jobs(cfg))
     save_result(root, cat, entry)
     return notes + describe(cat, entry)
 

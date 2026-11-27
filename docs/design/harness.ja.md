@@ -95,7 +95,7 @@ hook はすべて **標準ライブラリだけで書いた Python 3.9 互換の
 ### 3.4 PostToolUse（`Edit|Write|MultiEdit`、timeout 200 秒）
 
 - 整形は対象ファイルだけ: C++ は clang-format（`TDD_CLANG_FORMAT` → `/opt/homebrew/opt/llvm/bin/clang-format` → PATH の順）で `-i --style=file`、Python は ruff（`TDD_RUFF` → `.venv/bin/ruff` → PATH → `uv run ruff`）で `format` と `check`。
-- 軽量チェックは C++ の変更時だけで、`build/<preset>/build.ninja` が既にある（configure 済み）ときに限る。カテゴリは `tests/<cat>/...` ならその cat、`src/` `include/` `tools/` なら `unit`。`cmake --build build/<preset> --target sssp_<cat>_tests` のあと `ctest --test-dir build/<preset> -L ^<cat>$ -LE bench --output-on-failure --timeout 60` を実行する。**ベンチマークのターゲット、`all`、ベンチマーク用スクリプトは一切実行しない。**
+- 軽量チェックは C++ の変更時だけで、`build/<preset>/build.ninja` が既にある（configure 済み）ときに限る。カテゴリは `tests/<cat>/...` ならその cat、`src/` `include/` `tools/` なら `unit`。`cmake --build build/<preset> --target sssp_<cat>_tests` のあと `ctest --test-dir build/<preset> -L ^<cat>$ -LE bench -j <jobs> --output-on-failure --timeout 60` を実行する。`<jobs>` は `TDD_POSTCHECK_JOBS` > `post_check.jobs`（既定4）。正の整数でない値は無視し、次の設定元（最後は4）を使う。**ベンチマークのターゲット、`all`、ベンチマーク用スクリプトは一切実行しない。**
 - 全体のタイムアウトは `TDD_POSTCHECK_TIMEOUT`（秒）> `post_check.timeout_sec`（既定120）。並列の担当と build ディレクトリを共有するので `.tdd/runtime/postcheck.lock` を `flock` で排他し、10秒（`TDD_POSTCHECK_LOCK_WAIT`）待っても取れなければ skipped にする。`TDD_POSTCHECK=0` でビルドとテストを止められる。
 - 結果は `.tdd/runtime/last_check.json` に保存し、失敗・時間切れ・整形エラー・ruff の指摘があるときだけ `additionalContext` で知らせる。重いチェックは `make verify` に任せる。
 
@@ -107,7 +107,7 @@ hook はすべて **標準ライブラリだけで書いた Python 3.9 互換の
 
 ### 3.5 PreCompact（matcher なし、timeout 30 秒）
 
-完了タスク、作業中タスクと phase、未解決の問題（last_check の fail/timeout、`.tdd/runtime/stop_gate_unresolved.md` の有無、TASKS.md の BLOCKED 行）、タスクごとの次のコマンド、最後の commit、`docs/PAPER_MAPPING.md`（無ければ `PAPER_MAPPING.ja.md`）の先頭10行を Markdown にまとめる。`docs/PROGRESS.md` の `<!-- AUTO:precompact -->`〜`<!-- /AUTO -->` の間だけを書き換え（ブロック外の手書き部分は変えない。ブロックが無ければ末尾に追記、ファイルが無ければ作成）、同じ内容を `.tdd/runtime/precompact_snapshot.md` にも保存する。stdout には要約への短い指示（プレーンテキスト）を出す。
+完了タスク、作業中タスクと phase、未解決の問題（last_check の `fail`。`Failing check` として出す。`.tdd/runtime/stop_gate_unresolved.md` の有無、TASKS.md の BLOCKED 行）、時間切れのチェック（last_check の `timeout`。時間切れは合否を示さないので `Failing check` には入れず、専用の見出し `Inconclusive checks (timed out; not a test failure)` の下に出す。Stop gate もこれでは止めない）、タスクごとの次のコマンド、最後の commit、`docs/PAPER_MAPPING.md`（無ければ `PAPER_MAPPING.ja.md`）の先頭10行を Markdown にまとめる。`docs/PROGRESS.md` の `<!-- AUTO:precompact -->`〜`<!-- /AUTO -->` の間だけを書き換え（ブロック外の手書き部分は変えない。ブロックが無ければ末尾に追記、ファイルが無ければ作成）、同じ内容を `.tdd/runtime/precompact_snapshot.md` にも保存する。stdout には要約への短い指示（プレーンテキスト）を出す。
 
 ### 3.6 Stop（matcher なし、timeout 30 秒）
 

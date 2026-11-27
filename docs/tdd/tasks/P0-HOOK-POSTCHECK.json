@@ -1,0 +1,47 @@
+{
+  "id": "P0-HOOK-POSTCHECK",
+  "spec": "PreCompact reports a timed-out light check under a separate 'Inconclusive checks' heading instead of 'Failing check' (Stop gate still blocks only on fail), and the PostToolUse light check runs ctest with -j <post_check.jobs> (default 4, overridable by TDD_POSTCHECK_JOBS, invalid values fall back to the default)",
+  "paper_ref": "none",
+  "files": {
+    "impl": [
+      ".claude/hooks/post_tool_use.py",
+      ".claude/hooks/pre_compact.py",
+      ".claude/hooks/_common.py",
+      ".tdd/config.json"
+    ],
+    "tests": [
+      "tests/harness/test_post_tool_use.py",
+      "tests/harness/test_pre_compact.py",
+      "tests/harness/test_stop_gate.py"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "uv run pytest tests/harness/test_pre_compact.py tests/harness/test_post_tool_use.py tests/harness/test_stop_gate.py -q",
+      "exit_code": 1,
+      "reason": "pre_compact lists a timed-out check as 'Failing check unit (timeout, exit=124)' and has no Inconclusive heading; post_tool_use passes no -j to ctest (args.count('-j') == 0)",
+      "timestamp": "2026-11-27T18:30:24+09:00",
+      "output_tail": "tests/harness/test_post_tool_use.py:355: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_pre_compact.py::test_timeout_is_inconclusive_not_failing\nFAILED tests/harness/test_pre_compact.py::test_timeout_only_leaves_no_failing_check\nFAILED tests/harness/test_post_tool_use.py::test_ctest_runs_in_parallel_with_four_jobs_by_default\nFAILED tests/harness/test_post_tool_use.py::test_ctest_jobs_from_config - Ass...\nFAILED tests/harness/test_post_tool_use.py::test_ctest_jobs_env_overrides_config\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_env_falls_back_to_default[abc]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_env_falls_back_to_default[0]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_env_falls_back_to_default[-3]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_env_falls_back_to_default[1.5]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_env_falls_back_to_default[]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_config_falls_back_to_default[many]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_config_falls_back_to_default[0]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_config_falls_back_to_default[-2]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_config_falls_back_to_default[2.5]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_config_falls_back_to_default[True]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_config_falls_back_to_default[None]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_config_falls_back_to_default[bad6]\nFAILED tests/harness/test_post_tool_use.py::test_invalid_ctest_jobs_env_does_not_hide_valid_config"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "uv run pytest tests/harness -q",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:34:53+09:00",
+      "output_tail": "........................................................................ [ 16%]\n........................................................................ [ 32%]\n........................................................................ [ 49%]\n........................................................................ [ 65%]\n........................................................................ [ 82%]\n........................................................................ [ 98%]\n.......                                                                  [100%]"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "uv run pytest tests/harness -q -rN",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T18:38:31+09:00",
+      "output_tail": "........................................................................ [ 16%]\n........................................................................ [ 32%]\n........................................................................ [ 49%]\n........................................................................ [ 65%]\n........................................................................ [ 82%]\n........................................................................ [ 98%]\n.......                                                                  [100%]"
+    }
+  ],
+  "commit": null
+}

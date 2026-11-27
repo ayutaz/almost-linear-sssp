@@ -274,3 +274,78 @@ def test_snapshot_is_written_in_english(repo, run_hook):
     assert "- Generated: " in block
     assert "Implement, then `uv run python scripts/tdd.py green T-RED" in block
     assert "Finally run `make verify`" in block
+
+
+INCONCLUSIVE = "Inconclusive checks (timed out; not a test failure)"
+
+
+def _timeout_entry(cmd: str = "ctest --test-dir build/debug -L ^unit$ -LE bench") -> dict:
+    return {
+        "status": "timeout",
+        "timestamp": "2026-01-01T00:00:00+09:00",
+        "file": "src/core/a.cpp",
+        "command": cmd,
+        "exit_code": 124,
+        "output_tail": "[timeout after 120s]",
+        "reason": "ctest exceeded the remaining time of 120s",
+    }
+
+
+def test_timeout_is_inconclusive_not_failing(repo, run_hook):
+    _write_last_check(
+        repo,
+        {
+            "integration": {
+                "status": "fail",
+                "command": "ctest -L ^integration$",
+                "exit_code": 8,
+                "output_tail": "FAILED: it_case",
+            },
+            "unit": _timeout_entry(),
+        },
+    )
+    res = run_hook("pre_compact", _payload(), repo)
+    assert res.code == 0, res.stderr
+    block = _block(_progress(repo))
+    # A real failure is still a failing check ...
+    assert "Failing check `integration`" in block
+    assert "Reproduce the failure (integration)" in block
+    # ... but a time-out is not presented as one.
+    assert "Failing check `unit`" not in block
+    assert "Reproduce the failure (unit)" not in block
+    assert "timeout, exit=124" not in block
+    # It is listed under its own heading instead, after that heading.
+    assert INCONCLUSIVE in block
+    after = block[block.index(INCONCLUSIVE) :]
+    assert "`unit`" in after
+    assert "ctest --test-dir build/debug -L ^unit$ -LE bench" in after
+    assert "ctest exceeded the remaining time of 120s" in after
+    # The plain-text summary keeps them apart too.
+    failure_lines = [ln for ln in res.stdout.splitlines() if ln.startswith("未解決の失敗")]
+    assert len(failure_lines) == 1
+    assert "integration" in failure_lines[0] and "unit" not in failure_lines[0]
+    assert "unit" in res.stdout.replace(failure_lines[0], "")
+
+
+def test_timeout_only_leaves_no_failing_check(repo, run_hook):
+    import re
+
+    _write_last_check(repo, {"unit": _timeout_entry()})
+    res = run_hook("pre_compact", _payload(), repo)
+    assert res.code == 0, res.stderr
+    block = _block(_progress(repo))
+    assert "Failing check" not in block
+    assert "Reproduce the failure" not in block
+    assert INCONCLUSIVE in block
+    assert "未解決の失敗" not in res.stdout
+    # Still English only: the AUTO block lands in a public English document.
+    assert not re.search(r"[぀-ヿ㐀-鿿＀-￯]", block), block
+
+
+def test_no_inconclusive_heading_without_timeouts(repo, run_hook):
+    _write_last_check(
+        repo, {"unit": {"status": "fail", "command": "ctest", "exit_code": 8, "output_tail": "x"}}
+    )
+    res = run_hook("pre_compact", _payload(), repo)
+    assert res.code == 0, res.stderr
+    assert INCONCLUSIVE not in _block(_progress(repo))

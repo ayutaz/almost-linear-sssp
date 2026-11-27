@@ -13,6 +13,7 @@
   "post_check": {
     "enabled": true,
     "timeout_sec": 120,
-    "preset": "debug"
+    "preset": "debug",
+    "jobs": 4
   }
 }
