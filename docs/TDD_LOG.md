@@ -102,6 +102,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P3-SFM-DYADIC | DONE | 1 | Sec 3.5, Lemma 3.10 (dyadic representation, proof: rescans move records to strict descendants; at most two maximal nodes per depth) | d6ea37f | Dyadic split-findmin (Lemma 3.10): padded balanced tree, each live interval as an ordered list of maximal nodes; split exposes the cut path and rescans member records; decrease/query/descriptor lookup O(1); agrees with the naive model; counted rescans <= k*ceil(log2 k), exposed nodes <= 2K-2, per-split list visits <= 4(D+1) |
 | P3-SFM-REF | DONE | 1 | Sec 3.5 (interface), Lemma 3.10/3.11 (reference for differential tests); research notes A8, A9, A10 | d6ea37f | Reference split-findmin (boundary set + segment tree, O(log k) per operation): split at a prescribed boundary (existing boundary rejected), decrease, query (min key and original index; ties by (inf flag, value, index)), interval_of / bounds with fresh IDs for both sides of a split; agrees with a naive model on exhaustive random sequences |
 | P3-THRESHOLD-JOINS | DONE | 1 | Sec 5.3 l.1109-1180, Lemma 5.8, Lemma 5.9 | b081d55 | Threshold components and joins: I0, O0 (min propagation in the macro-free block DAG, attaining macro edge kept), I*, O* (block-DAG order with two bottleneck sweeps on each block MST), theta = max(I*, O*), B0 = max(I0, O0); join records = block MST edges, state-to-owner joins at finite theta, corridor joins; I0/O0/I*/O* equal brute force, Lemma 5.8 bounds, Lemma 5.9 (union-find of joins <= W and < W restricted to states = SCCs of arcs <= W and < W) for every distinct W |
+| P3-WORD-OPS | DONE | 1 | Sec 2 l.301-308 (word operations, tabulated ilog, scan-stored block index/offset, uniform draws); Sec 3.5 Lemma 3.11 | ab6a8ec | Per-operation Mode A paths take integer logarithms from IlogTable (or a value computed once per range) instead of a shift loop, and the blocked split-findmin reads block index and offset from a scan-built BlockLayout instead of integer division; all results unchanged |
 
 ## P0-CI-FIX-2
 
@@ -1035,3 +1036,13 @@ Do not edit by hand; edit the evidence files and regenerate.
 - RED (exit 1, 2026-11-27T11:36:27+09:00): fatal error: 'paper/local/threshold_joins.hpp' file not found (Sec 5.3 joins absent) — `bash -c 'cmake --build --preset debug -j8 2>&1 \| grep -E "error\|FAILED" \| head -5; exit ${PIPESTATUS[0]}'`
 - GREEN (exit 0, 2026-11-27T11:41:21+09:00) — `bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'`
 - REFACTOR (exit 0, 2026-11-27T11:44:54+09:00) — `bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'`
+
+## P3-WORD-OPS
+
+- Spec: Per-operation Mode A paths take integer logarithms from IlogTable (or a value computed once per range) instead of a shift loop, and the blocked split-findmin reads block index and offset from a scan-built BlockLayout instead of integer division; all results unchanged
+- Impl: `src/paper/model/word_ops.hpp`, `src/paper/model/word_ops.cpp`, `src/paper/model/ilog.*`, `src/paper/model/random.*`, `src/paper/primitives/split_findmin.*`
+- Tests: `tests/unit/paper/model/test_word_ops.cpp`, `tests/unit/paper/primitives/test_split_findmin_word_ops.cpp`
+- Covers: `tests/unit/paper/primitives/test_split_findmin.cpp`, `tests/unit/paper/primitives/test_split_findmin_contract.cpp`, `tests/property/paper/test_split_findmin_property.cpp`, `tests/unit/paper/model/test_ilog.cpp`, `tests/unit/paper/model/test_random.cpp`
+- RED (exit 1, 2026-11-27T13:14:34+09:00): missing header paper/model/word_ops.hpp (BlockLayout: scan-built block index/offset, Sec 2 l.305-306), missing IlogTable::build_steps and the table overload uniform_below(src, h, IlogTable) (Sec 2 l.303-308) — `bash -c 'cmake --build --preset debug 2>&1 \| grep -E "error\|FAILED" \| head -20; cmake --build --preset debug > /dev/null 2>&1 && ctest --preset debug -R "word"'`
+- GREEN (exit 0, 2026-11-27T13:19:58+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug -j8'`
+- REFACTOR (exit 0, 2026-11-27T13:22:20+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug -j8'`
