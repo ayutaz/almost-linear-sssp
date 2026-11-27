@@ -1,0 +1,56 @@
+{
+ "id": "P2-DIJKSTRA-4ARY",
+ "spec": "Dijkstra with the indexed 4-ary heap and decrease-key (uint64_t and double): same observable contract as the binary-heap baseline (distances, tree, errors, counters with decrease_keys)",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/baseline/dijkstra_4ary_heap.cpp",
+   "src/baseline/dijkstra_common.hpp"
+  ],
+  "tests": [
+   "tests/unit/baseline/test_dijkstra_4ary_heap.cpp",
+   "tests/unit/baseline/dijkstra_test_support.hpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "4-ary-heap Dijkstra: hand-computed classic graph",
+    "4-ary-heap Dijkstra: zero weights, multi-edges, self-loops, components",
+    "4-ary-heap Dijkstra: single vertex",
+    "4-ary-heap Dijkstra: exact dyadic doubles",
+    "4-ary-heap Dijkstra: invalid source and integer overflow",
+    "4-ary-heap Dijkstra: matches Floyd-Warshall on random graphs",
+    "4-ary-heap Dijkstra: operation counters"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E \"error|sssp::baseline::dijkstra\" | sort -u | head -10; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "link error: undefined symbol sssp::baseline::dijkstra_4ary_heap<unsigned long long> / <double> (not implemented yet)",
+   "timestamp": "2026-11-27T10:29:27+09:00",
+   "output_tail": "\"sssp::baseline::dijkstra_radix_heap(sssp::CsrGraph<unsigned long long> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<double> sssp::baseline::dijkstra_4ary_heap<double>(sssp::CsrGraph<double> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<double> sssp::baseline::dijkstra_fibonacci_heap<double>(sssp::CsrGraph<double> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<unsigned long long> sssp::baseline::dijkstra_4ary_heap<unsigned long long>(sssp::CsrGraph<unsigned long long> const&, unsigned int)\", referenced from:\n  \"sssp::SsspResult<unsigned long long> sssp::baseline::dijkstra_fibonacci_heap<unsigned long long>(sssp::CsrGraph<unsigned long long> const&, unsigned int)\", referenced from:\nclang++: error: linker command failed with exit code 1 (use -v to see invocation)"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'warning|error'; ctest --preset debug -R '4-ary-heap Dijkstra' 2>&1 | grep -E 'tests passed|Failed|FAILED' && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:30:05+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 7\n100% tests passed, 0 tests failed out of 69"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | grep -E 'warning|error'; ctest --preset debug -R '4-ary-heap Dijkstra' 2>&1 | grep -E 'tests passed|Failed|FAILED' && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:31:23+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 7\n100% tests passed, 0 tests failed out of 69"
+  }
+ ],
+ "commit": null
+}
