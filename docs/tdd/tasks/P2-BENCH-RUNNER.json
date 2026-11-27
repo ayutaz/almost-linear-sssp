@@ -1,0 +1,107 @@
+{
+ "id": "P2-BENCH-RUNNER",
+ "spec": "sssp_bench_runner implements docs/design/benchmark_runner_cli.md: generator-compatible graph options, seeded sources and per-round algorithm order, warmup/trials, steady_clock ns phases (graph_gen/preprocess/sssp/tree/end_to_end/verify, null when not separable), verification outside the timed span, env-json copy, isolated peak RSS in bytes, diagnostics-gated ops/counters, exit codes 0/1/2/3/5, and JSONL records that pass bench.schema validate",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "include/sssp/bench_runner.hpp",
+   "src/bench_runner/*.cpp",
+   "tools/sssp_bench_runner.cpp"
+  ],
+  "tests": [
+   "tests/unit/bench/test_*.cpp",
+   "tests/python/test_bench_runner_integration.py"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "tests/unit/bench/test_bench_json.cpp",
+    "tests/unit/bench/test_bench_cli.cpp",
+    "tests/unit/bench/test_bench_record.cpp"
+   ],
+   "command": "cmake --build --preset debug 2>&1 | grep -E \"error|FAILED\" | head -8; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "compile error: sssp/bench_runner.hpp does not exist yet (runner library not implemented)",
+   "timestamp": "2026-11-27T10:54:07+09:00",
+   "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_json.cpp.o \ntests/unit/bench/test_bench_json.cpp:10:10: fatal error: 'sssp/bench_runner.hpp' file not found\n1 error generated.\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_cli.cpp.o \ntests/unit/bench/test_bench_cli.cpp:10:10: fatal error: 'sssp/bench_runner.hpp' file not found\n1 error generated.\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_record.cpp.o \ntests/unit/bench/test_bench_record.cpp:14:10: fatal error: 'sssp/bench_runner.hpp' file not found"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "[bench] json, cli, registry, sources, order, rss, env, record"
+   ],
+   "command": "cmake --build --preset debug 2>&1 | grep -E \"warning|error\"; ctest --preset debug 2>&1 | tail -4",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:57:52+09:00",
+   "output_tail": "regression      =   0.01 sec*proc (1 test)\nunit            =  12.96 sec*proc (293 tests)\nTotal Test time (real) =   3.44 sec"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "[bench] json, cli, registry, sources, order, rss, env, record"
+   ],
+   "command": "set -o pipefail; cmake --build --preset debug 2>&1 | { grep -E \"warning|error\" || true; }; ctest --preset debug 2>&1 | grep -E \"tests passed|tests failed|FAILED\"",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:58:04+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 311"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "tests/unit/bench/test_bench_run.cpp",
+    "tests/python/test_bench_runner_integration.py"
+   ],
+   "command": "set -o pipefail; cmake --build --preset debug 2>&1 | grep -E \"error|FAILED\" | head -6; rc=$?; uv run pytest tests/python/test_bench_runner_integration.py -rs 2>&1 | tail -3; exit 1",
+   "exit_code": 1,
+   "reason": "compile error: sssp::bench::run_main (runner driver) is not declared yet; the Python integration test is skipped because build/debug/sssp_bench_runner does not exist",
+   "timestamp": "2026-11-27T11:00:28+09:00",
+   "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_run.cpp.o \ntests/unit/bench/test_bench_run.cpp:70:25: error: no member named 'run_main' in namespace 'sssp::bench'\n1 error generated.\nSKIPPED [1] tests/python/test_bench_runner_integration.py:197: build/debug/sssp_bench_runner is not built (cmake --preset debug && cmake --build --preset debug)\nSKIPPED [1] tests/python/test_bench_runner_integration.py:222: build/debug/sssp_bench_runner is not built (cmake --preset debug && cmake --build --preset debug)\n8 skipped in 0.60s"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "tests/unit/bench/test_bench_run.cpp"
+   ],
+   "command": "set -o pipefail; cmake --build --preset debug 2>&1 | grep -E \"error|FAILED\" | head -6",
+   "exit_code": 1,
+   "reason": "compile error: sssp::bench::run_main (runner driver) is not declared yet (exit code of the build itself)",
+   "timestamp": "2026-11-27T11:00:37+09:00",
+   "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/bench/test_bench_run.cpp.o \ntests/unit/bench/test_bench_run.cpp:70:25: error: no member named 'run_main' in namespace 'sssp::bench'\n1 error generated."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "tests/unit/bench/test_bench_run.cpp",
+    "tests/python/test_bench_runner_integration.py"
+   ],
+   "command": "set -o pipefail; cmake --build --preset debug 2>&1 | { grep -E \"warning|error\" || true; }; ctest --preset debug 2>&1 | grep -E \"tests passed|tests failed|FAILED\" && uv run pytest 2>&1 | tail -2",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T11:03:09+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 320\n..........................................................               [100%]\n274 passed in 24.78s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "all"
+   ],
+   "command": "set -o pipefail; cmake --preset debug > /dev/null && cmake --build --preset debug 2>&1 | { grep -E \"warning|error\" || true; }; ctest --preset debug 2>&1 | grep -E \"tests passed|tests failed|FAILED\" && uv run pytest 2>&1 | tail -1",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T11:07:53+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 320\n274 passed in 13.22s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "quality gate on the task files"
+   ],
+   "command": "set -o pipefail; cmake --build --preset ci 2>&1 | { grep -E \"warning|error\" || true; }; ctest --preset ci 2>&1 | grep -E \"tests passed|tests failed\" && /opt/homebrew/opt/llvm/bin/clang-tidy -p build/ci --quiet --extra-arg=-isysroot$(xcrun --show-sdk-path) src/bench_runner/*.cpp tools/sssp_bench_runner.cpp && /opt/homebrew/opt/llvm/bin/clang-format --dry-run --Werror include/sssp/bench_runner.hpp src/bench_runner/*.cpp tools/sssp_bench_runner.cpp tests/unit/bench/*.cpp && uv run ruff check . && uv run ruff format --check . && uv run pytest 2>&1 | tail -1",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T11:11:02+09:00",
+   "output_tail": "100% tests passed, 0 tests failed out of 320\nAll checks passed!\n52 files already formatted\n274 passed in 25.87s\n[1/6] Processing file src/bench_runner/cli.cpp.\n[2/6] Processing file src/bench_runner/json.cpp.\n[3/6] Processing file src/bench_runner/record.cpp.\n[4/6] Processing file src/bench_runner/registry.cpp.\n[5/6] Processing file src/bench_runner/runner.cpp.\n[6/6] Processing file tools/sssp_bench_runner.cpp."
+  }
+ ],
+ "commit": "5998c95"
+}
