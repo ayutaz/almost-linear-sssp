@@ -15,7 +15,7 @@
       "tests/differential/test_baselines_differential.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -35,5 +35,5 @@
       "output_tail": "        Start 651: differential:baselines agree on generated graphs: geometric (random/euclidean weights) - double\n688/695 Test  #76: unit:bench cli: multiple algorithms, source list and verify modes .......................................................................................   Passed    0.03 sec\n689/695 Test #641: differential:baselines agree on generated graphs: ba - double ...........................................................................................   Passed    0.03 sec\n690/695 Test #243: unit:eval oracle: target distance by hand on a path with one and several sources ........................................................................   Passed    0.04 sec\n691/695 Test #655: differential:every baseline rejects an invalid source with std::out_of_range - double ...................................................................   Passed    0.03 sec\n692/695 Test  #48: unit:4-ary-heap Dijkstra: single vertex .................................................................................................................   Passed    0.04 sec\n693/695 Test #654: differential:every baseline rejects an invalid source with std::out_of_range - std::uint64_t ............................................................   Passed    0.03 sec\n694/695 Test #651: differential:baselines agree on generated graphs: geometric (random/euclidean weights) - double .........................................................   Passed    0.04 sec\n695/695 Test #650: differential:baselines agree on generated graphs: geometric (random/euclidean weights) - std::uint64_t ..................................................   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 695\n\nLabel Time Summary:\ndifferential    =   6.47 sec*proc (29 tests)\nintegration     =   1.90 sec*proc (6 tests)\nproperty        =  50.23 sec*proc (30 tests)\nregression      =   0.20 sec*proc (5 tests)\nunit            = 301.92 sec*proc (625 tests)\n\nTotal Test time (real) =  45.95 sec"
     }
   ],
-  "commit": null
+  "commit": "88cb969"
 }
