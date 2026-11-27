@@ -110,6 +110,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P3-WORD-OPS | DONE | 1 | Sec 2 l.301-308 (word operations, tabulated ilog, scan-stored block index/offset, uniform draws); Sec 3.5 Lemma 3.11 | ab6a8ec | Per-operation Mode A paths take integer logarithms from IlogTable (or a value computed once per range) instead of a shift loop, and the blocked split-findmin reads block index and offset from a scan-built BlockLayout instead of integer division; all results unchanged |
 | P4-LOCAL-LARGE | DONE (test-only) | 0 | Sec 5.4 Algorithm 4 l.2 and l.6-12, Lemma 5.10; Def 4.1, Def 4.2; Sec 4.3 Lemma 4.6 | cae3e81 | Mode A Algorithm 4 at the paper's radial sizes (k >= 209953) yields a hierarchy satisfying Def 4.1 (project validator and an independent checker), records no fallback, realizes every geodesic from the native entry, and Evaluate from a native entry equals an independent Dijkstra at every vertex; k = 209952 takes the recorded base case |
 | P4-SLOW-LABELS | DONE | 1 | - | 0c3767b | Catch2 tests tagged [slow] get the ctest label <category>-slow (others keep <category>); CI runs the slow labels in a separate step so nothing is dropped |
+| P5-EXP-LOCAL | DONE | 1 | Sec 5.4 l.1182-1243 (alignment c = 10 l.1206, support N^16 l.1216, grid and merges), Alg 4 l.2-12, Lemma 5.9 l.1152, Lemma 5.10 l.1265-1300 | 3098e11 | Mode B local hierarchy entry: branches on PaperParams::local_branch (base case recorded as a FallbackRecord, unsupported is a failure), reproduces paper::local_hierarchy exactly for the paper alignment and grid, and provides the Lambda alignment and support (D-8) and the exact-height assembly (D-11), each validating Def 4.1 and giving Evaluate distances equal to Dijkstra |
 | P5-EXP-PARAMS | DONE | 1 | Sec 2 l.286; Sec 5.1 l.967; Sec 5.2 l.1021-1029; Sec 5.4 l.1206-1216; Alg 5 l.2-6; Sec 6.2 l.1473-1491; Sec 7.1 l.1644; Sec 7.3; Sec 8.1 l.1977; Sec 8.2 l.2080; Sec 4.1 | 391f507 | Mode B parameter set: PaperParams validates LocalParams/OuterParams at construction (rejecting the constants that PAPER_MAPPING §2 marks not changeable), rederives h, K, P, T, H, F from b and t, decides the local branch per instance, and logs every parameter with its deviation ID into Diagnostics |
 
 ## P0-BOOTSTRAP
@@ -1120,6 +1121,17 @@ Do not edit by hand; edit the evidence files and regenerate.
 - RED (exit 1, 2026-11-27T14:39:04+09:00): no test carries a <category>-slow label yet: catch_discover_tests gives every test only its category label — `bash -c 'ctest --preset debug -N -L '"'"'^(property\|differential)-slow$'"'"' \| grep -E '"'"'Total Tests: [1-9]'"'"''`
 - GREEN (exit 0, 2026-11-27T14:40:40+09:00) — `bash $TMPDIR debug`
 - REFACTOR (exit 0, 2026-11-27T14:50:04+09:00) — `bash $TMPDIR debug`
+
+## P5-EXP-LOCAL
+
+- Spec: Mode B local hierarchy entry: branches on PaperParams::local_branch (base case recorded as a FallbackRecord, unsupported is a failure), reproduces paper::local_hierarchy exactly for the paper alignment and grid, and provides the Lambda alignment and support (D-8) and the exact-height assembly (D-11), each validating Def 4.1 and giving Evaluate distances equal to Dijkstra
+- Impl: `src/experimental/paper_experimental/*.hpp`, `src/experimental/paper_experimental/*.cpp`
+- Tests: `tests/unit/paper_experimental/test_local_mode_b*.cpp`, `tests/differential/paper_experimental/test_local_mode_b*.cpp`, `tests/property/paper_experimental/test_local_mode_b*.cpp`, `tests/support/paper_experimental/local_mode_b_support.hpp`
+- Covers: `src/paper/local/local_hierarchy.hpp`, `src/paper/local/assemble.hpp`, `src/paper/local/assemble.cpp`, `src/paper/local/threshold_joins.hpp`, `src/paper/local/radial_states.hpp`, `src/paper/local/owner_decomposition.hpp`, `src/paper/local/base_case.hpp`, `src/paper/hierarchy/evaluate.hpp`, `src/paper/local/saturating.hpp`, `src/paper/hierarchy/ordered_hierarchy.hpp`
+- RED (exit 1, 2026-11-27T14:24:13+09:00): missing headers experimental/paper_experimental/local_hierarchy.hpp and local_assembly.hpp: the Mode B local entry point (local_branch dispatch, base-case FallbackRecord, unsupported failure), the D-8 Lambda alignment/support, the D-11 exact-height assembly and PaperParams::local_size_params do not exist yet — `bash -c 'cmake --build --preset debug && ctest --preset debug -R "Mode B local\|Mode B assembly\|D-8\|D-11"'`
+- GREEN (exit 0, 2026-11-27T14:31:32+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
+- REFACTOR (exit 0, 2026-11-27T14:33:39+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
+- REFACTOR (exit 0, 2026-11-27T14:37:47+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
 
 ## P5-EXP-PARAMS
 
