@@ -11,7 +11,7 @@
       "tests/property/paper/test_local_hierarchy_large_property.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -39,5 +39,5 @@
       "output_tail": "total=1108 fast=1089 slow=19 unlabelled=0"
     }
   ],
-  "commit": null
+  "commit": "0c3767b"
 }
