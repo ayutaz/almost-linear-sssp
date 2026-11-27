@@ -13,7 +13,7 @@
       "tests/unit/paper/hierarchy/test_child_order_range.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -41,5 +41,5 @@
       "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n184/185 Test #1038: differential:Mode B local (D-8, D-11) + Evaluate equals Dijkstra; grid equals exact - double .......................................   Passed    3.46 sec\n185/185 Test #1037: differential:Mode B local (D-8, D-11) + Evaluate equals Dijkstra; grid equals exact - std::uint64_t ................................   Passed    3.47 sec\n\n100% tests passed, 0 tests failed out of 185\n\nLabel Time Summary:\ndifferential    =  22.55 sec*proc (21 tests)\nproperty        =   8.29 sec*proc (9 tests)\nregression      =   0.14 sec*proc (9 tests)\nunit            =   4.38 sec*proc (146 tests)\n\nTotal Test time (real) =   9.93 sec"
     }
   ],
-  "commit": null
+  "commit": "19d18f4"
 }
