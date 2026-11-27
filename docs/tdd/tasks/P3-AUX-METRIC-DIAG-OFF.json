@@ -1,0 +1,30 @@
+{
+  "id": "P3-AUX-METRIC-DIAG-OFF",
+  "kind": "test-only",
+  "test_only_reason": "No implementation change: aux_metric already behaves as specified; the tests asserted SSSP_COUNT counters unconditionally, so 9 tests failed in ci-release (SSSP_DIAGNOSTICS=OFF, counters compiled out, every value 0). The fix guards the counter assertions and moves the coverage they implied onto the returned structures. A RED event would require breaking the implementation, so the task is test-only; the OFF failure is recorded in the evidence.",
+  "spec": "The aux_metric unit and property tests pass in every build: counter assertions run only when SSSP_DIAGNOSTICS is on, and the behaviour and coverage checks they stood for are made from the returned structures in every build",
+  "paper_ref": "Sec 7.1-7.2, Lemma 7.1-7.2 (tests only)",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/unit/paper/owner/test_aux_metric.cpp",
+      "tests/property/paper/test_aux_metric_property.cpp"
+    ],
+    "covers": [
+      "src/paper/owner/aux_metric.cpp",
+      "include/sssp/result.hpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset ci-release && ctest --preset ci-release && cmake --preset debug > /dev/null && cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:49:52+09:00",
+      "output_tail": "        Start 925: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n918/925 Test #919: property:split-findmin property: blocked work per record shrinks with the blocking depth ................................................................   Passed    0.14 sec\n919/925 Test #925: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.06 sec\n920/925 Test #917: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.94 sec\n921/925 Test #913: property:name_routes: Mode A certificates against Bellman-Ford, measured acceptance .....................................................................   Passed    1.24 sec\n922/925 Test #828: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ...................................................................   Passed    7.33 sec\n923/925 Test #918: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.68 sec\n924/925 Test #883: property:Lemmas 7.1 and 7.2 on seeded graph families - double ...........................................................................................   Passed   11.80 sec\n925/925 Test #882: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed   67.65 sec\n\n100% tests passed, 0 tests failed out of 925\n\nLabel Time Summary:\ndifferential    =  21.18 sec*proc (55 tests)\nintegration     =   0.66 sec*proc (6 tests)\nproperty        = 105.40 sec*proc (45 tests)\nregression      =   0.11 sec*proc (6 tests)\nunit            = 134.27 sec*proc (813 tests)\n\nTotal Test time (real) =  91.75 sec"
+    }
+  ],
+  "commit": "8060c5f"
+}
