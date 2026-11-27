@@ -13,6 +13,8 @@
 
 #include "paper/hierarchy/ordered_hierarchy.hpp"
 #include "paper/local/base_case.hpp"
+#include "paper/primitives/edge_pairs.hpp"
+#include "paper/primitives/merge_events.hpp"
 #include "sssp/graph.hpp"
 #include "sssp/result.hpp"
 
@@ -287,4 +289,45 @@ TEST_CASE("base case records path counters in Diagnostics", "[paper][local][base
 #else
   REQUIRE(diag.counters.empty());  // counters are compiled out in timed builds
 #endif
+}
+
+TEMPLATE_TEST_CASE("base case hierarchy is the merge forest of the lightest edges per pair",
+                   "[paper][local][base_case][random]", std::uint64_t, double) {
+  // Alg 4 l.4 = lightest edge per pair (P3-EDGE-PAIRS) + equal-weight simultaneous Kruskal
+  // merges (P3-MERGE-EVENTS): node i of the hierarchy is node i of the merge forest, with the
+  // same height, the same children in increasing id order, and its forest edges as links.
+  using W = TestType;
+  for (std::uint64_t seed = 1; seed <= 300; ++seed) {
+    std::mt19937_64 rng(seed);
+    const std::size_t n = 1 + rng() % 16;
+    const std::size_t m = rng() % (4 * n + 1);
+    const std::uint64_t max_w = 1 + rng() % 4;
+    std::vector<Edge<W>> edges;
+    for (std::size_t i = 0; i < m; ++i) {
+      edges.push_back({static_cast<Vertex>(rng() % n), static_cast<Vertex>(rng() % n),
+                       static_cast<W>(1 + rng() % max_w)});
+    }
+    const auto g = CsrGraph<W>::from_edges(n, edges);
+    const auto r = sssp::paper::local_hierarchy_base_case(g);
+    const auto& h = r.hierarchy;
+    const auto kept = sssp::paper::lightest_edge_per_pair<W>(n, g.edges());
+    const auto f = sssp::paper::build_merge_events<W>(n, g.edges(), kept);
+    INFO("seed " << seed << " n " << n << " m " << m);
+    REQUIRE(h.nodes.size() == f.num_nodes());
+    REQUIRE(h.roots == f.roots);
+    for (std::size_t i = 0; i < f.internal.size(); ++i) {
+      const auto& node = h.nodes[n + i];
+      const auto& want = f.internal[i];
+      REQUIRE(node.height == want.height);
+      REQUIRE(node.children == want.children);
+      REQUIRE(node.links.size() == want.edges.size());
+      for (std::size_t k = 0; k < want.edges.size(); ++k) {
+        const auto& e = g.edges()[want.edges[k]];
+        REQUIRE(node.links[k].x == e.u);
+        REQUIRE(node.links[k].y == e.v);
+        REQUIRE(node.links[k].length == e.weight);
+        REQUIRE(r.arc_edge[node.links[k].arc] == want.edges[k]);
+      }
+    }
+  }
 }

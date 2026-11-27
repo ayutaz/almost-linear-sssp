@@ -1,5 +1,5 @@
 // Sec 3.2 minimum spanning trees: GrowthPass (Algorithm 1, Lemma 3.4), the three-pass MST
-// (Lemma 3.5), the lightest edge per vertex pair, and a Kruskal reference.
+// (Lemma 3.5), and a Kruskal reference. The lightest edge per vertex pair is in edge_pairs.cpp.
 #include "paper/primitives/mst.hpp"
 
 #include <algorithm>
@@ -290,47 +290,6 @@ SpanningForestResult spanning_forest_three_pass(const CsrGraph<W>& g, Diagnostic
 }
 
 template <class W>
-std::vector<EdgeId> lightest_edge_per_pair(std::size_t n, std::span<const Edge<W>> edges) {
-  validate_edges<W>(n, edges);
-  // Non-loop edges as (lo, hi) pairs, grouped by two stable counting sorts (Lemma 3.1):
-  // first by hi, then by lo.
-  std::vector<EdgeId> ids;
-  ids.reserve(edges.size());
-  for (std::size_t i = 0; i < edges.size(); ++i) {
-    if (edges[i].u != edges[i].v) ids.push_back(static_cast<EdgeId>(i));
-  }
-  auto lo = [&](EdgeId id) { return std::min(edges[id].u, edges[id].v); };
-  auto hi = [&](EdgeId id) { return std::max(edges[id].u, edges[id].v); };
-  std::vector<EdgeId> buf(ids.size());
-  std::vector<std::size_t> count(n + 1, 0);
-  auto stable_pass = [&](auto coord) {
-    std::fill(count.begin(), count.end(), 0);
-    for (const EdgeId id : ids) ++count[coord(id) + 1];
-    for (std::size_t v = 0; v < n; ++v) count[v + 1] += count[v];
-    for (const EdgeId id : ids) buf[count[coord(id)]++] = id;
-    ids.swap(buf);
-  };
-  stable_pass(hi);
-  stable_pass(lo);
-  std::vector<bool> keep(edges.size(), false);
-  for (std::size_t i = 0; i < ids.size();) {
-    EdgeId best = ids[i];
-    std::size_t j = i + 1;
-    for (; j < ids.size() && lo(ids[j]) == lo(best) && hi(ids[j]) == hi(best); ++j) {
-      const EdgeId c = ids[j];
-      if (MstEdgeKey<W>{edges[c].weight, c} < MstEdgeKey<W>{edges[best].weight, best}) best = c;
-    }
-    keep[best] = true;
-    i = j;
-  }
-  std::vector<EdgeId> out;
-  for (std::size_t i = 0; i < keep.size(); ++i) {
-    if (keep[i]) out.push_back(static_cast<EdgeId>(i));
-  }
-  return out;
-}
-
-template <class W>
 std::vector<EdgeId> mst_kruskal_ref(std::size_t n, std::span<const Edge<W>> edges) {
   validate_edges<W>(n, edges);
   std::vector<EdgeId> order(edges.size());
@@ -390,9 +349,5 @@ template SpanningForestResult spanning_forest_three_pass<std::uint64_t>(
     const CsrGraph<std::uint64_t>&, Diagnostics*);
 template SpanningForestResult spanning_forest_three_pass<double>(const CsrGraph<double>&,
                                                                  Diagnostics*);
-template std::vector<EdgeId> lightest_edge_per_pair<std::uint64_t>(
-    std::size_t, std::span<const Edge<std::uint64_t>>);
-template std::vector<EdgeId> lightest_edge_per_pair<double>(std::size_t,
-                                                            std::span<const Edge<double>>);
 
 }  // namespace sssp::paper

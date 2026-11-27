@@ -4,7 +4,8 @@
 //   - quotient graphs whose edges keep their input index  Sec 3.2, first paragraph
 //   - GrowthPass                                          Algorithm 1, Lemma 3.4
 //   - the three-pass MST and its bottleneck property      Lemma 3.5
-//   - the lightest edge per vertex pair                   Algorithm 4 line 4
+//   - the lightest edge per vertex pair                   Algorithm 4 line 4 (edge_pairs.hpp,
+//                                                         re-exported here)
 //   - a Kruskal reference (sort + union-find)             test oracle, not from the paper
 //
 // Lengths are only copied and compared (comparison model, Sec 2); no length is added.
@@ -15,6 +16,7 @@
 #include <span>
 #include <vector>
 
+#include "paper/primitives/edge_pairs.hpp"  // lightest_edge_per_pair (P3-EDGE-PAIRS)
 #include "sssp/graph.hpp"
 #include "sssp/result.hpp"
 
@@ -128,12 +130,6 @@ SpanningForestResult spanning_forest_three_pass(std::size_t n, std::span<const E
                                                 Diagnostics* diag = nullptr);
 template <class W>
 SpanningForestResult spanning_forest_three_pass(const CsrGraph<W>& g, Diagnostics* diag = nullptr);
-
-/// For every unordered pair {u, v} with u != v, the index of the least edge joining it under the
-/// (length, index) order; loops are dropped. Indices are returned in increasing order.
-/// Two stable counting-sort passes (Lemma 3.1), O(n + m).
-template <class W>
-std::vector<EdgeId> lightest_edge_per_pair(std::size_t n, std::span<const Edge<W>> edges);
 
 /// Reference minimum spanning forest: sort by (length, index), then union-find (Kruskal).
 /// Returns the forest's edge indices in increasing order. O(m log m).
