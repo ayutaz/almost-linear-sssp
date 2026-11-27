@@ -75,6 +75,10 @@ enum class RadialArcKind : std::uint8_t {
   kSwitch,
   kPivot,
   kMacro,
+  /// Sec 8.1 (l.1984-1993): arcs into, along and out of the directed owner-tree states
+  /// v_in / v_out of the outer construction (paper/outer/outer_states.hpp). Never produced by
+  /// build_radial_states; compute_joins treats it like every other non-macro arc.
+  kOwnerTree,
 };
 
 /// Definition 5.4. States are indexed 0..num_states-1; `graph` holds every arc.
