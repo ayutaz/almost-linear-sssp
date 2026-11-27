@@ -42,12 +42,14 @@
 // The post-processing of Lemma 5.10 (links from the arcs at the lowest common ancestor, child
 // order by the light arcs, roots in condensation order) is the same for every variant.
 //
-// Relation to Mode A: src/paper/local/assemble.cpp fixes c = 10 and N^16 and offers no way to
-// pass other constants, so the engine below repeats its steps with the two tests made
-// parameters (the Mode A file is not edited by this task). With (kPaper, kGrid) the engine
-// reproduces paper::assemble_local_hierarchy field for field, counters included; tests check
-// this on every family, which ties the D-8 path to Mode A. The Mode B entry point
-// (local_hierarchy.hpp) does not use the engine for (kPaper, kGrid): it calls Mode A directly.
+// Relation to Mode A (task P5-LOCAL-UNIFY, Q-59): there is one implementation of the steps,
+// the shared core src/paper/local/assembly_core.hpp. Mode A passes it the paper's constants
+// (c = 10, N^16); this file passes the same for kPaper, the Lambda formulas for kLambda, and
+// sets the core's exact-height switch for kExactHeight. With (kPaper, kGrid) the result is
+// therefore paper::assemble_local_hierarchy's, counters included. The outputs of all three
+// variants are pinned by hashes recorded before the unification
+// (tests/property/paper_experimental/test_local_mode_b_property.cpp). The Mode B entry point
+// (local_hierarchy.hpp) calls Mode A directly for (kPaper, kGrid).
 //
 // Numerics (Q-38, D-13): s * Lambda and the support end are formed by doublings and integer
 // multiplications that saturate at WeightTraits<W>::infinity() (paper/local/saturating.hpp).
@@ -77,7 +79,7 @@ W lambda_scaled(W s, std::uint64_t n, std::uint64_t b, unsigned k_log2);
 template <class W>
 W lambda_support_end(W sigma, std::uint64_t n, std::uint64_t b, unsigned k_log2);
 
-/// Whether the engine accepts N vertices with separator b under `alignment` and `assembly`:
+/// Whether the assembly accepts N vertices with separator b under `alignment` and `assembly`:
 /// (kPaper, kGrid) needs paper::local_assembly_applies(N, b); every other choice needs N >= 2.
 bool local_assembly_variant_applies(std::size_t n, std::size_t b, LocalAlignment alignment,
                                     LocalAssembly assembly);
