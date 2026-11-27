@@ -1,0 +1,41 @@
+{
+  "id": "P3-UINT128-DEDUP",
+  "kind": "test-only",
+  "test_only_reason": "behaviour-preserving refactor: one shared 128-bit length alias",
+  "spec": "one shared 128-bit length alias; output unchanged",
+  "paper_ref": "none",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/unit/paper/hierarchy/test_child_order_range.cpp",
+      "tests/unit/paper/local/test_owner_decomposition_range.cpp"
+    ],
+    "covers": [
+      "src/paper/hierarchy/child_order.hpp",
+      "src/paper/hierarchy/child_order.cpp",
+      "src/paper/local/owner_decomposition.hpp",
+      "src/paper/local/owner_decomposition.cpp",
+      "src/paper/model/wide_length.hpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'ctest --preset debug -R \"child|link|order|hierarchy|evaluate|owner|local|regression|overflow\" -j4'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T17:46:59+09:00",
+      "output_tail": "        Start 1355: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix)\n267/272 Test #1354: regression:20261127-owner-decomposition-overflow: path of four edges of 2^62 with b = 2 ............................................   Passed    0.02 sec\n        Start 1356: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n268/272 Test #1355: regression:20261127-owner-decomposition-overflow: path of four edges of 2^61 (passes before the fix) ...............................   Passed    0.01 sec\n        Start 1357: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n269/272 Test #1356: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ...................................   Passed    0.02 sec\n270/272 Test #1357: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 .....................................   Passed    0.07 sec\n271/272 Test #1159: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - std::uint64_t ...........................   Passed  135.18 sec\n272/272 Test #1160: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - double ..................................   Passed  135.11 sec\n\n100% tests passed, 0 tests failed out of 272\n\nLabel Time Summary:\ndifferential         =  85.40 sec*proc (34 tests)\ndifferential-slow    = 270.29 sec*proc (2 tests)\nproperty             =  21.24 sec*proc (17 tests)\nregression           =   0.42 sec*proc (23 tests)\nunit                 =   6.15 sec*proc (196 tests)\n\nTotal Test time (real) = 159.57 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -R \"child|link|order|hierarchy|evaluate|owner|local|regression|overflow\" -j4'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T17:52:12+09:00",
+      "output_tail": "        Start 1337: regression:20261127-child-order-overflow: order_children on the path of four edges of 2^62\n267/272 Test #1346: regression:20261127-evaluate-mass-overflow: one edge of length 2^63 - 1 (passes before the fix) ....................................   Passed    0.02 sec\n        Start 1344: regression:20261127-evaluate-double-slot-rounding: representable sums (pass before the fix)\n268/272 Test #1337: regression:20261127-child-order-overflow: order_children on the path of four edges of 2^62 .........................................   Passed    0.02 sec\n        Start 1341: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf\n269/272 Test #1344: regression:20261127-evaluate-double-slot-rounding: representable sums (pass before the fix) ........................................   Passed    0.01 sec\n270/272 Test #1341: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ......................................   Passed    0.02 sec\n271/272 Test #1159: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - std::uint64_t ...........................   Passed  279.05 sec\n272/272 Test #1160: differential:practical-local equals Bellman-Ford and Dijkstra on larger generated graphs - double ..................................   Passed  280.57 sec\n\n100% tests passed, 0 tests failed out of 272\n\nLabel Time Summary:\ndifferential         = 173.31 sec*proc (34 tests)\ndifferential-slow    = 559.62 sec*proc (2 tests)\nproperty             =  49.17 sec*proc (17 tests)\nregression           =   0.64 sec*proc (23 tests)\nunit                 =  11.82 sec*proc (196 tests)\n\nTotal Test time (real) = 286.34 sec"
+    }
+  ],
+  "commit": null
+}
