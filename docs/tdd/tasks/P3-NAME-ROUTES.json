@@ -1,0 +1,57 @@
+{
+  "id": "P3-NAME-ROUTES",
+  "spec": "NameRoutes(G_P) computes u = ceil(log2(t+2)), g = 4u+3 and P = least power of two >= 8*256*g*u^2, keeps the least-weight representative per endpoint pair, and while more than 32t representatives remain samples a uniform 16t-subset, runs Estimate on all residual endpoint pairs, finds per index group the least a* with P a* >= Z by median pruning, and accepts the round iff at least half the residual qualifies (otherwise redraws); remaining edges certify their own weight; the dictionary is sorted with ties coalesced; every edge gets lambda_e <= a_e with dist_GP(x,y) <= P lambda_e on every seed; trials, acceptances and trials-to-accept are recorded in Diagnostics.counters; an optional retry cap (deviation D-10, off by default) is recorded as a FallbackRecord",
+  "paper_ref": "Def 6.1, Sec 6.1, Algorithm 5, Lemma 6.2, 6.3, 6.8",
+  "files": {
+    "impl": [
+      "src/paper/pivots/name_routes.cpp",
+      "src/paper/pivots/name_routes.hpp"
+    ],
+    "tests": [
+      "tests/property/paper/test_name_routes_property.cpp",
+      "tests/unit/paper/pivots/test_name_routes.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "name_routes constants follow Alg 5 l.2-3",
+        "median_prune finds the least feasible key (Sec 6.1)",
+        "partial_shuffle draws a uniform k-subset (Alg 5 l.6)",
+        "name_routes keeps the lightest parallel edge and coalesces ties",
+        "name_routes samples with Mode A constants on a dense instance",
+        "name_routes retry cap (deviation D-10) is off by default and recorded when hit",
+        "name_routes: certificates on random multigraphs, Mode B factors, many seeds",
+        "name_routes: Mode A certificates against Bellman-Ford, measured acceptance",
+        "Lemma 6.2: at most 2t critical edges (brute force)",
+        "Lemma 6.3: uniform 16t-samples leave few edges unwitnessed (measured)"
+      ],
+      "command": "set -o pipefail; { cmake --build --preset debug -j8 && ctest --preset debug -R \"name_routes|Lemma 6\"; } 2>&1 | grep -v \"^/usr/bin/c++\" | sed \"s|$PWD/||g\"",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/pivots/name_routes.hpp' file not found (NameRoutes, median_prune, partial_shuffle, name_routes_constants and check_route_names are not implemented yet)",
+      "timestamp": "2026-11-27T11:08:19+09:00",
+      "output_tail": "[0/2] Re-checking globbed directories...\n[1/5] Building CXX object tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_name_routes_property.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_property_tests.dir/property/paper/test_name_routes_property.cpp.o \ntests/property/paper/test_name_routes_property.cpp:15:10: fatal error: 'paper/pivots/name_routes.hpp' file not found\n   15 | #include \"paper/pivots/name_routes.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[2/5] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/pivots/test_name_routes.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/pivots/test_name_routes.cpp.o \ntests/unit/paper/pivots/test_name_routes.cpp:16:10: fatal error: 'paper/pivots/name_routes.hpp' file not found\n   16 | #include \"paper/pivots/name_routes.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "all 13 name_routes / median_prune / partial_shuffle / Lemma 6.2-6.3 unit and property test cases"
+      ],
+      "command": "set -o pipefail; { cmake --build --preset debug -j8 && ctest --preset debug; } 2>&1 | grep -v \"^/usr/bin/c++\" | sed \"s|$PWD/||g\"",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:10:20+09:00",
+      "output_tail": "        Start 236: unit:check_route_names reports invalid certificates\n341/348 Test  #55: unit:binary-heap Dijkstra: single vertex ................................................................   Passed    0.05 sec\n342/348 Test  #57: unit:binary-heap Dijkstra: invalid source and integer overflow ..........................................   Passed    0.05 sec\n343/348 Test  #50: unit:4-ary-heap Dijkstra: invalid source and integer overflow ...........................................   Passed    0.06 sec\n344/348 Test  #49: unit:4-ary-heap Dijkstra: exact dyadic doubles ..........................................................   Passed    0.05 sec\n345/348 Test  #48: unit:4-ary-heap Dijkstra: single vertex .................................................................   Passed    0.06 sec\n346/348 Test  #53: unit:binary-heap Dijkstra: hand-computed classic graph ..................................................   Passed    0.09 sec\n347/348 Test #236: unit:check_route_names reports invalid certificates .....................................................   Passed    0.07 sec\n348/348 Test  #56: unit:binary-heap Dijkstra: exact dyadic doubles .........................................................   Passed    0.15 sec\n\n100% tests passed, 0 tests failed out of 348\n\nLabel Time Summary:\ndifferential    =   3.80 sec*proc (4 tests)\nintegration     =   0.98 sec*proc (6 tests)\nproperty        =  23.48 sec*proc (20 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  43.40 sec*proc (317 tests)\n\nTotal Test time (real) =   9.03 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "set -o pipefail; { cmake --build --preset debug -j8 && ctest --preset debug; } 2>&1 | grep -v \"^/usr/bin/c++\" | sed \"s|$PWD/||g\"",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:15:25+09:00",
+      "output_tail": "        Start  89: unit:topology does not depend on the weight distribution or weight type\n341/348 Test #150: unit:small graph suite: path-structure cases - double ...................................................   Passed    0.08 sec\n342/348 Test #216: unit:estimate rejects inputs outside Algorithm 6's contract .............................................   Passed    0.06 sec\n343/348 Test #302: unit:verify detects broken results - U64 ................................................................   Passed    0.06 sec\n344/348 Test #304: unit:verify detects a zero-weight parent cycle that every distance check misses - U64 ...................   Passed    0.07 sec\n345/348 Test #218: unit:estimate bands and quotients on a geometric path (Sec 6.2) .........................................   Passed    0.05 sec\n346/348 Test  #27: unit:radix heap enforces monotonicity and rejects invalid operations ....................................   Passed    0.08 sec\n347/348 Test  #52: unit:4-ary-heap Dijkstra: operation counters ............................................................   Passed    0.06 sec\n348/348 Test  #89: unit:topology does not depend on the weight distribution or weight type .................................   Passed    0.05 sec\n\n100% tests passed, 0 tests failed out of 348\n\nLabel Time Summary:\ndifferential    =   4.18 sec*proc (4 tests)\nintegration     =   1.59 sec*proc (6 tests)\nproperty        =  26.63 sec*proc (20 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            =  50.43 sec*proc (317 tests)\n\nTotal Test time (real) =  10.41 sec"
+    }
+  ],
+  "commit": "a458e0e"
+}

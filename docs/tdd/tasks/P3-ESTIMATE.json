@@ -1,0 +1,54 @@
+{
+  "id": "P3-ESTIMATE",
+  "spec": "Estimate(S, Q) builds the Kruskal merge forest and weight bands (T = least power of two >= 4t), the contracted quotients Q_a with window [a/T^2, T^2 a], per scale Delta = 2^i a (i = 0..l, 2^l >= t T^2) a uniform center order and radius Delta(1 + j/H) with H = least power of two >= (16t)^5, pruned first-covering-center searches, partition trees with table value 4 Delta + a and LCA lookups; it flags exactly the disconnected demands and returns Z >= d_S(x,y) for every connected demand on every seed, with a <= beta <= d <= d_S <= d + a, top part = quotient component, and exact integer comparisons of all power-of-two scaled quantities",
+  "paper_ref": "Sec 6.2, Algorithm 6, Lemma 6.4-6.7",
+  "files": {
+    "impl": [
+      "src/paper/pivots/estimate.cpp",
+      "src/paper/pivots/estimate.hpp"
+    ],
+    "tests": [
+      "tests/property/paper/test_estimate_property.cpp",
+      "tests/unit/paper/pivots/test_estimate.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "estimate constants follow Sec 6.2: T, top scale and H",
+        "exact scaled comparisons used by Estimate and NameRoutes",
+        "radius test H d <= (H + j) Delta is exact (Sec 6.2)",
+        "estimate bands and quotients on a geometric path (Sec 6.2)",
+        "estimate: Z >= d_S and disconnection flags on random samples (Lemma 6.7(1))",
+        "estimate: quotients satisfy Lemma 6.4 on random samples",
+        "estimate: centers, partition trees and table indices (Lemma 6.6, Q-41)"
+      ],
+      "command": "set -o pipefail; { cmake --build --preset debug -j8 && ctest --preset debug -R estimate; } 2>&1 | grep -v \"^/usr/bin/c++\" | sed \"s|$PWD/||g\"",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/pivots/estimate.hpp' file not found (Estimate, its trace and the exact scaled comparisons are not implemented yet)",
+      "timestamp": "2026-11-27T11:00:38+09:00",
+      "output_tail": "[0/2] Re-checking globbed directories...\n[1/21] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/pivots/test_estimate.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/pivots/test_estimate.cpp.o \ntests/unit/paper/pivots/test_estimate.cpp:14:10: fatal error: 'paper/pivots/estimate.hpp' file not found\n   14 | #include \"paper/pivots/estimate.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[2/21] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/test_version.cpp.o\n[3/21] Building CXX object tests/CMakeFiles/sssp_property_tests.dir/property/baseline/test_binary_heap_properties.cpp.o\n[4/21] Building CXX object tests/CMakeFiles/sssp_integration_tests.dir/integration/test_io_roundtrip.cpp.o\n[5/21] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/support/test_support.cpp.o\n[6/21] Building CXX object tests/CMakeFiles/sssp_differential_tests.dir/differential/test_exhaustive_small.cpp.o\n[7/21] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_sort.cpp.o\n[8/21] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/verify/test_verify.cpp.o\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "all 16 estimate unit/property test cases"
+      ],
+      "command": "set -o pipefail; { cmake --build --preset debug -j8 && ctest --preset debug; } 2>&1 | grep -v \"^/usr/bin/c++\" | sed \"s|$PWD/||g\"",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:05:44+09:00",
+      "output_tail": "        Start 333: regression:Counted<double> graphs reject negative and NaN weights\n326/333 Test #322: property:Fibonacci heap matches the reference model .....................................................   Passed    0.23 sec\n327/333 Test #324: property:dsu find traversals obey the Lemma 3.6 band bound on random op sequences .......................   Passed    0.28 sec\n328/333 Test #333: regression:Counted<double> graphs reject negative and NaN weights .......................................   Passed    0.11 sec\n329/333 Test #320: property:indexed 4-ary heap matches the reference model .................................................   Passed    0.56 sec\n330/333 Test #321: property:indexed binary and 8-ary heaps match the reference model .......................................   Passed    0.57 sec\n331/333 Test #332: property:forest queries agree with binary lifting on deep and degenerate shapes .........................   Passed    1.63 sec\n332/333 Test #331: property:forest queries agree with binary lifting on random forests .....................................   Passed    1.89 sec\n333/333 Test #314: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................   Passed    2.36 sec\n\n100% tests passed, 0 tests failed out of 333\n\nLabel Time Summary:\ndifferential    =   2.95 sec*proc (4 tests)\nintegration     =   1.89 sec*proc (6 tests)\nproperty        =  14.24 sec*proc (16 tests)\nregression      =   0.11 sec*proc (1 test)\nunit            = 105.48 sec*proc (306 tests)\n\nTotal Test time (real) =  16.75 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "set -o pipefail; { cmake --build --preset debug -j8 && ctest --preset debug; } 2>&1 | grep -v \"^/usr/bin/c++\" | sed \"s|$PWD/||g\"",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:15:14+09:00",
+      "output_tail": "        Start 213: unit:estimate constants follow Sec 6.2: T, top scale and H\n341/348 Test #135: unit:file variants round-trip and report unopenable files ...............................................   Passed    0.05 sec\n342/348 Test #220: unit:estimate with no edges or fewer than two pivots returns no bounds ..................................   Passed    0.04 sec\n343/348 Test #134: unit:DIMACS reader rejects invalid input with ParseError and line number ................................   Passed    0.10 sec\n344/348 Test #109: unit:to_csr validates the edge list .....................................................................   Passed    0.07 sec\n345/348 Test #137: unit:xoshiro256** matches the reference sequence for state {1,2,3,4} ....................................   Passed    0.07 sec\n346/348 Test #213: unit:estimate constants follow Sec 6.2: T, top scale and H ..............................................   Passed    0.06 sec\n347/348 Test  #57: unit:binary-heap Dijkstra: invalid source and integer overflow ..........................................   Passed    0.07 sec\n348/348 Test #186: unit:signed pair addition is componentwise and negation swaps - double ..................................   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 348\n\nLabel Time Summary:\ndifferential    =   3.58 sec*proc (4 tests)\nintegration     =   1.45 sec*proc (6 tests)\nproperty        =  22.28 sec*proc (20 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            =  39.50 sec*proc (317 tests)\n\nTotal Test time (real) =  10.23 sec"
+    }
+  ],
+  "commit": "eb2955c"
+}
