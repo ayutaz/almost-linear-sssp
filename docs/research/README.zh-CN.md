@@ -10,11 +10,11 @@
 |---|---|---|
 | [01_preliminaries_primitives.zh-CN.md](01_preliminaries_primitives.zh-CN.md) | Sec 1–3 | 主定理、符号一览、阈值的使用方式、基本情形的约定、计算模型(长度运算、整数、随机数)、double 会出问题的地方、Sec 3 的原语 P1–P13(搜索、排序、选择、Dijkstra、Fibonacci 堆、生长路径与 MST、union-find、LCA、level ancestor、split–findmin)、与参考实现的对应、模块方案 |
 | [02_ordered_hierarchy_local.zh-CN.md](02_ordered_hierarchy_local.zh-CN.md) | Sec 4–5 | 有序层次结构(Def 4.1–4.2)、规范化、子节点顺序、Scan 与 Evaluate(Alg 2–3)、可检查的不变量 I1–I8、owner 分解、radial 状态表示、阈值分量、局部层次结构(Alg 4)、原子替换、降低阈值时会失效的引理、模块方案与实现顺序 |
-| [03_pivots_aux_outer.md](03_pivots_aux_outer.md) | Sec 6–8 | 枢纽路由证书(Alg 5–6、Lemma 6.2–6.8)、辅助度量与 owner 坐标、宽度类、日历与原子、OwnerDistances(Alg 7)、外层状态图与数值尺度、ShortestPaths(Alg 8)与主定理运行时间的分解、中间状态不变量一览 |
-| [04_outer_scales_pipeline.md](04_outer_scales_pipeline.md) | Sec 8.2–8.3 | 外层尺度(Lemma 8.4)与外层流水线(Alg 8 l.8–17、Lemma 8.5)的实现规格:以精确的(值, 指数)形式表示的因子 F、逐阶段的 Lemma 8.4、Alg 8 的各阶段及回退的记录位置、Mode A / Mode B、现有组件所欠缺之处(M-1–M-12)、提议的问题 Q-65–Q-74、提议的验收测试 SC-1–14 与 PL-1–12 |
+| [03_pivots_aux_outer.md](03_pivots_aux_outer.zh-CN.md) | Sec 6–8 | 枢纽路由证书(Alg 5–6、Lemma 6.2–6.8)、辅助度量与 owner 坐标、宽度类、日历与原子、OwnerDistances(Alg 7)、外层状态图与数值尺度、ShortestPaths(Alg 8)与主定理运行时间的分解、中间状态不变量一览 |
+| [04_outer_scales_pipeline.md](04_outer_scales_pipeline.zh-CN.md) | Sec 8.2–8.3 | 外层尺度(Lemma 8.4)与外层流水线(Alg 8 l.8–17、Lemma 8.5)的实现规格:以精确的(值, 指数)形式表示的因子 F、逐阶段的 Lemma 8.4、Alg 8 的各阶段及回退的记录位置、Mode A / Mode B、现有组件所欠缺之处(M-1–M-12)、提议的问题 Q-65–Q-74、提议的验收测试 SC-1–14 与 PL-1–12 |
 | [thresholds.zh-CN.md](thresholds.zh-CN.md) | 阈值与常数 | 所有常数的一览与分类(影响正确性还是只影响时间)、满足各阈值的最小 N、现实规模 N 下所走的路径、Mode B 中改动数值时会失效之处、对实现的建议 |
-| [prior_work_and_oss.md](prior_work_and_oss.md) | 先行研究与现有 OSS | 现有实现(包括目标论文的一个实现)的许可证、验证方法与测量条件,先行研究,关于引入还是重新实现的建议 |
-| [open-questions.md](open-questions.md) | 整篇论文 | 将上述文档中的含糊之处汇总为带 ID(Q-xx)的一张表:暂定解释、受影响的模块、解决状态(Decided by interpretation / Needs agreement / Open) |
+| [prior_work_and_oss.md](prior_work_and_oss.zh-CN.md) | 先行研究与现有 OSS | 现有实现(包括目标论文的一个实现)的许可证、验证方法与测量条件,先行研究,关于引入还是重新实现的建议 |
+| [open-questions.md](open-questions.zh-CN.md) | 整篇论文 | 将上述文档中的含糊之处汇总为带 ID(Q-xx)的一张表:暂定解释、受影响的模块、解决状态(Decided by interpretation / Needs agreement / Open) |
 | [../PAPER_MAPPING.md](../PAPER_MAPPING.md) | 整篇论文 | 论文中每个条目到模块、测试、Mode、状态与偏差(D-xx)的对应表。统一后的模块名记录也在这里 |
 
 ## 阅读顺序
