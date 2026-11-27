@@ -615,3 +615,32 @@ TEST_CASE("normalize records path counters in Diagnostics", "[paper][hierarchy][
   static_cast<void>(nh);
 #endif
 }
+
+TEST_CASE("normalize: a mass beyond the uint64 range saturates at infinity (D-13 / D-23)",
+          "[paper][hierarchy][normalize]") {
+  using W = std::uint64_t;
+  // The hand example above with hc = 2^63 and hp = 3 * 2^62: S(C) = 2 hc = 2^64 and S(P) =
+  // hp + hp + S(C) do not fit. Both are upper bounds (Sec 4.1 l.686-688), so the saturated value
+  // +infinity is still one; 4 S(C) >= h(P) holds for the true value and for infinity, so C is
+  // linked to P. The table of the set starts at 2^63 and stops there (2^64 does not fit), so
+  // nu(C) = nu(P) = 2^63 and C is contracted into P, which keeps its own (saturated) mass.
+  constexpr W hc = W{1} << 63;
+  constexpr W hp = W{3} << 62;
+  StateGraph<W> g;
+  g.num_states = 3;
+  g.arcs = {{0, 1, hc}, {1, 0, hc}, {1, 2, hp}, {2, 1, hp}};
+  auto h = sssp::paper::make_leaf_forest<W>(g, {0, 1, 2});
+  const NodeId c = sssp::paper::add_internal_node<W>(h, hc, {0, 1}, {{0, 1, hc}});
+  const NodeId p = sssp::paper::add_internal_node<W>(h, hp, {c, 2}, {{1, 2, hp}});
+  sssp::paper::collect_roots(h);
+  const auto phys = CsrGraph<W>::from_edges(3, {{0, 1, hc}, {1, 2, hp}});
+  REQUIRE(sssp::paper::validate_ordered_hierarchy(h, phys).ok());
+  NormalizedHierarchy<W> nh;
+  REQUIRE_NOTHROW(nh = sssp::paper::normalize(h));
+  REQUIRE(nh.forest.nodes.size() == 4);  // three leaves and P (C contracted)
+  const NodeId x = nh.node_of_input[p];
+  CHECK(nh.node_of_input[c] == x);
+  CHECK(nh.unit[x] == hc);
+  CHECK(nh.mass[x] == kInf<W>);
+  CHECK(nh.original_height[x] == hp);
+}
