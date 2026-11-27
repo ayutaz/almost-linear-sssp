@@ -1,6 +1,6 @@
 # 03. Pivot Routes, Auxiliary Distances, and the Outer Hierarchy (Paper Sec 6–8)
 
-English | [日本語](03_pivots_aux_outer.ja.md)
+**English** | [日本語](03_pivots_aux_outer.ja.md) | [简体中文](03_pivots_aux_outer.zh-CN.md)
 
 Target: arXiv 2611.34911v1 "Linear Single-Source Shortest Path, Almost" (Gholami, Hajiaghayi).
 Written after reading l.1367–2217 (PDF p.29–47) of the text `.cache/paper/2611.34911v1.txt` in full. Sec 2–5 were also read as background (for the detailed analysis, see the documents by the other owners).

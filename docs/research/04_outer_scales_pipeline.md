@@ -1,6 +1,6 @@
 # 04. Outer Scales and the Outer Pipeline (Paper Sec 8.2–8.3): Implementation Spec
 
-English | [日本語](04_outer_scales_pipeline.ja.md)
+**English** | [日本語](04_outer_scales_pipeline.ja.md) | [简体中文](04_outer_scales_pipeline.zh-CN.md)
 
 Target: arXiv 2611.34911v1, Sec 8.2 (Lemma 8.4, l.2076–2142) and Sec 8.3 (Lemma 8.5 l.2145, Algorithm 8 l.2167–2196, proof of Theorem 1 l.2158–2217). Line numbers refer to `.cache/paper/2611.34911v1.txt`.
 Tasks served: **P3-OUTER-SCALES** (`src/paper/outer/scales`) and **P3-OUTER-PIPELINE** (`outer_construction` in `src/paper/outer/shortest_paths`).
