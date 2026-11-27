@@ -2,6 +2,8 @@
 # Design notes: docs/design/ci.md
 name: sanitizer
 
+run-name: ${{ inputs.ref != '' && format('{0} {1} os={2}', github.workflow, inputs.ref, inputs.os) || github.event.pull_request.title || github.event.head_commit.message || github.workflow }}
+
 on:
   push:
     branches: [main]
