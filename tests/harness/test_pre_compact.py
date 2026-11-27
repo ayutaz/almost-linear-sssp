@@ -148,7 +148,7 @@ def test_paper_mapping_absent(repo, run_hook):
     assert res.code == 0, res.stderr
     block = _block(_progress(repo))
     assert "PAPER_MAPPING" in block
-    assert "なし" in block
+    assert "none" in block
 
 
 def test_last_commit_is_shown(repo, run_hook):
@@ -231,3 +231,46 @@ def test_blocked_is_decided_by_the_status_column_only(repo, run_hook):
     assert "P3-SFM-BLOCKED" not in block
     assert "P3-INTERVAL-MIN" not in block
     assert "P9-PARTIAL" not in block
+
+
+def test_snapshot_is_written_in_english(repo, run_hook):
+    """The AUTO block lands in a public English document: no Japanese boilerplate."""
+    import re
+
+    _write_last_check(
+        repo,
+        {
+            "unit": {
+                "status": "fail",
+                "command": "ctest -L unit",
+                "exit_code": 8,
+                "output_tail": "x",
+            }
+        },
+    )
+    write_task(
+        repo, {"id": "T-RED", "files": {"impl": ["src/a.cpp"], "tests": []}, "events": [RED_EVENT]}
+    )
+    write_task(repo, {"id": "T-NEW"})
+    write_task(
+        repo, {"id": "T-OLD", "phase": "DONE", "events": [RED_EVENT, GREEN_EVENT]}, active=False
+    )
+    (repo / ".tdd" / "runtime" / "stop_gate_unresolved.md").write_text("# x\n")
+    (repo / "docs" / "TASKS.md").write_text("| ID | Status |\n|---|---|\n| P9-B | BLOCKED |\n")
+    res = run_hook("pre_compact", _payload(), repo)
+    assert res.code == 0, res.stderr
+    block = _block(_progress(repo))
+    assert not re.search(r"[\u3040-\u30ff\u3400-\u9fff\uff00-\uffef]", block), block
+    for heading in (
+        "## Automatic snapshot (PreCompact)",
+        "### Completed tasks",
+        "### Active tasks",
+        "### Open problems",
+        "### TDD state and next commands",
+        "### Last commit",
+        "### PAPER_MAPPING.md excerpt",
+    ):
+        assert heading in block
+    assert "- Generated: " in block
+    assert "Implement, then `uv run python scripts/tdd.py green T-RED" in block
+    assert "Finally run `make verify`" in block

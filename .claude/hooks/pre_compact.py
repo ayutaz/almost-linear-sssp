@@ -132,7 +132,7 @@ def _paper_mapping(root: Path, limit: int = 10) -> list[str]:
 def _last_commit(root: Path) -> str:
     code, out = _common.git(root, "log", "-1", "--format=%h %s (%cr)")
     out = out.strip()
-    return out if code == 0 and out else "(なし)"
+    return out if code == 0 and out else "(none)"
 
 
 def _next_commands(tid: str, task: dict[str, Any] | None) -> list[str]:
@@ -142,7 +142,7 @@ def _next_commands(tid: str, task: dict[str, Any] | None) -> list[str]:
     if task is None or not _common.has_event(task, "RED"):
         return [f'{tdd} red {tid} --reason "..." -- <test cmd>']
     if last == "RED":
-        return [f"実装してから `{tdd} green {tid} -- {TEST_CMD}`"]
+        return [f"Implement, then `{tdd} green {tid} -- {TEST_CMD}`"]
     if last in ("GREEN", "REFACTOR"):
         return [f"{tdd} refactor {tid} -- {TEST_CMD}", f"{tdd} done {tid}"]
     return [f"{tdd} status"]
@@ -160,66 +160,66 @@ def build_snapshot(root: Path, data: dict[str, Any]) -> tuple[str, str]:
     trigger = trigger if isinstance(trigger, str) and trigger else "unknown"
 
     md: list[str] = [
-        "## 自動スナップショット (PreCompact)",
+        "## Automatic snapshot (PreCompact)",
         "",
-        f"- 生成時刻: {_common.now_iso()}",
+        f"- Generated: {_common.now_iso()}",
         f"- trigger: {trigger}",
         "",
-        "### 完了タスク",
+        "### Completed tasks",
         "",
     ]
     done = _done_ids(tasks)
     if not done:
-        md.append("- なし")
+        md.append("- none")
     elif len(done) <= DONE_SHOW:
         md.append("- " + ", ".join(done))
     else:
-        md.append(f"- {len(done)} 件(末尾 {DONE_SHOW} 件: {', '.join(done[-DONE_SHOW:])})")
+        md.append(f"- {len(done)} tasks (last {DONE_SHOW}: {', '.join(done[-DONE_SHOW:])})")
 
-    md += ["", "### 作業中タスク", ""]
+    md += ["", "### Active tasks", ""]
     if not active:
-        md.append("- なし")
+        md.append("- none")
     for tid in sorted(active):
         task = tasks.get(tid)
-        phase = task.get("phase") if task else "(証跡なし)"
+        phase = task.get("phase") if task else "(no evidence file)"
         last = _common.last_event_phase(task) if task else None
         globs = ", ".join(_impl_globs(task)) if task else ""
         md.append(
-            f"- {tid}: phase={phase}, 最終イベント={last or 'なし'}, impl={globs or '(未指定)'}"
+            f"- {tid}: phase={phase}, last event={last or 'none'}, impl={globs or '(not set)'}"
         )
 
-    md += ["", "### 未解決の問題", ""]
+    md += ["", "### Open problems", ""]
     if not (failures or unresolved or blocked):
-        md.append("- なし")
+        md.append("- none")
     for name, info in failures:
         md.append(
-            f"- 検査失敗 `{name}` ({info.get('status')}, exit={info.get('exit_code')}): "
+            f"- Failing check `{name}` ({info.get('status')}, exit={info.get('exit_code')}): "
             f"`{info.get('command', '')}`"
         )
         tail = _common.tail(str(info.get("output_tail") or ""), 5)
         if tail:
             md += ["", "  ```", *("  " + ln for ln in tail.splitlines()), "  ```", ""]
     if unresolved:
-        md.append("- Stop gate の未解決レポートあり: .tdd/runtime/stop_gate_unresolved.md を確認")
+        md.append("- Stop gate left unresolved issues: see .tdd/runtime/stop_gate_unresolved.md")
     for ln in blocked:
         md.append(f"- TASKS.md: {ln}")
 
-    md += ["", "### TDD 状態と次のコマンド", ""]
+    md += ["", "### TDD state and next commands", ""]
     for tid in sorted(active):
         for cmd in _next_commands(tid, tasks.get(tid)):
-            md.append(f"- {tid}: `{cmd}`" if not cmd.startswith("実装") else f"- {tid}: {cmd}")
+            md.append(f"- {tid}: `{cmd}`" if not cmd.startswith("Implement") else f"- {tid}: {cmd}")
     for name, info in failures:
         if info.get("command"):
-            md.append(f"- 失敗の再現 ({name}): `{info.get('command')}`")
-    md.append("- 最後に `make verify`")
+            md.append(f"- Reproduce the failure ({name}): `{info.get('command')}`")
+    md.append("- Finally run `make verify`")
 
-    md += ["", "### 最後の commit", "", f"- {_last_commit(root)}", ""]
-    md += ["### PAPER_MAPPING.md 抜粋", ""]
+    md += ["", "### Last commit", "", f"- {_last_commit(root)}", ""]
+    md += ["### PAPER_MAPPING.md excerpt", ""]
     pm = _paper_mapping(root)
     if pm:
         md += ["```", *pm, "```"]
     else:
-        md.append("- なし")
+        md.append("- none")
     body = "\n".join(md).rstrip() + "\n"
 
     # ---------------------------------------------- short plain text for stdout

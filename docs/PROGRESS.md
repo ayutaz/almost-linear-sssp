@@ -95,43 +95,34 @@ Workflows exist but have never run: no git remote is configured yet.
 Last updated: 2026-11-27T11:15+0900
 
 <!-- AUTO:precompact -->
-## 自動スナップショット (PreCompact)
+## Automatic snapshot (PreCompact)
 
-- 生成時刻: 2026-11-27T11:32:47+09:00
+- Generated: 2026-11-27T11:38:31+09:00
 - trigger: manual
 
-### 完了タスク
+### Completed tasks
 
-- 48 件(末尾 10 件: P3-MST-HEAP, P3-MST-THREE-PASS, P3-NAME-ROUTES, P3-NORMALIZE, P3-OUTER-BASE, P3-PAPER-SSSP, P3-SEARCH-SELECT, P3-SFM-BLOCKED, P3-SFM-DYADIC, P3-SFM-REF)
+- 56 tasks (last 10: P3-MST-HEAP, P3-MST-THREE-PASS, P3-NAME-ROUTES, P3-NORMALIZE, P3-OUTER-BASE, P3-PAPER-SSSP, P3-SEARCH-SELECT, P3-SFM-BLOCKED, P3-SFM-DYADIC, P3-SFM-REF)
 
-### 作業中タスク
+### Active tasks
 
-- P0-HARNESS-PRECOMPACT: phase=GREEN, 最終イベント=GREEN, impl=.claude/hooks/pre_compact.py
-- P0-HARNESS-SETTINGS: phase=REFACTOR, 最終イベント=REFACTOR, impl=.claude/settings.json, .tdd/config.json
-- P0-HARNESS-STOPGATE: phase=GREEN, 最終イベント=GREEN, impl=.claude/hooks/stop_gate.py
-- P0-HARNESS-TDD-CLI: phase=GREEN, 最終イベント=GREEN, impl=scripts/tdd.py
+- P0-HARNESS-PRECOMPACT: phase=GREEN, last event=GREEN, impl=.claude/hooks/pre_compact.py
 
-### 未解決の問題
+### Open problems
 
-- Stop gate の未解決レポートあり: .tdd/runtime/stop_gate_unresolved.md を確認
+- Stop gate left unresolved issues: see .tdd/runtime/stop_gate_unresolved.md
 
-### TDD 状態と次のコマンド
+### TDD state and next commands
 
 - P0-HARNESS-PRECOMPACT: `uv run python scripts/tdd.py refactor P0-HARNESS-PRECOMPACT -- ctest --preset debug`
 - P0-HARNESS-PRECOMPACT: `uv run python scripts/tdd.py done P0-HARNESS-PRECOMPACT`
-- P0-HARNESS-SETTINGS: `uv run python scripts/tdd.py refactor P0-HARNESS-SETTINGS -- ctest --preset debug`
-- P0-HARNESS-SETTINGS: `uv run python scripts/tdd.py done P0-HARNESS-SETTINGS`
-- P0-HARNESS-STOPGATE: `uv run python scripts/tdd.py refactor P0-HARNESS-STOPGATE -- ctest --preset debug`
-- P0-HARNESS-STOPGATE: `uv run python scripts/tdd.py done P0-HARNESS-STOPGATE`
-- P0-HARNESS-TDD-CLI: `uv run python scripts/tdd.py refactor P0-HARNESS-TDD-CLI -- ctest --preset debug`
-- P0-HARNESS-TDD-CLI: `uv run python scripts/tdd.py done P0-HARNESS-TDD-CLI`
-- 最後に `make verify`
+- Finally run `make verify`
 
-### 最後の commit
+### Last commit
 
-- d7eb52f merge: Mode A paper_sssp entry with outer base case (scan Dijkstra and D-1 binary heap) and fallback records (3 minutes ago)
+- 75f2d38 docs(mapping): record the Mode A entry and outer base case, decide Q-51 (28 seconds ago)
 
-### PAPER_MAPPING.md 抜粋
+### PAPER_MAPPING.md excerpt
 
 ```
 # Mapping Table Between the Paper and the Implementation (arXiv 2611.34911v1)

@@ -1,6 +1,6 @@
 {
   "id": "P0-HARNESS-STOPGATE",
-  "spec": "Stop hook blocks stopping (decision=block with reason and remedies) while checks fail, an active task is left RED, changes are uncommitted, or docs/PROGRESS.md is missing/stale; allows when the user's last prompt explicitly asks to stop, when disabled (config or TDD_STOP_GATE=off), and on stop_hook_active or max_consecutive_blocks identical blocks (then appends a deduplicated report to docs/reports/stop_gate_unresolved.md); the hook's own report and .tdd/runtime/ files never count as changes; always exits 0",
+  "spec": "Stop hook blocks stopping (decision=block with reason and remedies) while checks fail, an active task is left RED, changes are uncommitted, or docs/PROGRESS.md is missing/stale; allows when the user's last prompt explicitly asks to stop, when disabled (config or TDD_STOP_GATE=off), and on stop_hook_active or max_consecutive_blocks identical blocks (then appends a deduplicated report to .tdd/runtime/stop_gate_unresolved.md); the hook's own report and .tdd/runtime/ files never count as changes; always exits 0",
   "paper_ref": null,
   "files": {
     "impl": [

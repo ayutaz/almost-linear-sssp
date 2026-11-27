@@ -10,7 +10,7 @@
       "tests/harness/test_pre_compact.py"
     ]
   },
-  "phase": "DONE",
+  "phase": "GREEN",
   "events": [
     {
       "phase": "RED",
@@ -97,6 +97,29 @@
       "exit_code": 0,
       "timestamp": "2026-11-27T11:30:17+09:00",
       "output_tail": "...............                                                          [100%]\n15 passed in 2.50s"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "test_snapshot_is_written_in_english",
+        "test_paper_mapping_absent"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 1,
+      "reason": "the AUTO block written into the public docs/PROGRESS.md uses Japanese headings, labels and boilerplate; project documents default to English",
+      "timestamp": "2026-11-27T11:35:50+09:00",
+      "output_tail": "E         - 失敗の再現 (unit): `ctest -L unit`\nE         - 最後に `make verify`\nE         \nE         ### 最後の commit\nE         \nE         - bd7074e init (0 seconds ago)\nE         \nE         ### PAPER_MAPPING.md 抜粋\nE         \nE         - なし\nE         <!-- /AUTO -->\nE       assert not <re.Match object; span=(28, 29), match='自'>\nE        +  where <re.Match object; span=(28, 29), match='自'> = <function search at 0x1015861f0>('[\\\\u3040-\\\\u30ff\\\\u3400-\\\\u9fff\\\\uff00-\\\\uffef]', '<!-- AUTO:precompact -->\\n## 自動スナップショット (PreCompact)\\n\\n- 生成時刻: 2026-11-27T11:35:47+09:00\\n- trigger: auto\\n\\n### 完了タ...に `make verify`\\n\\n### 最後の commit\\n\\n- bd7074e init (0 seconds ago)\\n\\n### PAPER_MAPPING.md 抜粋\\n\\n- なし\\n<!-- /AUTO -->')\nE        +    where <function search at 0x1015861f0> = <module 're' from '~/.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/re/__init__.py'>.search\n\ntests/harness/test_pre_compact.py:263: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_pre_compact.py::test_paper_mapping_absent - Asserti...\nFAILED tests/harness/test_pre_compact.py::test_snapshot_is_written_in_english\n2 failed, 14 passed in 7.71s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_snapshot_is_written_in_english",
+        "test_paper_mapping_absent"
+      ],
+      "command": "uv run pytest tests/harness/test_pre_compact.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:36:32+09:00",
+      "output_tail": "................                                                         [100%]\n16 passed in 5.65s"
     }
   ],
   "commit": "31ad9d9"
