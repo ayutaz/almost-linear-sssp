@@ -1,0 +1,41 @@
+{
+  "id": "P3-LOCAL-HIERARCHY",
+  "spec": "Alg 4 entry: decide N > c*L_N^e with saturating integer arithmetic (paper c=2, e=4; parameters for Mode B); when false run the base case and push FallbackRecord{'local: k <= 2*L_k^4 (paper base case)', k, m}; when true take the radial construction branch (explicit not-implemented error until Sec 5.4 assembly lands)",
+  "paper_ref": "Alg 4 l.2-6; Sec 2 l.284-290; Lemma 5.10",
+  "files": {
+    "impl": [
+      "src/paper/local/local_hierarchy.hpp",
+      "src/paper/local/local_hierarchy.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/local/test_local_hierarchy.cpp"
+    ]
+  },
+  "phase": "GREEN",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "unit:local threshold*",
+        "unit:Alg 4*"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 2>&1 | grep -E \"error|FAILED\" | head -5; exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/local/local_hierarchy.hpp' file not found (Alg 4 entry absent)",
+      "timestamp": "2026-11-27T11:00:09+09:00",
+      "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_local_hierarchy.cpp.o \n./tests/unit/paper/local/test_local_hierarchy.cpp:16:10: fatal error: 'paper/local/local_hierarchy.hpp' file not found\n1 error generated."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "unit:local threshold* (3 cases)",
+        "unit:Alg 4* (8 cases)"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:02:15+09:00",
+      "output_tail": "        Start 519: regression:Counted<double> graphs reject negative and NaN weights\n512/519 Test #519: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.01 sec\n513/519 Test #508: property:forest queries agree with binary lifting on deep and degenerate shapes .........................................................................   Passed    0.87 sec\n514/519 Test #507: property:forest queries agree with binary lifting on random forests .....................................................................................   Passed    1.02 sec\n515/519 Test #516: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.89 sec\n516/519 Test #495: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................................................................   Passed    1.28 sec\n517/519 Test #509: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    1.18 sec\n518/519 Test #510: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    1.18 sec\n519/519 Test #517: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.52 sec\n\n100% tests passed, 0 tests failed out of 519\n\nLabel Time Summary:\ndifferential    =   1.43 sec*proc (4 tests)\nintegration     =   0.58 sec*proc (6 tests)\nproperty        =  12.25 sec*proc (21 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  75.96 sec*proc (487 tests)\n\nTotal Test time (real) =  15.46 sec"
+    }
+  ],
+  "commit": null
+}
