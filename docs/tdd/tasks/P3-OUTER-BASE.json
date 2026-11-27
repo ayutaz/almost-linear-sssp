@@ -11,7 +11,7 @@
       "tests/unit/paper/outer/test_base_case.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -42,5 +42,5 @@
       "output_tail": "        Start 546: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds\n543/548 Test #544: property:split-findmin property: dyadic work stays within the Lemma 3.10 bounds .........................................................................   Passed    0.28 sec\n        Start 547: property:split-findmin property: blocked work per record shrinks with the blocking depth\n544/548 Test #547: property:split-findmin property: blocked work per record shrinks with the blocking depth ................................................................   Passed    0.25 sec\n        Start 548: regression:Counted<double> graphs reject negative and NaN weights\n545/548 Test #548: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.18 sec\n546/548 Test #539: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    2.17 sec\n547/548 Test #545: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    1.51 sec\n548/548 Test #546: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    8.85 sec\n\n100% tests passed, 0 tests failed out of 548\n\nLabel Time Summary:\ndifferential    =   4.28 sec*proc (6 tests)\nintegration     =   1.75 sec*proc (6 tests)\nproperty        =  23.29 sec*proc (21 tests)\nregression      =   0.18 sec*proc (1 test)\nunit            = 132.28 sec*proc (514 tests)\n\nTotal Test time (real) =  50.72 sec"
     }
   ],
-  "commit": null
+  "commit": "7a0058d"
 }
