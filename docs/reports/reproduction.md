@@ -369,7 +369,7 @@ Open questions (`docs/research/open-questions.md`; status as read at the time of
 | Q-50 | Height of a contracted node after normalisation | Needs agreement |
 
 Also not decided in the repository when this was written: the destination of the final report (see
-`docs/TASKS.md` P6-REPORT, which names `docs/reports/reproduction.md`; this draft is `docs/REPORT.md`).
+`docs/TASKS.md` P6-REPORT, which names `docs/reports/reproduction.md`; this draft is `docs/reports/reproduction.md`).
 
 ## 7. How to reproduce
 
