@@ -36,6 +36,9 @@ missing. Never commit it, never paste more than a short phrase into the repo; ci
   honestly; do not lower the threshold in Mode A.
 - Mode B (`src/experimental/paper_experimental/`): same structure, thresholds are parameters.
   Every changed constant is listed in `docs/PAPER_MAPPING.md` (Deviations) with the value used.
+- `src/paper/` holds only what the paper states. Tuning switches and alternative variants live
+  in Mode B even when they reuse Mode A parts (seen: the exact-height assembly switch, D-11,
+  belongs in `src/experimental/paper_experimental/`, not as an option of the Mode A code).
 - Model of computation (Sec 2): lengths are opaque reals (compare/add/copy only; signed values
   as two non-negative sums; multiply by `2^j` via doublings). If the code uses a real as an
   index, takes floor/log/bits of a weight, or similar, that is a deviation: record it.
@@ -48,6 +51,12 @@ changed constant, replaced data structure with different bounds, skipped step, e
 in the paper, numeric representation change, ambiguity resolved by our own choice.
 Format in the Deviations column: `D-<n>: <what> — <why> — <impact on bound/correctness>`.
 Ambiguities in the paper go to `docs/research/open-questions.md` with the exact location.
+
+**Numbering.** The lead assigns every `D-<n>` (deviation) and `Q-<n>` (open question) number.
+Parallel agents must not pick numbers themselves: two agents choosing the next free number
+collide (seen: a second D-23 had to be renumbered D-31). An agent reports a "D candidate" /
+"Q candidate" (what, why, impact, location) and uses a placeholder such as `D-?` in code
+comments until the lead returns the number.
 
 ## 4. Claims
 - "Paper-faithful" may only be said of Mode A code whose mapping rows are VERIFIED with no

@@ -25,7 +25,17 @@ cmake --preset release && cmake --build --preset release -j
   `hw.perflevel0/1` core counts.
 - Thermal: check `pmset -g therm` before and after; if `CPU_Speed_Limit < 100` the run is
   invalid. Insert cool-down pauses between long configurations.
-- Linux CI runners are noisy: CI runs only `smoke` for regressions, never for reported numbers.
+- Measure locally only when the machine is idle: no parallel agents building, testing or
+  benchmarking. Record the load at measurement time (`sysctl -n vm.loadavg`, `uptime`) in
+  `env.txt` before and after the run; a run under load is invalid.
+
+## 2a. GitHub-hosted runners
+- Shared virtual machines: their numbers are never used for performance decisions or reports.
+  A `benchmark` workflow run only shows that the procedure runs end to end (build, run,
+  analyse, upload).
+- Parallel dispatches: the workflow's `concurrency.group` is keyed by workflow, ref, `runner`
+  and `suite`, so different runners/suites do not cancel each other. Keep that key when
+  editing `.github/workflows/benchmark.yml`.
 
 ## 3. Run
 ```bash
@@ -69,4 +79,10 @@ and speed-up relative to the binary-heap Dijkstra. Commit summaries (CSV/Markdow
 - Scaling claims (e.g. "near linear") need a fit over ≥ 4 sizes spanning ≥ 2 orders of magnitude.
 - Mode A results show the fallback share; a mostly-fallback run is not evidence about the
   paper's algorithm.
-- Update the "Latest measurements" section of `docs/PROGRESS.md`.
+- Read the fallback share **per reason** (`FallbackRecord.reason`); never add vertices/edges
+  across different reasons into one share.
+- `practical-local` is Mode C (`src/experimental/practical/local_sssp.*`), `uint64_t` weights
+  only. It claims no paper complexity bound; label it "practical-optimized", never "the
+  paper's algorithm", and report its direct-search and trivial-component fallbacks separately.
+- Update the "Latest measurements" section of `docs/PROGRESS.md` (lead only; a parallel agent
+  sends the text to the lead).

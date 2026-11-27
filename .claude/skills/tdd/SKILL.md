@@ -69,7 +69,31 @@ uv run python scripts/tdd.py done <ID> --commit "$(git rev-parse --short HEAD)"
 uv run python scripts/tdd.py log            # regenerates docs/TDD_LOG.md
 ```
 Then update `docs/TASKS.md` (Status, Test Evidence, Commit SHA) and commit the evidence/doc
-update as `docs(tdd): close <ID>`.
+update as `docs(tdd): close <ID>`. `docs/TASKS.md`, `docs/PROGRESS.md` and `docs/TDD_LOG.md`
+are shared: a parallel agent leaves them (and `tdd.py log`) to the lead.
+
+## Test-only tasks (verification tests that add no behaviour)
+```bash
+uv run python scripts/tdd.py start <ID> --test-only "<why no behaviour changes>" \
+  --spec "<property checked>" --test "tests/property/test_*.cpp" --covers "src/paper/<module>/*.cpp"
+```
+- Exercised files go in `--covers`, never `--impl`; `tdd.py` rejects `--impl` here.
+- The commit holds tests and evidence only. A comment or note fix in an implementation file is
+  a separate commit (and task).
+- A test that is GREEN at once is the expected result here. Prove it has teeth with a
+  **mutation check**: break the covered code in one place at a time, run the test, confirm it
+  fails, then revert. Never commit a mutation; check `git diff` is clean afterwards. Report the
+  score, e.g. "detected 10 of 11 mutations", and name the survivors.
+
+## Recording evidence honestly
+- Never steer the exit code of a RED/GREEN command (`exit 1`, `|| true`, `; false`, `!`).
+  The recorded command must be the real test command.
+- Never hand-edit an event. A wrong event stays; explain it in the next event's `--reason`
+  or note.
+- `files.impl` lists **every** implementation file the task changes, not just the main one
+  (seen: a benchmark-registration task listed only docs while it changed `benchmarks/`).
+- A change to a shared header (`include/sssp/*.hpp`) is a task of its own: `start` needs
+  `--spec` (the changed contract) and `--test` (a test pinning it), as for any other task.
 
 ## Rules
 - Never edit a test's expected value to match output. If the expectation was wrong, record why

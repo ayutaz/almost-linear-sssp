@@ -24,13 +24,32 @@ from the implementer's explanation.
 ## 2. Inputs to cover
 - Boundary: n=0 (if allowed), n=1, isolated source, disconnected graph, self-loops,
   multi-edges with different weights, zero-weight edges and zero-weight cycles, all-equal
-  weights (ties), path/star/complete graphs, very large weights (uint64 overflow detection:
-  expect `std::overflow_error`), subnormal and huge `double`s, invalid input (negative, NaN,
+  weights (ties), path/star/complete graphs, very large weights (uint64: see the overflow
+  contract in 2a), subnormal and huge `double`s, invalid input (negative, NaN,
   inf, out-of-range endpoints, invalid source → `std::out_of_range`).
 - Threshold edges: N exactly at `2*L_N^4` and `2*L_N^4 + 1`; L_N jumps (N+2 a power of two).
 - Random: Erdős–Rényi, random geometric, grid, power-law, trees + few extra edges; integer
   weights in small ranges (many ties) and wide ranges; several seeds per family.
 - Randomised algorithms: many seeds; the output must be exact for every terminating run.
+
+## 2a. Overflow contract (decided; `uint64_t`)
+- `std::overflow_error` is allowed **only** when, for a reachable `u`, a tentative path length
+  `d[u] + w` reaches the sentinel `infinity()`. Throwing for any other reason is a bug.
+- Auxiliary quantities (mass, upper bounds, tree distances, gaps) are computed exactly or
+  saturate to `infinity()`; they never throw and never wrap.
+- Boundary inputs to run every time:
+  - paths with edge weights `2^62` and `2^63` (sums that do and do not overflow);
+  - a path whose length is exactly the sentinel (must throw);
+  - a path whose length is the largest representable distance, `infinity() - 1` (must not).
+
+## 2b. Mutation check (does the test catch anything?)
+For a test-only task, or when a review finds tests GREEN at once:
+- Break the code under test in one place at a time (flip a comparison, drop a `+1`, skip a
+  step), rerun the test, confirm it fails, revert. Never commit a mutation; `git diff` clean
+  at the end. Report the score ("detected 10 of 11"), and the survivors.
+- For a bug fix: run the new tests against the pre-fix commit
+  (`git worktree add <scratch dir> <pre-fix sha>`) and confirm they fail there
+  (e.g. "6 of 8 fail on the pre-fix source").
 
 ## 3. Floating point
 - `uint64_t`: exact equality, no tolerance.
@@ -55,6 +74,10 @@ locally, keep CI counts small.
 3. Add it to `tests/regression/` as a named test case (`regression: <task-id> <short cause>`),
    run it to record RED via `/tdd`, then hand the fix to the implementer.
 4. Report: input, expected vs actual, which oracle disagreed, suspected paper step.
+
+A **reviewer** (as opposed to the implementer of a fix) stops after step 2: do not fix the code
+and do not add the regression test yourself. Report the minimised input, seed, expected and
+actual values; the lead decides whether and where the regression test goes.
 
 ## 6. Verdict
 Report one of: PASS (with the list of checks and seeds run), FAIL (counterexample attached),
