@@ -7,8 +7,9 @@
 //   PL-7   zero edges, unreachable vertices, loops, parallel edges
 //   PL-8   seed independence where NameRoutes samples (D-17 parameters)
 //   PL-10  double weights: dyadic exact; non-dyadic within the tolerance or an exception
-//   PL-11  unaligned blocks end to end (SC-7 exact); weights above 2^62 (Q-79): the current
-//          std::overflow_error of Sec 4.2 and Sec 5.1 pinned until their fixes are merged
+//   PL-11  unaligned blocks end to end (SC-7 exact); weights above 2^62 (Q-79): the 2^62 path
+//          exact (D-20 for b >= 2); SC-8 exact except where a state copy lies beyond the
+//          range, which Evaluate still rejects (pinned, condition derived independently)
 //   PL-12  the cases without [slow] are the reduced-size inputs for the sanitizer build
 // PL-1 is in tests/differential/paper/test_paper_sssp_differential.cpp, PL-2, PL-3 and PL-9 in
 // tests/unit/paper/outer/test_shortest_paths.cpp and tests/unit/paper_experimental/.
@@ -828,89 +829,138 @@ TEST_CASE("PL-11: unaligned block with an atom end to end (SC-8 input, weights a
   REQUIRE(d[0][5] == Wide{corridor} + 3);  // by hand: 0 - 3 - 4 - 5
   REQUIRE(d[2][5] == Wide{corridor} + 1);  // by hand: the edge 2 - 5
 
-  // Weights above 2^62 (Q-79), pinned as of this task: every source throws
-  // std::overflow_error from Sec 4.2 order_children (sums of forest path lengths in Evaluate's
-  // preprocessing, an auxiliary quantity; open finding P3-CHILDORDER-OVERFLOW, fix not on
-  // main). The stages up to the substituted hierarchy run (SC-8 of test_outer_scales.cpp). When
-  // the fix is merged this case must return the exact distances d[s][.] above, and the
-  // expectation changes with it (P4-OVERFLOW-E2E); it is never accepted as a third outcome.
+  // Weights above 2^62 (Q-79), after the Sec 4.2 (P3-CHILDORDER-OVERFLOW), Sec 5.1
+  // (P3-OWNERDECOMP-OVERFLOW) and Evaluate (D-23) fixes. Every vertex distance fits the type,
+  // but a single copy of a vertex can lie only on state walks longer than 2^64 - 1 (its
+  // vertex is reached through another copy). Evaluate rejects such a state ("received only
+  // offers beyond the range ... never emitted") instead of leaving it at infinity, so the
+  // run throws exactly from the sources for which such a copy exists. The condition is
+  // derived here independently (128-bit Dijkstra on the outer state graph); the sources where
+  // it is absent must return d[s][.] exactly. Remaining open finding of Q-79: when Evaluate
+  // leaves those states unemitted, every source must return d[s][.] and this expectation
+  // changes with it.
   const auto params = pe::outer_construction_params(p1_only(3), g.num_vertices());
+  // Alg 8 l.8-13 do not depend on s.
+  sssp::paper::model::WordRng rng(3);
+  const auto od = sssp::paper::owner_decomposition(g, std::size_t{3});
+  const auto cls = sssp::paper::owner::classify_interowner_edges(g, od, rng, params.name_routes);
+  const auto aux = sssp::paper::owner::build_aux_graph(g, od, cls);
+  sssp::paper::owner::OwnerDistancesOptions odo;
+  odo.local = params.local;
+  const auto jr = sssp::paper::owner::owner_distances(aux, nullptr, odo);
+  const auto os = po::build_outer_states(g, od, cls, aux, jr.scaled_distance);
+  const auto factor =
+      po::outer_scale_factor_power_separator(cls.p_log2, 3, 1, po::kOuterShellRatioLog2);
+  CHECK(factor.log2 == 31);
+  const auto sc = po::build_outer_scales(g, od, cls, aux, jr.calendars, os, factor);
+  CHECK(tp::count_blocks(sc, po::OuterBlockKind::kUnaligned) == 2);
+  CHECK(sc.atoms.size() == 3);
+  const auto part = po::build_outer_partition(os, sc);
+  const auto sub = sssp::paper::substitute_atoms(part.hierarchy, nullptr, params.local);
+  std::vector<to::XArc> arcs;
+  arcs.reserve(os.states.graph.arcs.size());
+  for (const auto& a : os.states.graph.arcs) arcs.push_back({a.tail, a.head, Wide{a.length}});
+  const Wide sentinel = Wide{WeightTraits<W>::infinity()};
+
+  std::size_t exact_sources = 0;
+  std::size_t rejected_sources = 0;
   for (Vertex s = 0; s < 6; ++s) {
     INFO("s=" << s);
-    // Alg 8 l.8-14 stage by stage (as run_outer_construction): all of them run.
-    sssp::paper::model::WordRng rng(3);
-    const auto od = sssp::paper::owner_decomposition(g, std::size_t{3});
-    const auto cls = sssp::paper::owner::classify_interowner_edges(g, od, rng, params.name_routes);
-    const auto aux = sssp::paper::owner::build_aux_graph(g, od, cls);
-    sssp::paper::owner::OwnerDistancesOptions odo;
-    odo.local = params.local;
-    const auto jr = sssp::paper::owner::owner_distances(aux, nullptr, odo);
-    const auto os = po::build_outer_states(g, od, cls, aux, jr.scaled_distance);
-    const auto factor =
-        po::outer_scale_factor_power_separator(cls.p_log2, 3, 1, po::kOuterShellRatioLog2);
-    CHECK(factor.log2 == 31);
-    const auto sc = po::build_outer_scales(g, od, cls, aux, jr.calendars, os, factor);
-    CHECK(tp::count_blocks(sc, po::OuterBlockKind::kUnaligned) == 2);
-    CHECK(sc.atoms.size() == 3);
-    const auto part = po::build_outer_partition(os, sc);
-    const auto sub = sssp::paper::substitute_atoms(part.hierarchy, nullptr, params.local);
-    const std::vector<sssp::paper::StateOffer<W>> seed{{os.states.native_inward[s], W{0}}};
-    const auto offers = sssp::paper::redirect_offers<W>(sub, seed);
-    // l.15: Evaluate throws.
-    const sssp::paper::SeededOrderedHierarchy<W> seeded{sub.hierarchy, {{s, W{0}}}, offers};
+    const auto sd = to::state_distances(os.states.num_states(), arcs,
+                                        static_cast<std::uint32_t>(os.states.native_inward[s]));
+    // Lemma 8.1 with the seed of l.14: the least copy realizes d(s, v), which fits.
+    std::vector<Wide> least(6, to::kExactInf);
+    std::vector<std::uint8_t> beyond(os.states.num_states(), 0);
+    for (StateId x = 0; x < os.states.num_states(); ++x) {
+      const Vertex v = os.states.projection[x];
+      least[v] = std::min(least[v], sd[x]);
+      beyond[x] = (sd[x] != to::kExactInf && sd[x] >= sentinel) ? 1 : 0;
+    }
+    for (Vertex v = 0; v < 6; ++v) REQUIRE(least[v] == d[s][v]);
+    const bool has_beyond = std::ranges::find(beyond, 1) != beyond.end();
+
     std::string message;
     try {
-      (void)sssp::paper::evaluate(seeded);
+      const auto r = direct(g, s, p1_only(3));
+      for (Vertex v = 0; v < 6; ++v) {
+        INFO("vertex " << v);
+        REQUIRE(Wide{r.dist[v]} == d[s][v]);
+      }
     } catch (const std::overflow_error& e) {
       message = e.what();
     }
-    REQUIRE(message == "integer length overflow");
-    // And so does the whole construction, with the same exception.
-    CHECK_THROWS_AS(direct(g, s, p1_only(3)), std::overflow_error);
+    if (!has_beyond) {
+      REQUIRE(message.empty());
+      ++exact_sources;
+      continue;
+    }
+    // The rejected state is one of the copies beyond the range.
+    INFO(message);
+    const std::string prefix = "evaluate: state ";
+    REQUIRE(message.rfind(prefix, 0) == 0);
+    REQUIRE(message.find("received only offers beyond the range") != std::string::npos);
+    const auto x = static_cast<StateId>(std::stoul(message.substr(prefix.size())));
+    REQUIRE(x < sub.hierarchy.num_states());
+    REQUIRE(beyond[sub.old_state[x]] == 1);
+    ++rejected_sources;
   }
+  // Both kinds occur on this input (sources 0 and 3 have a copy beyond the range).
+  CHECK(exact_sources == 4);
+  CHECK(rejected_sources == 2);
 }
 
-TEST_CASE("PL-11 / Q-79: a path of four edges of 2^62 is rejected by Sec 5.1 (pinned)",
+TEST_CASE("PL-11 / Q-79: a path of four edges of 2^62 (Sec 5.1 root distances)",
           "[differential][paper_experimental][outer][pipeline]") {
   using W = std::uint64_t;
   // The reproduction of P3-OWNERDECOMP-OVERFLOW (docs/TASKS.md) through the outer
-  // construction: from the middle vertex 2 the distances are 2^63, 2^62, 0, 2^62, 2^63 (all
-  // below the sentinel 2^64 - 1).
+  // construction. Exact oracle in 128 bits (|i - j| * 2^62); from s = 1, 2, 3 every distance
+  // fits below the sentinel 2^64 - 1, from s = 0 and s = 4 the far end is at 2^64 and does not.
   const W q = W{1} << 62;
   const auto g = CsrGraph<W>::from_edges(5, {{0, 1, q}, {1, 2, q}, {2, 3, q}, {3, 4, q}});
-  const std::vector<W> exact{2 * q, q, 0, q, 2 * q};  // by hand
+  using Wide = unsigned __int128;
+  const auto oracle = [&](Vertex s, Vertex v) {
+    return Wide{q} * static_cast<Wide>(s > v ? s - v : v - s);
+  };
   for (const std::uint64_t b : kSeparators) {
-    INFO("b=" << b);
-    // On g itself the MST root is vertex 0 and D_T(0, 4) = 2^64 of Sec 5.1 l.962-966 does not
-    // fit: owner_decomposition throws although every distance from s = 2 fits. Pinned as of
-    // this task (fix not on main); when it is merged the expectation becomes `exact`
-    // (P4-OVERFLOW-E2E).
-    std::string message;
-    try {
-      (void)direct(g, Vertex{2}, forced(b));
-    } catch (const std::overflow_error& e) {
-      message = e.what();
-    }
-    REQUIRE(message == "integer distance overflow");
-
-    // Through Alg 8 l.2 the contracted vertices are numbered from s, so the root is s and the
-    // root distances fit. b = 1 runs to the end and is exact; for b >= 2 an owner radius is
-    // 2^62 and the Sec 7.3 calendars need 2^7 R (the documented limit D-20, R >= 2^54).
-    message.clear();
-    try {
-      const auto r = pe::paper_sssp(g, Vertex{2}, forced(b), 5);
-      REQUIRE(r.dist == exact);
-      message = "returned";
-    } catch (const std::overflow_error& e) {
-      message = e.what();
-    }
-    if (b == 1) {
-      REQUIRE(message == "returned");
-    } else {
-      REQUIRE(message.rfind("calendars:", 0) == 0);
+    for (const Vertex s : {Vertex{1}, Vertex{2}, Vertex{3}}) {
+      INFO("b=" << b << " s=" << s);
+      // On g itself the MST root is vertex 0, so the Sec 5.1 root distance D_T(0, 4) = 2^64 is
+      // formed; it is an auxiliary quantity and must not stop the run (fixed on main).
+      std::string direct_outcome = "returned";
+      try {
+        const auto r = direct(g, s, forced(b));
+        for (Vertex v = 0; v < 5; ++v) {
+          INFO("vertex " << v);
+          REQUIRE(Wide{r.dist[v]} == oracle(s, v));
+        }
+      } catch (const std::overflow_error& e) {
+        direct_outcome = e.what();
+      }
+      // Through Alg 8 l.2 the contracted vertices are numbered from s.
+      std::string entry_outcome = "returned";
+      try {
+        const auto r = pe::paper_sssp(g, s, forced(b), 5);
+        for (Vertex v = 0; v < 5; ++v) {
+          INFO("vertex " << v);
+          REQUIRE(Wide{r.dist[v]} == oracle(s, v));
+        }
+      } catch (const std::overflow_error& e) {
+        entry_outcome = e.what();
+      }
+      INFO("direct: " << direct_outcome << "; paper_sssp: " << entry_outcome);
+      if (b == 1) {
+        // Every vertex is a pivot: no owner radius, nothing beyond the overflow rule.
+        REQUIRE(direct_outcome == "returned");
+        REQUIRE(entry_outcome == "returned");
+      } else {
+        // b >= 2: an owner radius R = 2^62 >= 2^54 is outside the documented range of the
+        // Sec 7.3 calendars (D-20, 2^10 max R < 2^64): rejected there, by both entries.
+        REQUIRE(direct_outcome.rfind("calendars:", 0) == 0);
+        REQUIRE(entry_outcome.rfind("calendars:", 0) == 0);
+      }
     }
   }
   // The Mode A entry takes the recorded base case (N < 2^64) and is exact on the same input.
   const auto a = sssp::paper::paper_sssp(g, Vertex{2});
-  REQUIRE(a.dist == exact);
+  REQUIRE(a.dist == std::vector<W>{2 * q, q, 0, q, 2 * q});
 }
