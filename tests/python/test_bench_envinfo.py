@@ -117,6 +117,53 @@ def test_parse_proc_cpuinfo_and_meminfo():
     assert envinfo.parse_proc_meminfo(PROC_MEMINFO) == 16303428 * 1024
 
 
+# SYNTHETIC sysctl answers (name -> value); a missing name is a sysctl that does not exist.
+SYSCTL_APPLE_SILICON = {
+    "machdep.cpu.brand_string": "Synthetic M9",
+    "hw.logicalcpu": "16",
+    "hw.physicalcpu": "16",
+    "hw.nperflevels": "2",
+    "hw.perflevel0.physicalcpu": "12",
+    "hw.perflevel1.physicalcpu": "4",
+}
+# One performance level and no hw.perflevel1.*: what a macOS arm64 VM (e.g. a GitHub-hosted
+# macos runner) exposes. Regression for CI run 45929909889, where the old assumption
+# "every arm64 Mac reports perflevel1" made efficiency_cores null.
+SYSCTL_SINGLE_PERFLEVEL = {
+    "machdep.cpu.brand_string": "Synthetic M9 (Virtual)",
+    "hw.logicalcpu": "3",
+    "hw.physicalcpu": "3",
+    "hw.nperflevels": "1",
+    "hw.perflevel0.physicalcpu": "3",
+}
+# No perflevel sysctls at all (Intel Macs): the split cannot be determined.
+SYSCTL_NO_PERFLEVELS = {
+    "machdep.cpu.brand_string": "Synthetic Core i9",
+    "hw.logicalcpu": "16",
+    "hw.physicalcpu": "8",
+}
+
+
+@pytest.mark.parametrize(
+    ("answers", "perf", "efficiency"),
+    [
+        (SYSCTL_APPLE_SILICON, 12, 4),
+        (SYSCTL_SINGLE_PERFLEVEL, 3, 0),
+        (SYSCTL_NO_PERFLEVELS, None, None),
+        # two levels reported but perflevel1 unreadable: unknown, not zero
+        ({**SYSCTL_APPLE_SILICON, "hw.perflevel1.physicalcpu": None}, 12, None),
+    ],
+    ids=["two-levels", "single-level-vm", "no-perflevels", "perflevel1-unreadable"],
+)
+def test_darwin_cpu_core_split_from_sysctl(monkeypatch, answers, perf, efficiency):
+    monkeypatch.setattr(envinfo.sys, "platform", "darwin")
+    monkeypatch.setattr(envinfo, "_sysctl", lambda name: answers.get(name))
+    cpu = envinfo._cpu()
+    assert cpu["perf_cores"] == perf
+    assert cpu["efficiency_cores"] == efficiency
+    assert cpu["brand"] == answers["machdep.cpu.brand_string"]
+
+
 @pytest.fixture
 def fake_build_dir(tmp_path):
     d = tmp_path / "release"
