@@ -27,3 +27,6 @@ htmlcov/
 
 # Claude Code worktrees for parallel agents
 .claude/worktrees/
+
+# Local-only hooks (not committed, per user request)
+.claude/local-hooks/

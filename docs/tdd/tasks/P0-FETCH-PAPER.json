@@ -1,0 +1,38 @@
+{
+ "id": "P0-FETCH-PAPER",
+ "spec": "Fetch arXiv 2611.34911v1 into gitignored .cache/paper with pinned SHA-256; reject mismatches",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "scripts/fetch_paper.sh"
+  ],
+  "tests": [
+   "tests/python/test_fetch_paper.py"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "tests/python/test_fetch_paper.py"
+   ],
+   "command": "uv run pytest -q tests/python/test_fetch_paper.py",
+   "exit_code": 1,
+   "reason": "scripts/fetch_paper.sh does not exist (2 tests failed)",
+   "timestamp": "2026-11-27T10:23:51+0900",
+   "output_tail": "scripts/fetch_paper.sh does not exist (2 tests failed)"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "tests/python/test_fetch_paper.py"
+   ],
+   "command": "uv run pytest -q tests/python/test_fetch_paper.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:23:51+0900",
+   "output_tail": "3 passed"
+  }
+ ],
+ "commit": null
+}

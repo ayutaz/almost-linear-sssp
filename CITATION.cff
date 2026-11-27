@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite both the software and the original paper.
+  This is an independent reproduction; it is not affiliated with the paper's authors.
+title: "almost-linear-sssp: reproduction and evaluation of 'Linear Single-Source Shortest Path, Almost'"
+type: software
+authors:
+  - name: "yousan"
+license: MIT
+version: 0.1.0
+keywords:
+  - shortest paths
+  - SSSP
+  - graph algorithms
+  - reproducibility
+references:
+  - &paper
+    type: article
+    title: "Linear Single-Source Shortest Path, Almost"
+    authors:
+      - family-names: Gholami
+        given-names: Iman
+      - family-names: Hajiaghayi
+        given-names: MohammadTaghi
+    year: 2026
+    identifiers:
+      - type: other
+        value: "arXiv:2611.34911v1"
+    url: "https://arxiv.org/abs/2611.34911"
+preferred-citation: *paper

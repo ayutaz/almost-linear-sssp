@@ -8,9 +8,15 @@ PRESET ?= debug
 CXX_SOURCES = $(shell git ls-files --cached --others --exclude-standard -- '*.cpp' '*.hpp' '*.h')
 BENCH_TIMEOUT ?= 3600
 
-.PHONY: bootstrap configure build test test-unit test-integration test-differential test-property \
+.PHONY: public-safety fetch-paper bootstrap configure build test test-unit test-integration test-differential test-property \
         test-regression test-harness test-python format format-check lint tidy sanitizer coverage \
         verify benchmark-smoke benchmark benchmark-full report clean
+
+public-safety:
+	uv run python scripts/check_public_safety.py
+
+fetch-paper:
+	./scripts/fetch_paper.sh
 
 bootstrap:
 	./scripts/bootstrap.sh
@@ -63,6 +69,7 @@ coverage:
 	./scripts/coverage.sh
 
 verify:
+	uv run python scripts/check_public_safety.py
 	$(MAKE) format-check
 	uv run ruff check .
 	$(MAKE) PRESET=ci build

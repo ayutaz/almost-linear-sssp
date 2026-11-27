@@ -8,7 +8,6 @@ Checks: >
   -performance-enum-size,
   modernize-use-nullptr,
   modernize-use-override,
-  readability-braces-around-statements,
   misc-unused-using-decls
 WarningsAsErrors: 'bugprone-*,clang-analyzer-*'
 HeaderFilterRegex: '(include|src)/.*'

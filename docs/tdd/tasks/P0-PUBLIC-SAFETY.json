@@ -1,0 +1,39 @@
+{
+ "id": "P0-PUBLIC-SAFETY",
+ "spec": "Audit files to be committed for local absolute paths, e-mails, tokens, private keys, paper copies, large files (public OSS)",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "scripts/check_public_safety.py",
+   "Makefile"
+  ],
+  "tests": [
+   "tests/python/test_public_safety.py"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "tests/python/test_public_safety.py"
+   ],
+   "command": "uv run pytest -q tests/python/test_public_safety.py",
+   "exit_code": 1,
+   "reason": "scripts/check_public_safety.py does not exist (all tests failed)",
+   "timestamp": "2026-11-27T10:23:51+0900",
+   "output_tail": "scripts/check_public_safety.py does not exist (all tests failed)"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "tests/python/test_public_safety.py"
+   ],
+   "command": "uv run pytest -q tests/python/test_public_safety.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:23:51+0900",
+   "output_tail": "7 passed"
+  }
+ ],
+ "commit": null
+}
