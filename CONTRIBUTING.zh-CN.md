@@ -9,7 +9,8 @@
 ## 环境准备
 
 ```bash
-./scripts/bootstrap.sh          # 检查工具链 + uv sync + 配置
+./scripts/bootstrap.sh          # 检查工具链(安装缺失的工具)+ uv sync + 配置 debug
+./scripts/bootstrap.sh --check  # 只报告,不做任何改动(缺少必需工具时 exit 1)
 make build && make test
 ./scripts/fetch_paper.sh        # 把论文下载到 .cache/paper/(切勿提交)
 ```
@@ -19,7 +20,7 @@ make build && make test
 - 支持 C++20 的 Clang(Apple Clang 或 LLVM)、CMake ≥ 3.24、Ninja
 - uv、Python ≥ 3.12
 - clang-format、clang-tidy
-- `gh`(用于查看 CI)
+- `gh`(可选,用于查看 CI)
 
 Python 依赖:用 `uv add <pkg>` 添加(开发依赖:`uv add --dev <pkg>`),用 `uv run` 运行。
 不要使用 pip。

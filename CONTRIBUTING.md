@@ -10,7 +10,8 @@ file is the human-oriented summary. For an overview of the documents, see
 ## Setup
 
 ```bash
-./scripts/bootstrap.sh          # toolchain check + uv sync + configure
+./scripts/bootstrap.sh          # toolchain check (installs what is absent) + uv sync + configure debug
+./scripts/bootstrap.sh --check  # report only, change nothing (exit 1 if a required tool is missing)
 make build && make test
 ./scripts/fetch_paper.sh        # paper into .cache/paper/ (never commit it)
 ```
@@ -20,7 +21,7 @@ Requirements:
 - Clang (Apple Clang or LLVM) with C++20, CMake ≥ 3.24, Ninja
 - uv, Python ≥ 3.12
 - clang-format, clang-tidy
-- `gh` (for CI checks)
+- `gh` (optional, for CI checks)
 
 Python dependencies: `uv add <pkg>` (dev: `uv add --dev <pkg>`), run with `uv run`.
 Do not use pip.
