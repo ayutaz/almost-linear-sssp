@@ -1,0 +1,69 @@
+{
+ "id": "P2-BENCH-PLAN",
+ "spec": "Benchmark job plan for smoke/standard/full: one single-algorithm job per (build, graph config, algorithm), seeded shuffled order, filters, TSV CLI",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "scripts/bench/plan.py"
+  ],
+  "tests": [
+   "tests/python/test_bench_plan.py"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "test_bench_plan.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_plan.py",
+   "exit_code": 2,
+   "reason": "ModuleNotFoundError: bench.plan does not exist yet (feature absent)",
+   "timestamp": "2026-11-27T10:28:58+0900",
+   "output_tail": "==================================== ERRORS ====================================\n_______________ ERROR collecting tests/python/test_bench_plan.py _______________\nImportError while importing test module 'tests/python/test_bench_plan.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/python/test_bench_plan.py:11: in <module>\n    from bench import plan, schema\nE   ModuleNotFoundError: No module named 'bench'\n=========================== short test summary info ============================\nERROR tests/python/test_bench_plan.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.09s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_plan.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_plan.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:31:31+0900",
+   "output_tail": ".........                                                                [100%]\n9 passed in 0.23s"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "test_graph_types_are_sssp_gen_types",
+    "test_fixed_degree_families_are_not_duplicated_per_degree",
+    "test_shape_arguments_follow_the_generator_cli"
+   ],
+   "command": "uv run pytest tests/python/test_bench_plan.py",
+   "exit_code": 1,
+   "reason": "spec change: graph/weight names must match sssp_gen (docs/design/graph_library.md: er, grid, chung_lu, uniform_int, ...); plan still uses gnm/grid2d/rmat and has no shape_args",
+   "timestamp": "2026-11-27T10:37:36+0900",
+   "output_tail": "\nkind = 'graph type', values = ['er']\nallowed = ('gnm', 'grid2d', 'rmat', 'ba', 'rgg', 'path')\n\n    def _check(kind: str, values: Sequence[str] | None, allowed: Sequence[str]) -> None:\n        for v in values or ():\n            if v not in allowed:\n>               raise ValueError(f\"unknown {kind} {v!r}; allowed: {list(allowed)}\")\nE               ValueError: unknown graph type 'er'; allowed: ['gnm', 'grid2d', 'rmat', 'ba', 'rgg', 'path']\n\nscripts/bench/plan.py:112: ValueError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_plan.py::test_jobs_are_single_algorithm_and_well_formed[smoke]\nFAILED tests/python/test_bench_plan.py::test_jobs_are_single_algorithm_and_well_formed[standard]\nFAILED tests/python/test_bench_plan.py::test_jobs_are_single_algorithm_and_well_formed[full]\nFAILED tests/python/test_bench_plan.py::test_graph_types_are_sssp_gen_types\nFAILED tests/python/test_bench_plan.py::test_fixed_degree_families_are_not_duplicated_per_degree\nFAILED tests/python/test_bench_plan.py::test_shape_arguments_follow_the_generator_cli\nFAILED tests/python/test_bench_plan.py::test_filters_restrict_the_plan - Valu...\n7 failed, 4 passed in 0.13s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_plan.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_plan.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:39:18+0900",
+   "output_tail": "...........                                                              [100%]\n11 passed in 0.16s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "bash -c uv run ruff check scripts/bench scripts/analyze_results.py tests/python && uv run ruff format --check scripts/bench scripts/analyze_results.py tests/python && shellcheck scripts/run_benchmarks.sh && uv run pytest tests/python",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:44:15+0900",
+   "output_tail": "All checks passed!\n20 files already formatted\n........................................................................ [ 27%]\n........................................................................ [ 54%]\n........................................................................ [ 81%]\n..................................................                       [100%]\n266 passed in 32.76s"
+  }
+ ],
+ "commit": null
+}

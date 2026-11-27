@@ -1,0 +1,113 @@
+{
+ "id": "P2-BENCH-SCHEMA",
+ "spec": "Benchmark JSONL record schema and validator: required fields, types, null-not-zero for unmeasured values, consistency rules, failure-record factory, validate/failure CLI",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "scripts/bench/schema.py",
+   "docs/design/benchmark_schema.md"
+  ],
+  "tests": [
+   "tests/python/test_bench_schema.py",
+   "tests/python/bench_fixtures.py",
+   "tests/python/conftest.py"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "test_bench_schema.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_schema.py",
+   "exit_code": 2,
+   "reason": "ModuleNotFoundError: bench.schema does not exist yet (feature absent)",
+   "timestamp": "2026-11-27T10:28:57+0900",
+   "output_tail": "==================================== ERRORS ====================================\n______________ ERROR collecting tests/python/test_bench_schema.py ______________\nImportError while importing test module 'tests/python/test_bench_schema.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/python/test_bench_schema.py:14: in <module>\n    from bench import schema\nE   ModuleNotFoundError: No module named 'bench'\n=========================== short test summary info ============================\nERROR tests/python/test_bench_schema.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.11s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_schema.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_schema.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:30:19+0900",
+   "output_tail": "........................................................................ [ 84%]\n.............                                                            [100%]\n85 passed in 0.53s"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "test_failed_verification_must_be_status_error"
+   ],
+   "command": "uv run pytest tests/python/test_bench_schema.py -k failed_verification",
+   "exit_code": 1,
+   "reason": "a record whose verification failed (correctness.ok=false) is still accepted with status=ok; protocol §5 requires status=error",
+   "timestamp": "2026-11-27T10:36:22+0900",
+   "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n________________ test_failed_verification_must_be_status_error _________________\n\n    def test_failed_verification_must_be_status_error():\n        bad = {\"verified\": True, \"ok\": False, \"method\": \"reference:dijkstra-binary\"}\n        errs = errors_of(synthetic_record(correctness=bad))\n>       assert any(\"status\" in e and \"verification\" in e for e in errs), errs\nE       AssertionError: []\nE       assert False\nE        +  where False = any(<generator object test_failed_verification_must_be_status_error.<locals>.<genexpr> at 0x109cd0ad0>)\n\ntests/python/test_bench_schema.py:310: AssertionError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_schema.py::test_failed_verification_must_be_status_error\n1 failed, 85 deselected in 0.08s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_schema.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_schema.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:37:09+0900",
+   "output_tail": "........................................................................ [ 83%]\n..............                                                           [100%]\n86 passed in 0.32s"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "test_synthetic_valid_record_has_no_errors",
+    "test_radix_heap_only_with_integer_weights"
+   ],
+   "command": "uv run pytest tests/python/test_bench_schema.py",
+   "exit_code": 1,
+   "reason": "spec change: weight_type values must be uint64/double as in sssp_gen --weight-type; schema still only accepts u64/f64",
+   "timestamp": "2026-11-27T10:37:36+0900",
+   "output_tail": "E       assert [\"weight_type...got 'uint64'\"] == []\nE         \nE         Left contains one more item: \"weight_type: must be one of ['u64', 'f64'], got 'uint64'\"\nE         Use -v to get more diff\n\ntests/python/test_bench_schema.py:311: AssertionError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_schema.py::test_synthetic_valid_record_has_no_errors\nFAILED tests/python/test_bench_schema.py::test_failure_record_may_leave_unknowns_null\nFAILED tests/python/test_bench_schema.py::test_peak_rss_only_from_isolated_process\nFAILED tests/python/test_bench_schema.py::test_fallback_totals_must_match_records\nFAILED tests/python/test_bench_schema.py::test_baseline_algorithms_have_baseline_mode\nFAILED tests/python/test_bench_schema.py::test_any_non_negative_op_counts_are_accepted\nFAILED tests/python/test_bench_schema.py::test_source_in_range_is_accepted - ...\nFAILED tests/python/test_bench_schema.py::test_load_jsonl_reports_line_numbers\nFAILED tests/python/test_bench_schema.py::test_failure_record_factory_produces_valid_record\nFAILED tests/python/test_bench_schema.py::test_cli_validate_exit_codes - asse...\nFAILED tests/python/test_bench_schema.py::test_cli_failure_appends_valid_record\nFAILED tests/python/test_bench_schema.py::test_failed_verification_must_be_status_error\n12 failed, 74 passed in 0.48s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_schema.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_schema.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:39:18+0900",
+   "output_tail": "........................................................................ [ 83%]\n..............                                                           [100%]\n86 passed in 0.41s"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "test_cli_failure_params_keep_numbers"
+   ],
+   "command": "uv run pytest tests/python/test_bench_schema.py -k params_keep",
+   "exit_code": 1,
+   "reason": "failure CLI stores --param values as strings ({'threshold': '4'}), so failure records do not group with the runner's numeric params",
+   "timestamp": "2026-11-27T10:40:58+0900",
+   "output_tail": "            \"failure\", \"--env-json\", str(env_path), \"--out\", str(out), \"--run-id\", \"SYNTHETIC\",\n            \"--algorithm\", \"paper\", \"--graph-type\", \"er\", \"--n\", \"10\", \"--weights\", \"uniform_int\",\n            \"--weight-type\", \"uint64\", \"--seed\", \"1\", \"--status\", \"error\", \"--error\", \"x\",\n            \"--param\", \"threshold=4\", \"--param\", \"variant=fast\",\n        )  # fmt: skip\n        assert res.returncode == 0, res.stderr\n        records, errors = schema.load_jsonl(out)\n        assert errors == []\n>       assert records[0][\"params\"] == {\"threshold\": 4, \"variant\": \"fast\"}\nE       AssertionError: assert {'threshold':...iant': 'fast'} == {'threshold':...iant': 'fast'}\nE         \nE         Omitting 1 identical items, use -vv to show\nE         Differing items:\nE         {'threshold': '4'} != {'threshold': 4}\nE         Use -v to get more diff\n\ntests/python/test_bench_schema.py:329: AssertionError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_schema.py::test_cli_failure_params_keep_numbers\n1 failed, 86 deselected in 0.13s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_schema.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_schema.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:41:05+0900",
+   "output_tail": "........................................................................ [ 82%]\n...............                                                          [100%]\n87 passed in 1.34s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "bash -c uv run ruff check scripts/bench scripts/analyze_results.py tests/python && uv run ruff format --check scripts/bench scripts/analyze_results.py tests/python && shellcheck scripts/run_benchmarks.sh && uv run pytest tests/python",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:43:05+0900",
+   "output_tail": "All checks passed!\n20 files already formatted\n........................................................................ [ 27%]\n........................................................................ [ 54%]\n........................................................................ [ 81%]\n..................................................                       [100%]\n266 passed in 13.97s"
+  }
+ ],
+ "commit": null
+}

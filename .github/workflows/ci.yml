@@ -1,0 +1,222 @@
+# Main CI: lint + Debug/Release build + labelled ctest + pytest on macOS (arm64) and Ubuntu (LTS).
+# Design notes and the sources for runner labels / action SHAs: docs/design/ci.md
+name: ci
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: &docs_only
+      - "docs/**"
+      - "**/*.md"
+      - "LICENSE"
+      - ".gitignore"
+  pull_request:
+    paths-ignore: *docs_only
+  workflow_dispatch:
+
+# Least privilege: read-only token for every job. Untrusted PRs run on `pull_request`
+# (never `pull_request_target`), so they receive no secrets and a read-only token.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: "1"
+  UV_PYTHON: "3.12"
+  # Ubuntu toolchain: apt clang, major version pinned. Must match the local clang-format
+  # major (Homebrew llvm 22.x) so that format-check gives identical results.
+  LLVM_MAJOR: "22"
+
+jobs:
+  lint:
+    name: lint (clang-format, clang-tidy, ruff)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install LLVM ${{ env.LLVM_MAJOR }} (apt)
+        run: |
+          set -euo pipefail
+          pkgs=()
+          command -v "clang++-${LLVM_MAJOR}" >/dev/null || pkgs+=("clang-${LLVM_MAJOR}")
+          command -v "clang-format-${LLVM_MAJOR}" >/dev/null || pkgs+=("clang-format-${LLVM_MAJOR}")
+          command -v "clang-tidy-${LLVM_MAJOR}" >/dev/null || pkgs+=("clang-tidy-${LLVM_MAJOR}")
+          command -v ninja >/dev/null || pkgs+=(ninja-build)
+          if [ "${#pkgs[@]}" -gt 0 ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends "${pkgs[@]}"
+          fi
+          {
+            echo "CXX=clang++-${LLVM_MAJOR}"
+            echo "CLANG_FORMAT=clang-format-${LLVM_MAJOR}"
+            echo "CLANG_TIDY=clang-tidy-${LLVM_MAJOR}"
+          } >> "$GITHUB_ENV"
+          "clang++-${LLVM_MAJOR}" --version
+          "clang-format-${LLVM_MAJOR}" --version
+          "clang-tidy-${LLVM_MAJOR}" --version
+
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: uv sync
+        run: uv sync --locked
+
+      - name: clang-format check
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git ls-files -- '*.cpp' '*.hpp' '*.h')
+          if [ "${#files[@]}" -eq 0 ]; then echo "no C++ sources"; exit 0; fi
+          "$CLANG_FORMAT" --dry-run --Werror "${files[@]}"
+
+      - name: ruff check
+        if: ${{ !cancelled() }}
+        run: uv run ruff check --output-format=github .
+
+      - name: ruff format check
+        if: ${{ !cancelled() }}
+        run: uv run ruff format --check .
+
+      - name: Restore FetchContent cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/fetchcontent/ci
+          key: fetchcontent-${{ runner.os }}-${{ runner.arch }}-clang${{ env.LLVM_MAJOR }}-ci-${{ hashFiles('cmake/Dependencies.cmake') }}
+
+      - name: clang-tidy (src/, tools/)
+        if: ${{ !cancelled() }}
+        # `make tidy` configures the preset (compile_commands.json) and runs clang-tidy on
+        # src/*.cpp and tools/*.cpp; WarningsAsErrors in .clang-tidy makes it fail the job.
+        run: |
+          set -euo pipefail
+          cmake --preset ci -DFETCHCONTENT_BASE_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent/ci"
+          make tidy PRESET=ci CLANG_TIDY="$CLANG_TIDY"
+
+  build-test:
+    name: ${{ matrix.preset }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-26 = macOS 26 arm64 (Apple Silicon); ubuntu-26.04 = latest LTS (x64).
+        os: [macos-26, ubuntu-26.04]
+        # ci = Debug + -Werror, ci-release = Release + -Werror (CMakePresets.json)
+        preset: [ci, ci-release]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Toolchain (Ubuntu, apt clang ${{ env.LLVM_MAJOR }})
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          pkgs=()
+          command -v "clang++-${LLVM_MAJOR}" >/dev/null || pkgs+=("clang-${LLVM_MAJOR}")
+          command -v ninja >/dev/null || pkgs+=(ninja-build)
+          if [ "${#pkgs[@]}" -gt 0 ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends "${pkgs[@]}"
+          fi
+          echo "CXX=clang++-${LLVM_MAJOR}" >> "$GITHUB_ENV"
+
+      - name: Toolchain (macOS, Apple clang)
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          command -v ninja >/dev/null || brew install ninja
+
+      - name: Print tool versions
+        run: |
+          uname -a
+          cmake --version | head -n1
+          echo "ninja $(ninja --version)"
+          "${CXX:-c++}" --version
+
+      - name: Restore FetchContent cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/fetchcontent/${{ matrix.preset }}
+          key: fetchcontent-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ hashFiles('cmake/Dependencies.cmake') }}
+
+      - name: Configure
+        run: cmake --preset "${{ matrix.preset }}" -DFETCHCONTENT_BASE_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent/${{ matrix.preset }}"
+
+      - name: Build
+        id: build
+        run: cmake --build --preset "${{ matrix.preset }}"
+
+      # One step per CTest label so the failing category is visible at a glance.
+      # --no-tests=ignore: a label with zero tests (early in the project) is not a failure.
+      - name: ctest unit
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ctest --preset "${{ matrix.preset }}" -L '^unit$' --no-tests=ignore
+      - name: ctest integration
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ctest --preset "${{ matrix.preset }}" -L '^integration$' --no-tests=ignore
+      - name: ctest differential
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ctest --preset "${{ matrix.preset }}" -L '^differential$' --no-tests=ignore
+      - name: ctest property
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ctest --preset "${{ matrix.preset }}" -L '^property$' --no-tests=ignore
+      - name: ctest regression
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ctest --preset "${{ matrix.preset }}" -L '^regression$' --no-tests=ignore
+      - name: ctest unlabelled (safety net)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ctest --preset "${{ matrix.preset }}" -LE '^(unit|integration|differential|property|regression)$' --no-tests=ignore
+
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        if: matrix.preset == 'ci'
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: pytest (tests/harness, tests/python)
+        if: ${{ !cancelled() && matrix.preset == 'ci' && steps.build.outcome == 'success' }}
+        run: |
+          set -uo pipefail
+          uv sync --locked
+          dirs=()
+          for d in tests/harness tests/python; do [ -d "$d" ] && dirs+=("$d"); done
+          if [ "${#dirs[@]}" -eq 0 ]; then echo "no python test directories"; exit 0; fi
+          uv run pytest "${dirs[@]}"
+          rc=$?
+          # exit code 5 = no tests collected; not a failure while the harness is empty.
+          if [ "$rc" -eq 5 ]; then echo "::notice::pytest collected no tests"; exit 0; fi
+          exit "$rc"
+
+      - name: Upload CTest logs on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ctest-logs-${{ matrix.preset }}-${{ matrix.os }}
+          path: build/${{ matrix.preset }}/Testing/Temporary/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # Single stable status for branch protection (matrix job names change with the matrix).
+  ci-result:
+    name: ci result
+    if: always()
+    needs: [lint, build-test]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - name: Check needed jobs
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "results: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ]; then echo "::error::a required job finished with '$r'"; exit 1; fi
+          done

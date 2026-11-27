@@ -1,0 +1,46 @@
+{
+ "id": "P2-BENCH-STATS",
+ "spec": "Benchmark statistics: median/mean/p95/stddev/min/max, p95 reference-only flag below 20 samples, Speedup = median(baseline)/median(target), seeded bootstrap CI of the Speedup",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "scripts/bench/stats.py"
+  ],
+  "tests": [
+   "tests/python/test_bench_stats.py"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "test_bench_stats.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_stats.py",
+   "exit_code": 2,
+   "reason": "ModuleNotFoundError: bench.stats does not exist yet (feature absent)",
+   "timestamp": "2026-11-27T10:28:57+0900",
+   "output_tail": "==================================== ERRORS ====================================\n______________ ERROR collecting tests/python/test_bench_stats.py _______________\nImportError while importing test module 'tests/python/test_bench_stats.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/python/test_bench_stats.py:11: in <module>\n    from bench import stats\nE   ModuleNotFoundError: No module named 'bench'\n=========================== short test summary info ============================\nERROR tests/python/test_bench_stats.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.09s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_stats.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_stats.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:30:25+0900",
+   "output_tail": ".................                                                        [100%]\n17 passed in 0.20s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "bash -c uv run ruff check scripts/bench scripts/analyze_results.py tests/python && uv run ruff format --check scripts/bench scripts/analyze_results.py tests/python && shellcheck scripts/run_benchmarks.sh && uv run pytest tests/python",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:43:20+0900",
+   "output_tail": "All checks passed!\n20 files already formatted\n........................................................................ [ 27%]\n........................................................................ [ 54%]\n........................................................................ [ 81%]\n..................................................                       [100%]\n266 passed in 14.01s"
+  }
+ ],
+ "commit": null
+}

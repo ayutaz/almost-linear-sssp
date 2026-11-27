@@ -1,0 +1,79 @@
+{
+ "id": "P2-BENCH-ANALYZE",
+ "spec": "make report: read results/raw/*.jsonl, validate, write summary CSVs and figures of measured data only; print データなし and write nothing when there is no data",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "scripts/analyze_results.py"
+  ],
+  "tests": [
+   "tests/python/test_bench_analyze.py"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "test_bench_analyze.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_analyze.py",
+   "exit_code": 2,
+   "reason": "ModuleNotFoundError: analyze_results does not exist yet (feature absent)",
+   "timestamp": "2026-11-27T10:28:58+0900",
+   "output_tail": "==================================== ERRORS ====================================\n_____________ ERROR collecting tests/python/test_bench_analyze.py ______________\nImportError while importing test module 'tests/python/test_bench_analyze.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/python/test_bench_analyze.py:12: in <module>\n    import analyze_results\nE   ModuleNotFoundError: No module named 'analyze_results'\n=========================== short test summary info ============================\nERROR tests/python/test_bench_analyze.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.10s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_analyze.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_analyze.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:35:42+0900",
+   "output_tail": "......                                                                   [100%]\n6 passed in 2.19s"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "test_figures_are_written",
+    "test_summary_csvs_aggregate_only_measured_data"
+   ],
+   "command": "uv run pytest tests/python/test_bench_analyze.py",
+   "exit_code": 1,
+   "reason": "fixed-degree families (grid) have avg_degree=null; faceting compares NaN == NaN and drops them, so runtime_vs_n__grid.png is missing",
+   "timestamp": "2026-11-27T10:38:25+0900",
+   "output_tail": "wrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/summary/memory.csv (6 rows)\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/summary/status.csv (8 rows)\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/summary/fallback.csv (1 rows)\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/summary/ops.csv (1 rows)\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/runtime_vs_n__er.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/runtime_vs_m__er.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/speedup_vs_n__er.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/memory_vs_n__er.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/fallback_rate__er.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/breakdown__er.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/runtime_vs_n__grid.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/runtime_vs_m__grid.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/speedup_vs_n__grid.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/memory_vs_n__grid.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/speedup_by_graph_type.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/speedup_by_weight_dist.png\nwrote <tmp>/pytest-of-s19447/pytest-545/test_summary_csvs_aggregate_on0/figures/param__paper__threshold.png\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_analyze.py::test_summary_csvs_aggregate_only_measured_data\n1 failed, 5 passed in 2.44s"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "test_fixed_degree_rows_land_in_a_facet"
+   ],
+   "command": "uv run pytest tests/python/test_bench_analyze.py -k fixed_degree",
+   "exit_code": 1,
+   "reason": "correction of the previous RED (its reason was a test filter bug, now fixed): fixed-degree rows (avg_degree NaN) never match a facet because NaN == NaN is false, so the panel says 'not measured'; facet_cells does not exist yet",
+   "timestamp": "2026-11-27T10:38:47+0900",
+   "output_tail": "=================================== FAILURES ===================================\n____________________ test_fixed_degree_rows_land_in_a_facet ____________________\n\n    def test_fixed_degree_rows_land_in_a_facet():\n        df = pd.DataFrame(\n            {\n                \"weight_dist\": [\"uniform_int\", \"uniform_int\"],\n                \"weight_type\": [\"uint64\", \"uint64\"],\n                \"avg_degree\": [float(\"nan\"), 4.0],\n                \"y\": [1.0, 2.0],\n            }\n        )\n>       cells = analyze_results.facet_cells(df)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       AttributeError: module 'analyze_results' has no attribute 'facet_cells'\n\ntests/python/test_bench_analyze.py:228: AttributeError\n=========================== short test summary info ============================\nFAILED tests/python/test_bench_analyze.py::test_fixed_degree_rows_land_in_a_facet\n1 failed, 6 deselected in 0.21s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_analyze.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_analyze.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:39:09+0900",
+   "output_tail": ".......                                                                  [100%]\n7 passed in 3.88s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "bash -c uv run ruff check scripts/bench scripts/analyze_results.py tests/python && uv run ruff format --check scripts/bench scripts/analyze_results.py tests/python && shellcheck scripts/run_benchmarks.sh && uv run pytest tests/python",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:44:30+0900",
+   "output_tail": "All checks passed!\n20 files already formatted\n........................................................................ [ 27%]\n........................................................................ [ 54%]\n........................................................................ [ 81%]\n..................................................                       [100%]\n266 passed in 13.75s"
+  }
+ ],
+ "commit": null
+}

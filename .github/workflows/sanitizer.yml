@@ -1,0 +1,103 @@
+# ASan + UBSan (sanitizer preset). LeakSanitizer is enabled on Linux only.
+# Design notes: docs/design/ci.md
+name: sanitizer
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: &docs_only
+      - "docs/**"
+      - "**/*.md"
+      - "LICENSE"
+      - ".gitignore"
+  pull_request:
+    paths-ignore: *docs_only
+  schedule:
+    - cron: "41 4 * * 1" # weekly, Monday 04:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: "1"
+  LLVM_MAJOR: "22"
+  UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
+
+jobs:
+  sanitizer:
+    name: asan+ubsan / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-26.04
+            # LeakSanitizer is part of ASan on Linux and is enabled explicitly.
+            asan_options: "detect_leaks=1:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+          - os: macos-26
+            # Apple clang's ASan does NOT support LeakSanitizer on macOS (detect_leaks=1 is
+            # rejected/ignored there), so leaks are only checked by the Linux job.
+            asan_options: "detect_leaks=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+    env:
+      ASAN_OPTIONS: ${{ matrix.asan_options }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Toolchain (Ubuntu, apt clang ${{ env.LLVM_MAJOR }})
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          pkgs=()
+          command -v "clang++-${LLVM_MAJOR}" >/dev/null || pkgs+=("clang-${LLVM_MAJOR}")
+          command -v ninja >/dev/null || pkgs+=(ninja-build)
+          if [ "${#pkgs[@]}" -gt 0 ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends "${pkgs[@]}"
+          fi
+          echo "CXX=clang++-${LLVM_MAJOR}" >> "$GITHUB_ENV"
+          # Large mmap ASLR entropy on recent kernels can break ASan's shadow mapping
+          # ("AddressSanitizer:DEADLYSIGNAL" loops). Lowering it is harmless for CI.
+          sudo sysctl -w vm.mmap_rnd_bits=28
+
+      - name: Toolchain (macOS, Apple clang)
+        if: runner.os == 'macOS'
+        run: command -v ninja >/dev/null || brew install ninja
+
+      - name: Print tool versions
+        run: |
+          cmake --version | head -n1
+          "${CXX:-c++}" --version
+          echo "ASAN_OPTIONS=$ASAN_OPTIONS"
+          echo "UBSAN_OPTIONS=$UBSAN_OPTIONS"
+
+      - name: Restore FetchContent cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/fetchcontent/sanitizer
+          key: fetchcontent-${{ runner.os }}-${{ runner.arch }}-sanitizer-${{ hashFiles('cmake/Dependencies.cmake') }}
+
+      - name: Configure (sanitizer preset)
+        run: cmake --preset sanitizer -DFETCHCONTENT_BASE_DIR="$GITHUB_WORKSPACE/.cache/fetchcontent/sanitizer"
+
+      - name: Build
+        run: cmake --build --preset sanitizer
+
+      - name: ctest (all labels)
+        run: ctest --preset sanitizer --no-tests=ignore
+
+      - name: Upload CTest logs on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sanitizer-logs-${{ matrix.os }}
+          path: build/sanitizer/Testing/Temporary/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,57 @@
+{
+ "id": "P2-BENCH-RUNSCRIPT",
+ "spec": "run_benchmarks.sh smoke|standard|full: build release/release-diag, run one isolated runner process per job with timeout/memory limit, record timeouts/crashes as failure records, exit 2 when the runner is missing (smoke tolerates with --allow-missing-runner)",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "scripts/run_benchmarks.sh",
+   "docs/design/benchmark_runner_cli.md"
+  ],
+  "tests": [
+   "tests/python/test_bench_run_script.py"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "test_bench_run_script.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_run_script.py",
+   "exit_code": 2,
+   "reason": "ModuleNotFoundError: bench.plan / scripts/run_benchmarks.sh do not exist yet (feature absent)",
+   "timestamp": "2026-11-27T10:28:59+0900",
+   "output_tail": "==================================== ERRORS ====================================\n____________ ERROR collecting tests/python/test_bench_run_script.py ____________\nImportError while importing test module 'tests/python/test_bench_run_script.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/python/test_bench_run_script.py:16: in <module>\n    from bench import plan, schema\nE   ModuleNotFoundError: No module named 'bench'\n=========================== short test summary info ============================\nERROR tests/python/test_bench_run_script.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.09s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_run_script.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_run_script.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:32:52+0900",
+   "output_tail": "......                                                                   [100%]\n6 passed in 4.87s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "test_bench_run_script.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_run_script.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:39:25+0900",
+   "output_tail": "......                                                                   [100%]\n6 passed in 5.90s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "bash -c uv run ruff check scripts/bench scripts/analyze_results.py tests/python && uv run ruff format --check scripts/bench scripts/analyze_results.py tests/python && shellcheck scripts/run_benchmarks.sh && uv run pytest tests/python",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:44:46+0900",
+   "output_tail": "All checks passed!\n20 files already formatted\n........................................................................ [ 27%]\n........................................................................ [ 54%]\n........................................................................ [ 81%]\n..................................................                       [100%]\n266 passed in 15.09s"
+  }
+ ],
+ "commit": null
+}

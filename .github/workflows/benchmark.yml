@@ -1,0 +1,249 @@
+# Benchmarks on GitHub-hosted runners.
+#
+# IMPORTANT: GitHub-hosted runners are shared VMs with noisy neighbours, variable CPU models and
+# turbo/thermal behaviour. Numbers produced here are for smoke-testing the benchmark pipeline and
+# for rough trends only. They MUST NOT be used to decide performance regressions or to support
+# claims in the paper reproduction. Use a dedicated, pinned machine for that (docs/design/ci.md).
+name: benchmark
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "include/**"
+      - "tools/**"
+      - "benchmarks/**"
+      - "scripts/**"
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+      - "cmake/**"
+      - "Makefile"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/benchmark.yml"
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Profile passed to scripts/run_benchmarks.sh"
+        type: choice
+        options: [smoke, standard, full]
+        default: standard
+      runner:
+        description: "Runner image"
+        type: choice
+        options: [ubuntu-26.04, macos-26]
+        default: ubuntu-26.04
+      bench_timeout:
+        description: "BENCH_TIMEOUT in seconds (passed to scripts/run_benchmarks.sh)"
+        type: string
+        default: "3600"
+      # Optional filters; empty means "script default". Comma separated (docs/design/benchmark_runner_cli.md).
+      algorithms:
+        description: "BENCH_ALGORITHMS (comma separated)"
+        type: string
+        default: ""
+      graph_types:
+        description: "BENCH_GRAPH_TYPES (comma separated)"
+        type: string
+        default: ""
+      sizes:
+        description: "BENCH_SIZES (comma separated)"
+        type: string
+        default: ""
+      builds:
+        description: "BENCH_BUILDS (comma separated presets, default release,release-diag)"
+        type: string
+        default: ""
+      params:
+        description: "BENCH_PARAMS (k=v, comma separated)"
+        type: string
+        default: ""
+      order_seed:
+        description: "BENCH_ORDER_SEED (integer; script default 12345)"
+        type: string
+        default: ""
+  schedule:
+    - cron: "23 5 * * 1" # weekly, Monday 05:23 UTC, standard suite
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_PYTHON: "3.12"
+  LLVM_MAJOR: "22"
+
+jobs:
+  benchmark:
+    name: benchmark (${{ github.event_name == 'workflow_dispatch' && inputs.suite || (github.event_name == 'schedule' && 'standard' || 'smoke') }})
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'ubuntu-26.04' }}
+    # GitHub-hosted jobs are capped at 360 minutes.
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.suite == 'full' && 350 || 90 }}
+    env:
+      SUITE: ${{ github.event_name == 'workflow_dispatch' && inputs.suite || (github.event_name == 'schedule' && 'standard' || 'smoke') }}
+      # Inputs go through env (never interpolated into scripts) to avoid shell injection.
+      INPUT_BENCH_TIMEOUT: ${{ inputs.bench_timeout || '3600' }}
+      IN_ALGORITHMS: ${{ inputs.algorithms || '' }}
+      IN_GRAPH_TYPES: ${{ inputs.graph_types || '' }}
+      IN_SIZES: ${{ inputs.sizes || '' }}
+      IN_BUILDS: ${{ inputs.builds || '' }}
+      IN_PARAMS: ${{ inputs.params || '' }}
+      IN_ORDER_SEED: ${{ inputs.order_seed || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          [[ "$INPUT_BENCH_TIMEOUT" =~ ^[0-9]+$ ]] || { echo "::error::bench_timeout must be an integer"; exit 1; }
+          [[ -z "$IN_ORDER_SEED" || "$IN_ORDER_SEED" =~ ^[0-9]+$ ]] || { echo "::error::order_seed must be an integer"; exit 1; }
+          # Comma-separated lists / k=v pairs only: no spaces, quotes or shell metacharacters.
+          for v in "$IN_ALGORITHMS" "$IN_GRAPH_TYPES" "$IN_SIZES" "$IN_BUILDS" "$IN_PARAMS"; do
+            [[ "$v" =~ ^[A-Za-z0-9_.,=:+-]*$ ]] || { echo "::error::invalid characters in input '$v'"; exit 1; }
+          done
+          {
+            echo "BENCH_TIMEOUT=$INPUT_BENCH_TIMEOUT"
+            # Export only non-empty filters so the script defaults apply otherwise.
+            [ -n "$IN_ALGORITHMS" ] && echo "BENCH_ALGORITHMS=$IN_ALGORITHMS"
+            [ -n "$IN_GRAPH_TYPES" ] && echo "BENCH_GRAPH_TYPES=$IN_GRAPH_TYPES"
+            [ -n "$IN_SIZES" ] && echo "BENCH_SIZES=$IN_SIZES"
+            [ -n "$IN_BUILDS" ] && echo "BENCH_BUILDS=$IN_BUILDS"
+            [ -n "$IN_PARAMS" ] && echo "BENCH_PARAMS=$IN_PARAMS"
+            [ -n "$IN_ORDER_SEED" ] && echo "BENCH_ORDER_SEED=$IN_ORDER_SEED"
+            true
+          } >> "$GITHUB_ENV"
+          echo "suite=$SUITE timeout=$INPUT_BENCH_TIMEOUT"
+
+      - name: Toolchain (Ubuntu, apt clang ${{ env.LLVM_MAJOR }})
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          pkgs=()
+          command -v "clang++-${LLVM_MAJOR}" >/dev/null || pkgs+=("clang-${LLVM_MAJOR}")
+          command -v ninja >/dev/null || pkgs+=(ninja-build)
+          if [ "${#pkgs[@]}" -gt 0 ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends "${pkgs[@]}"
+          fi
+          echo "CXX=clang++-${LLVM_MAJOR}" >> "$GITHUB_ENV"
+
+      - name: Toolchain (macOS, Apple clang)
+        if: runner.os == 'macOS'
+        run: command -v ninja >/dev/null || brew install ninja
+
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Restore FetchContent cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # run_benchmarks.sh configures its own presets, so FETCHCONTENT_BASE_DIR cannot be
+          # injected; cache the downloaded sources + populate stamps under build/*/_deps instead
+          # (best effort: on a miss FetchContent simply downloads again).
+          path: |
+            build/*/_deps/*-src
+            build/*/_deps/*-subbuild
+          key: fetchcontent-bench-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('cmake/Dependencies.cmake') }}
+
+      - name: Machine info
+        run: |
+          {
+            echo "## Runner"
+            echo '```'
+            uname -a
+            if [ "$RUNNER_OS" = "macOS" ]; then sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize; else lscpu | head -n 20; free -h; fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run benchmarks
+        id: run
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          touch "$RUNNER_TEMP/bench-start"
+          if [ ! -f scripts/run_benchmarks.sh ]; then
+            echo "implemented=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::scripts/run_benchmarks.sh is not implemented yet; skipping"
+            exit 0
+          fi
+          # The script builds its own presets (release, release-diag; BENCH_BUILDS) and writes
+          # results/raw/<run_id>.jsonl (+ .env.json/.env-end.json/.plan.tsv).
+          # smoke uses --allow-missing-runner: while build/<preset>/sssp_bench_runner does not exist
+          # yet it prints "未実装" and exits 0 (still fails on build errors). The Makefile target
+          # `benchmark-smoke` does not pass this flag, hence the direct call.
+          # Exit codes: 0 ok (timeouts/OOM are recorded), 1 job/schema/build failure, 2 bad args or
+          # missing runner (standard/full).
+          args=("$SUITE")
+          [ "$SUITE" = smoke ] && args+=(--allow-missing-runner)
+          ./scripts/run_benchmarks.sh "${args[@]}" 2>&1 | tee "$RUNNER_TEMP/bench.log"
+          # Marker printed only by the --allow-missing-runner skip path.
+          if grep -q '計測をスキップしました' "$RUNNER_TEMP/bench.log"; then
+            echo "implemented=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "implemented=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Report (make report -> results/summary/*.csv)
+        if: ${{ steps.run.outcome == 'success' && steps.run.outputs.implemented == 'true' && hashFiles('scripts/analyze_results.py') != '' }}
+        # Prints "データなし" and exits 0 when there is nothing to analyse.
+        run: make report
+
+      - name: Summary
+        if: ${{ !cancelled() }}
+        env:
+          IMPLEMENTED: ${{ steps.run.outputs.implemented }}
+        run: |
+          set -uo pipefail
+          {
+            echo "## Benchmark: ${SUITE}"
+            echo
+            echo "> GitHub-hosted runner の値は性能回帰の判定に使わない（共有 VM でばらつきが大きい）。"
+            echo "> Numbers from GitHub-hosted runners are NOT used for performance-regression decisions."
+            echo
+            if [ "${IMPLEMENTED:-}" != "true" ]; then
+              echo "**未実装**: \`scripts/run_benchmarks.sh\` またはベンチランナー（\`sssp_bench_runner\`）がまだ無いため、計測はしていない（ビルドは通過）。"
+              exit 0
+            fi
+            mapfile -t files < <(find results -type f \( -name '*.csv' -o -name '*.jsonl' \) -newer "$RUNNER_TEMP/bench-start" 2>/dev/null | sort)
+            if [ "${#files[@]}" -eq 0 ]; then
+              echo "結果ファイル（CSV/JSONL）は生成されなかった。"
+              exit 0
+            fi
+            echo "| file | lines | bytes |"
+            echo "|---|---:|---:|"
+            for f in "${files[@]}"; do
+              echo "| \`$f\` | $(wc -l < "$f" | tr -d ' ') | $(wc -c < "$f" | tr -d ' ') |"
+            done
+            for f in "${files[@]}"; do
+              case "$f" in *.csv) ;; *) continue ;; esac
+              echo
+              echo "<details><summary>$f (first 30 lines)</summary>"
+              echo
+              echo '```csv'
+              head -n 30 "$f"
+              echo '```'
+              echo "</details>"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload results
+        if: ${{ !cancelled() && steps.run.outputs.implemented == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: benchmark-${{ env.SUITE }}-${{ runner.os }}-${{ github.run_id }}
+          # raw/: <run_id>.jsonl, .env.json, .env-end.json, .plan.tsv; summary/: CSV from make report.
+          path: |
+            results/raw/
+            results/**/*.csv
+            results/**/*.jsonl
+            docs/reports/figures/*.png
+          if-no-files-found: warn
+          retention-days: 30

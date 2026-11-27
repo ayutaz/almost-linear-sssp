@@ -1,0 +1,46 @@
+{
+ "id": "P2-BENCH-ENVINFO",
+ "spec": "Environment capture for benchmark records: OS, CPU brand, P/E cores, RAM, arch, compiler, CMake build type/flags/diagnostics, git SHA/dirty, power/thermal state; macOS and Linux parsers; JSON CLI",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "scripts/bench/envinfo.py"
+  ],
+  "tests": [
+   "tests/python/test_bench_envinfo.py"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "test_bench_envinfo.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_envinfo.py",
+   "exit_code": 2,
+   "reason": "ModuleNotFoundError: bench.envinfo does not exist yet (feature absent)",
+   "timestamp": "2026-11-27T10:28:58+0900",
+   "output_tail": "==================================== ERRORS ====================================\n_____________ ERROR collecting tests/python/test_bench_envinfo.py ______________\nImportError while importing test module 'tests/python/test_bench_envinfo.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../.local/share/uv/python/cpython-3.14.0-macos-aarch64-none/lib/python3.14/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/python/test_bench_envinfo.py:18: in <module>\n    from bench import envinfo, schema\nE   ModuleNotFoundError: No module named 'bench'\n=========================== short test summary info ============================\nERROR tests/python/test_bench_envinfo.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.10s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "test_bench_envinfo.py"
+   ],
+   "command": "uv run pytest tests/python/test_bench_envinfo.py",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:31:25+0900",
+   "output_tail": "..........                                                               [100%]\n10 passed in 0.76s"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "bash -c uv run ruff check scripts/bench scripts/analyze_results.py tests/python && uv run ruff format --check scripts/bench scripts/analyze_results.py tests/python && shellcheck scripts/run_benchmarks.sh && uv run pytest tests/python",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:43:41+0900",
+   "output_tail": "All checks passed!\n20 files already formatted\n........................................................................ [ 27%]\n........................................................................ [ 54%]\n........................................................................ [ 81%]\n..................................................                       [100%]\n266 passed in 20.44s"
+  }
+ ],
+ "commit": null
+}
