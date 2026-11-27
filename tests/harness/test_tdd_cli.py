@@ -533,3 +533,93 @@ def test_recorded_output_passes_public_safety_path_rules(repo: Path) -> None:
     tail = task_json(repo, "T-1")["events"][-1]["output_tail"]
     assert "x.cpp" in tail  # only the machine-specific prefix is removed
     assert "$TMPDIR" in tail
+
+
+# ------------------------------------------------- commit reachability (P0-HARNESS-COMMIT-CHECK)
+def _tdd_env(root: Path, *args: str, **env: str) -> subprocess.CompletedProcess[str]:
+    full = dict(os.environ, TDD_ROOT=str(root), GIT_CEILING_DIRECTORIES=str(root.parent))
+    full.update(env)
+    return subprocess.run(
+        [sys.executable, str(TDD_PY), *args],
+        capture_output=True,
+        text=True,
+        cwd=str(root),
+        env=full,
+        timeout=60,
+    )
+
+
+def _done_task(root: Path, tid: str, sha: str) -> None:
+    task = {"id": tid, "phase": "DONE", "events": [RED_EVENT, GREEN_EVENT], "commit": sha}
+    write_task(root, task, active=False)
+
+
+def test_check_rejects_commit_that_does_not_exist(repo: Path) -> None:
+    _done_task(repo, "C-1", "0123456789abcdef0123456789abcdef01234567")
+    res = _tdd_env(repo, "check")
+    assert res.returncode != 0
+    assert "C-1" in res.stdout
+    assert "0123456789ab" in res.stdout
+
+
+def test_check_rejects_commit_not_reachable_from_head(repo: Path) -> None:
+    """A rewritten branch leaves evidence pointing at a commit that is not in history."""
+    git = ["git", "-C", str(repo)]
+    subprocess.run([*git, "switch", "-qc", "side"], check=True)
+    sha = _git_commit(repo, "tests/unit/test_side.cpp", 'TEST_CASE("s") {}\n')
+    subprocess.run([*git, "switch", "-q", "main"], check=True)
+    _done_task(repo, "C-2", sha)
+    res = _tdd_env(repo, "check")
+    assert res.returncode != 0
+    assert "C-2" in res.stdout
+    assert "HEAD" in res.stdout
+
+
+def test_check_accepts_commit_reachable_from_head(repo: Path) -> None:
+    sha = _git_commit(repo, "tests/unit/test_more.cpp", 'TEST_CASE("m") {}\n')
+    _done_task(repo, "C-3", sha)
+    _done_task(repo, "C-4", sha[:7])  # abbreviated SHAs as written in TASKS.md
+    res = _tdd_env(repo, "check")
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert "WARN" not in res.stdout
+
+
+def test_check_only_warns_without_git(repo: Path, tmp_path: Path) -> None:
+    empty = tmp_path / "no-git-bin"
+    empty.mkdir()
+    _done_task(repo, "C-5", "0123456789abcdef0123456789abcdef01234567")
+    res = _tdd_env(repo, "check", PATH=str(empty))
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert "WARN" in res.stdout
+    assert "git" in res.stdout
+
+
+def test_check_only_warns_outside_a_repository(tmp_path: Path) -> None:
+    root = tmp_path / "plain"
+    (root / "docs/tdd/tasks").mkdir(parents=True)
+    _done_task(root, "C-6", "abc1234")
+    res = _tdd_env(root, "check")
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert "WARN" in res.stdout
+
+
+def test_check_only_warns_in_a_shallow_clone(repo: Path, tmp_path: Path) -> None:
+    first = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+    _git_commit(repo, "tests/unit/test_more.cpp", 'TEST_CASE("m") {}\n')
+    clone = tmp_path / "shallow"
+    subprocess.run(["git", "clone", "-q", "--depth", "1", f"file://{repo}", str(clone)], check=True)
+    (clone / "docs/tdd/tasks").mkdir(parents=True, exist_ok=True)
+    _done_task(clone, "C-7", first)  # exists upstream, cut off by the shallow clone
+    res = _tdd_env(clone, "check")
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert "WARN" in res.stdout
+    assert "shallow" in res.stdout
+
+
+def test_check_no_git_flag_skips_the_commit_check(repo: Path) -> None:
+    _done_task(repo, "C-8", "0123456789abcdef0123456789abcdef01234567")
+    res = _tdd_env(repo, "check", "--no-git")
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert "not checked" in res.stdout

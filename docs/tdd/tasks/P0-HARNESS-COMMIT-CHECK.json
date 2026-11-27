@@ -1,0 +1,58 @@
+{
+  "id": "P0-HARNESS-COMMIT-CHECK",
+  "spec": "tdd.py check verifies that every non-empty commit field names a commit reachable from HEAD (git merge-base --is-ancestor); unknown or unreachable SHAs are invalid; without git, outside a repository or in a shallow clone the check only warns; --no-git skips it",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      "scripts/tdd.py"
+    ],
+    "tests": [
+      "tests/harness/test_tdd_cli.py"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "test_check_rejects_commit_that_does_not_exist",
+        "test_check_rejects_commit_not_reachable_from_head",
+        "test_check_accepts_commit_reachable_from_head",
+        "test_check_only_warns_without_git",
+        "test_check_only_warns_outside_a_repository",
+        "test_check_only_warns_in_a_shallow_clone",
+        "test_check_no_git_flag_skips_the_commit_check"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 1,
+      "reason": "check does not look at the commit field: evidence pointing at a nonexistent or rewritten (unreachable) commit passes, and --no-git is unknown",
+      "timestamp": "2026-11-27T12:40:06+09:00",
+      "output_tail": "    def test_check_no_git_flag_skips_the_commit_check(repo: Path) -> None:\n        _done_task(repo, \"C-8\", \"0123456789abcdef0123456789abcdef01234567\")\n        res = _tdd_env(repo, \"check\", \"--no-git\")\n>       assert res.returncode == 0, res.stdout + res.stderr\nE       AssertionError: usage: tdd.py [-h]\nE                       {start,red,green,refactor,allow-test-change,done,status,check,log} ...\nE         tdd.py: error: unrecognized arguments: --no-git\nE         \nE       assert 2 == 0\nE        +  where 2 = CompletedProcess(args=['./.venv/bin/python', '~/Desktop/almost-line...rt,red,green,refactor,allow-test-change,done,status,check,log} ...\\ntdd.py: error: unrecognized arguments: --no-git\\n').returncode\n\ntests/harness/test_tdd_cli.py:624: AssertionError\n=========================== short test summary info ============================\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_commit_that_does_not_exist\nFAILED tests/harness/test_tdd_cli.py::test_check_rejects_commit_not_reachable_from_head\nFAILED tests/harness/test_tdd_cli.py::test_check_only_warns_without_git - Ass...\nFAILED tests/harness/test_tdd_cli.py::test_check_only_warns_outside_a_repository\nFAILED tests/harness/test_tdd_cli.py::test_check_only_warns_in_a_shallow_clone\nFAILED tests/harness/test_tdd_cli.py::test_check_no_git_flag_skips_the_commit_check\n6 failed, 59 passed in 11.93s"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "test_check_rejects_commit_that_does_not_exist",
+        "test_check_rejects_commit_not_reachable_from_head",
+        "test_check_accepts_commit_reachable_from_head",
+        "test_check_only_warns_without_git",
+        "test_check_only_warns_outside_a_repository",
+        "test_check_only_warns_in_a_shallow_clone",
+        "test_check_no_git_flag_skips_the_commit_check"
+      ],
+      "command": "uv run pytest tests/harness/test_tdd_cli.py",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:40:41+09:00",
+      "output_tail": ".................................................................        [100%]\n65 passed in 12.60s"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "uv run pytest tests/harness -q && uv run python scripts/tdd.py check",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:43:47+09:00",
+      "output_tail": "........................................................................ [ 17%]\n........................................................................ [ 34%]\n........................................................................ [ 51%]\n........................................................................ [ 68%]\n........................................................................ [ 85%]\n...........................................................              [100%]\nchecked 91 task file(s): 0 invalid"
+    }
+  ],
+  "commit": null
+}

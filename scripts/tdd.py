@@ -16,7 +16,7 @@ Usage (standard library only; ``uv run python scripts/tdd.py ...``)::
     tdd.py refactor <ID> [--tests NAME..] -- <cmd...>            # must pass
     tdd.py allow-test-change <ID> --reason TEXT   # permit removing/merging tests
     tdd.py done <ID> [--commit SHA]
-    tdd.py status | check | log
+    tdd.py status | check [--no-git] | log
 
 A command given as one argument (``-- "ctest --preset debug -R x"``) runs
 through the shell; several arguments run without a shell.
@@ -166,20 +166,23 @@ def impl_dirs() -> tuple[str, ...]:
     return DEFAULT_IMPL_DIRS
 
 
-def commit_files(sha: str) -> list[str] | None:
-    """Paths changed by ``sha`` (None when git or the commit is unavailable)."""
+def _git(*args: str) -> tuple[int, str] | None:
+    """Run git in the repository root; None when git cannot be started."""
     try:
         proc = subprocess.run(
-            ["git", "-C", str(ROOT), "show", "--no-renames", "--name-only", "--format=", sha],
-            capture_output=True,
-            text=True,
-            timeout=20,
+            ["git", "-C", str(ROOT), *args], capture_output=True, text=True, timeout=20
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
-    if proc.returncode != 0:
+    return proc.returncode, proc.stdout.strip()
+
+
+def commit_files(sha: str) -> list[str] | None:
+    """Paths changed by ``sha`` (None when git or the commit is unavailable)."""
+    res = _git("show", "--no-renames", "--name-only", "--format=", sha)
+    if res is None or res[0] != 0:
         return None
-    return [ln.strip() for ln in proc.stdout.splitlines() if ln.strip()]
+    return [ln.strip() for ln in res[1].splitlines() if ln.strip()]
 
 
 def tail(text: str, n: int = TAIL_LINES) -> str:
@@ -578,11 +581,59 @@ def _validate_test_only(task: dict[str, Any]) -> list[str]:
     return errs
 
 
-def cmd_check(_args: argparse.Namespace, _cmd: list[str]) -> int:
+def commit_check_unavailable() -> str | None:
+    """Why commit reachability cannot be judged here (None = it can)."""
+    res = _git("rev-parse", "--is-inside-work-tree")
+    if res is None:
+        return "git not found"
+    if res[0] != 0 or res[1] != "true":
+        return "not a git repository"
+    shallow = _git("rev-parse", "--is-shallow-repository")
+    if shallow is None or shallow[0] != 0 or shallow[1] != "false":
+        return "shallow clone: history is cut off (use `git fetch --unshallow` or fetch-depth: 0)"
+    head = _git("rev-parse", "--verify", "--quiet", "HEAD")
+    if head is None or head[0] != 0:
+        return "the repository has no HEAD commit"
+    return None
+
+
+def commit_problem(sha: Any) -> str | None:
+    """Problem with a non-empty ``commit`` field, judged against HEAD (None = fine)."""
+    if not isinstance(sha, str):
+        return "commit must be a commit SHA string or null"
+    sha = sha.strip()
+    found = _git("rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}")
+    if found is None or found[0] != 0:
+        return f"commit {sha} does not exist in this repository"
+    res = _git("merge-base", "--is-ancestor", sha, "HEAD")
+    if res is None:
+        return None
+    if res[0] == 1:
+        return (
+            f"commit {sha} is not reachable from HEAD "
+            "(history rewritten, or the branch was never merged)"
+        )
+    if res[0] != 0:
+        return f"cannot check commit {sha} against HEAD (git exit {res[0]})"
+    return None
+
+
+def cmd_check(args: argparse.Namespace, _cmd: list[str]) -> int:
     entries = all_tasks()
+    commits = [(p, t) for p, t in entries if isinstance(t, dict) and t.get("commit")]
+    skip_git = getattr(args, "no_git", False)
+    unavailable = None if skip_git else (commit_check_unavailable() if commits else None)
+    if skip_git:
+        print("NOTE commit fields not checked against git history (--no-git)")
+    elif unavailable:
+        print(f"WARN commit fields not checked against git history: {unavailable}")
     bad = 0
     for path, task in entries:
         problems = validate(path, task)
+        if not skip_git and not unavailable and isinstance(task, dict) and task.get("commit"):
+            problem = commit_problem(task["commit"])
+            if problem:
+                problems.append(problem)
         for msg in problems:
             print(f"ERROR {path.stem}: {msg}")
         bad += bool(problems)
@@ -686,7 +737,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--commit", default=None)
     p.set_defaults(func=cmd_done)
 
-    for name, func in (("status", cmd_status), ("check", cmd_check), ("log", cmd_log)):
+    p = sub.add_parser("check", help="validate every evidence file")
+    p.add_argument(
+        "--no-git",
+        action="store_true",
+        help="do not check that commit fields are reachable from HEAD",
+    )
+    p.set_defaults(func=cmd_check)
+
+    for name, func in (("status", cmd_status), ("log", cmd_log)):
         sub.add_parser(name).set_defaults(func=func)
     return parser
 

@@ -141,7 +141,7 @@ uv run python scripts/tdd.py green <ID> -- ctest --preset debug -R x
 uv run python scripts/tdd.py refactor <ID> -- ctest --preset debug
 uv run python scripts/tdd.py allow-test-change <ID> --reason "重複したケースを統合"   # GREEN 後のみ
 uv run python scripts/tdd.py done <ID> [--commit SHA]
-uv run python scripts/tdd.py status | check | log
+uv run python scripts/tdd.py status | check [--no-git] | log
 ```
 
 - `start`: `docs/tdd/tasks/<ID>.json` を作り、`.tdd/runtime/active.json` に登録する（複数のタスクを同時に作業中にできる）。既にあるタスクなら証跡を残したまま再登録する。ID は英数字と `.` `_` `-` だけ。
@@ -150,6 +150,9 @@ uv run python scripts/tdd.py status | check | log
 - 引数が1つ（`-- "a && b"`）ならシェルで、複数ならシェルなしで実行する。出力はそのまま画面に流し、末尾20行を `output_tail` に保存する。保存時にリポジトリのルートを `.`、一時ディレクトリを `$TMPDIR`、ホームを `~`、`pytest-of-<ユーザー名>` を `pytest-of-$USER` に置き換え、利用者固有のパスを証跡に残さない。全文は `.tdd/runtime/runs/<ID>-<時刻>-<PHASE>.log`、最新の1件は `.tdd/runtime/last_run.json`。
 - テストだけのタスク（既存の振る舞いを検証するだけで、正直な RED が作れないもの）は `start <ID> --spec .. --test <glob> [--covers <glob>] --test-only "<理由>"` で作り、`green` から記録する。書式と検査は `docs/tdd/README.md` の「Test-only tasks」。
 - `check`: すべての証跡を検証する（必須キー、id とファイル名の一致、phase の値、RED の終了コードが0以外で理由がある、GREEN/REFACTOR が0、RED が GREEN より先、GREEN が REFACTOR より先、最初のイベントが RED、DONE の最後が GREEN か REFACTOR、phase と最後のイベントの一致、タイムスタンプが ISO 8601（`+0900` と `+09:00` の両方を受け付ける））。1件でも不正なら終了コード1。
+  - さらに、`commit` 欄が空でない証跡について、その SHA がリポジトリに存在し、HEAD から到達できること（`git merge-base --is-ancestor <sha> HEAD`）を確かめる。存在しない SHA と、HEAD から届かない SHA（履歴の書き直しや、マージされていない枝）は不正。短縮 SHA も受け付ける。
+  - git が無い、リポジトリでない、浅い clone（`git rev-parse --is-shallow-repository` が `true`）、HEAD が無い、のいずれかなら判定できないので、`WARN commit fields not checked ...` を1行出すだけで不正にはしない。`--no-git` を付けるとこの検査を飛ばす（`NOTE` を1行出す）。
+  - CI でこの検査を効かせるには、`actions/checkout` に `fetch-depth: 0` が要る（既定の深さ1では警告になるだけ）。
 - `log`: すべての証跡から `docs/TDD_LOG.md` を作り直す（内容が同じなら出力も同じ）。
 - `active.json` の読み書きは `.tdd/runtime/tdd.lock` で排他する。
 
