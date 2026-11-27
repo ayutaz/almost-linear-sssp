@@ -10,16 +10,35 @@
 //           S(P) = 6, S(R) = 22; table from 3: nu(P) = 3, nu(R) = 6. delta = [11, 8, 0].
 //           P opens at D0 = 8 in R's slot [6, 12): D0 + S(P) = 14 >= 12, so the second
 //           origin rule applies: the largest 12 - 3j <= 8 is 6 (Sec 4.3 l.794).
+// Child order (Sec 4.2, derived in the test "the hand-trace fixtures have the Sec 4.2 child
+// order" and checked against order_children()): no light arcs, so every child is a DFS root
+// that finishes at once, in the F preorder a, b, c of its provisional representative; the rank
+// order is the REVERSE finishing order: [c, P] at R with rep(P) = a, g(c, P) = D_F(a, c)
+// (5 / 11), and [b, a] at P with g(b, a) = D_F(a, b) (1 / 3). The leaf layout is c, b, a.
+// Supplemental offers (Sec 4.3 l.826, u = max{b, z + S(i) + g(i, j)} at x_j):
+//   chain  R slot [0, 4): minimum 0 at a, i = P, left subrun {c}: c = max{4, 0 + 2 + 5} = 7;
+//          P slot [0, 1): minimum 0 at a, i = a, left subrun {b}: b = max{1, 0 + 0 + 1} = 1.
+//   align  R slot [0, 6): minimum 0 at c, i = c, right subrun {P}: rep(P) = a =
+//          max{6, 0 + 0 + 11} = 11; P slot [6, 9): minimum 8 at b, i = b, right subrun {a}:
+//          a = max{9, 8 + 0 + 3} = 11.
 // Every broken variant changes one thing and must raise the named violation; the correct
-// traces and plain state-graph Dijkstra traces must raise none.
+// traces and plain state-graph Dijkstra traces must raise none. The checker itself does not see
+// the child order, the representatives or the gaps (it checks I1-I8 and the protocol only), so
+// the traces are tied to order_children() and to evaluate() by the tests that recompute the
+// supplemental offers and replay Evaluate.
 
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <span>
 #include <string>
+#include <tuple>
 #include <vector>
 
+#include "paper/hierarchy/child_order.hpp"
+#include "paper/hierarchy/evaluate.hpp"
+#include "paper/hierarchy/normalize.hpp"
 #include "paper/hierarchy/ordered_hierarchy.hpp"
 #include "paper/hierarchy/reference_hierarchy.hpp"
 #include "sssp/graph.hpp"
@@ -63,8 +82,9 @@ Fixture make_fixture(U ab, U bc, sssp::Vertex source_vertex, StateId offer_state
   return f;
 }
 
-const std::vector<StateId> kP{0, 1};
-const std::vector<StateId> kR{0, 1, 2};
+// Leaf-layout intervals (rank order: R = [c, P], P = [b, a]).
+const std::vector<StateId> kP{1, 0};
+const std::vector<StateId> kR{2, 1, 0};
 
 // Correct trace of Evaluate on the chain fixture (see the file comment). Arc ids: 0 a->b,
 // 1 b->a, 2 b->c, 3 c->b.
@@ -75,11 +95,11 @@ std::vector<Ev> chain_trace(const Fixture& f) {
       ev_initial<U>(0, 0),
       ev_open<U>(r, kR, 0, 0, 4, 10),           // root: origin = D0, c = D0 + S = 10
       ev_scan_begin<U>(r, kR, 0, 4, 0, 4, 10),  // slot [0, 4)
-      ev_supplemental<U>(2, 7),                 // split at P, right subrun {c}: max{4, 0+2+5}
+      ev_supplemental<U>(2, 7),                 // split at P, left subrun {c}: max{4, 0+2+5}
       ev_open<U>(p, kP, 0, 0, 1, 2),            // D0 + S(P) = 2 < 4: origin = D0
       ev_scan_begin<U>(p, kP, 0, 1, 0, 1, 2),   // c_P = min(10, 2)
-      ev_supplemental<U>(1, 1),                 // split at a, subrun {b}: max{1, 0+0+1}
-      ev_emit<U>(0, 0),                         // a
+      ev_supplemental<U>(1, 1),                 // split at a, left subrun {b}: max{1, 0+0+1}
+      ev_emit<U>(0, 0),                         // a ({b} is passed first: key 1 not due)
       ev_relax<U>(0, 1),                        // a->b
       ev_scan_end<U>(p, kP),                    // b's key 1 is outside [0, 1)
       ev_scan_begin<U>(p, kP, 1, 2, 1, 2, 2),   // next slot of P
@@ -105,14 +125,14 @@ std::vector<Ev> align_trace(const Fixture& f) {
       ev_initial<U>(2, 0),
       ev_open<U>(r, kR, 0, 0, 6, 22),
       ev_scan_begin<U>(r, kR, 0, 6, 0, 6, 22),
-      ev_supplemental<U>(1, 8),  // split at c, left subrun {P}: max{6, 0+0+8}
-      ev_emit<U>(2, 0),          // c (P's run is not due: key 8)
-      ev_relax<U>(3, 8),         // c->b
+      ev_supplemental<U>(0, 11),  // split at c, right subrun {P}, at rep(P) = a: max{6, 0+0+11}
+      ev_emit<U>(2, 0),           // c (then P's run is not due: key 8 at b)
+      ev_relax<U>(3, 8),          // c->b
       ev_scan_end<U>(r, kR),
       ev_scan_begin<U>(r, kR, 6, 12, 6, 12, 22),
       ev_open<U>(p, kP, 8, 6, 3, 6),            // second rule: origin 6
       ev_scan_begin<U>(p, kP, 6, 9, 6, 9, 14),  // c_P = min(22, 8 + 6)
-      ev_supplemental<U>(0, 11),                // split at b, left subrun {a}: max{9, 8+0+3}
+      ev_supplemental<U>(0, 11),                // split at b, right subrun {a}: max{9, 8+0+3}
       ev_emit<U>(1, 8),                         // b
       ev_relax<U>(1, 11),                       // b->a
       ev_relax<U>(2, 16),                       // b->c (settled)
@@ -160,6 +180,173 @@ TEST_CASE("eval invariants: the fixtures have the hand-computed oracle values",
   const auto a = align();
   CHECK(a.ref.state_target == std::vector<U>{11, 8, 0});
   CHECK(a.ref.is_protected == std::vector<bool>{true, true, true});
+}
+
+namespace {
+// The Sec 4.1 / 4.2 data the hand traces rely on, read from normalize() + order_children().
+struct OrderedFixture {
+  sssp::paper::NormalizedHierarchy<U> nh;
+  NodeId r = 0;  // normalised node ids
+  NodeId p = 0;
+  NodeId leaf[3] = {0, 0, 0};
+};
+
+OrderedFixture ordered(const Fixture& f) {
+  OrderedFixture o{sssp::paper::normalize(f.s.hierarchy)};
+  sssp::paper::order_children(o.nh);
+  o.r = o.nh.node_of_input[f.r];
+  o.p = o.nh.node_of_input[f.p];
+  for (StateId x = 0; x < 3; ++x) o.leaf[x] = o.nh.forest.leaf_of_state[x];
+  return o;
+}
+}  // namespace
+
+// Hand derivation from the paper (both fixtures have the same shape). Sec 4.1: F has the links
+// a - b (P) and b - c (R), rooted at a, preorder a, b, c. No arc is shorter than the unit at its
+// LCA (1 < 1 / 4 < 4 in chain, 3 < 3 / 8 < 6 in align), so neither node has light arcs.
+// Sec 4.2 l.726-730: at R the provisional representatives are a (for P) and c; the DFS launches
+// at P (preorder of a is smaller), P has no outgoing light arc and finishes at once, then c.
+// Lemma 4.4 (l.735): the rank order is the REVERSE finishing order, [c, P]; rep(P) = a, the
+// provisional representative of a DFS root; the charge between the two marks is the move along
+// F between the successive DFS roots, D_F(a, c). At P the same gives [b, a] and D_F(a, b).
+TEST_CASE("eval invariants: the hand-trace fixtures have the Sec 4.2 child order",
+          "[eval-invariants]") {
+  struct Expected {
+    Fixture f;
+    U nu_p, nu_r, mass_p, mass_r, gap_cp, gap_ba;
+  };
+  for (const auto& e :
+       {Expected{chain(), 1, 4, 2, 10, 1 + 4, 1}, Expected{align(), 3, 6, 6, 22, 3 + 8, 3}}) {
+    const auto o = ordered(e.f);
+    const auto& nh = o.nh;
+    REQUIRE(nh.children_ordered);
+    CHECK(nh.forest.nodes[o.r].parent == sssp::paper::kNoNode);
+    CHECK(nh.forest.nodes[o.p].parent == o.r);
+    CHECK(nh.light(o.r).empty());
+    CHECK(nh.light(o.p).empty());
+    CHECK(nh.unit[o.p] == e.nu_p);
+    CHECK(nh.unit[o.r] == e.nu_r);
+    CHECK(nh.mass[o.p] == e.mass_p);
+    CHECK(nh.mass[o.r] == e.mass_r);
+    // R: ranks [c, P], rep(c) = c, rep(P) = a, g(c, P) = D_F(a, c).
+    CHECK(nh.forest.nodes[o.r].children == std::vector<NodeId>{o.leaf[2], o.p});
+    CHECK(nh.rep[o.leaf[2]] == StateId{2});
+    CHECK(nh.rep[o.p] == StateId{0});
+    CHECK(nh.gap_next[o.leaf[2]] == e.gap_cp);
+    CHECK(nh.gap_next[o.p] == U{0});
+    // P: ranks [b, a], g(b, a) = D_F(a, b).
+    CHECK(nh.forest.nodes[o.p].children == std::vector<NodeId>{o.leaf[1], o.leaf[0]});
+    CHECK(nh.rep[o.leaf[1]] == StateId{1});
+    CHECK(nh.rep[o.leaf[0]] == StateId{0});
+    CHECK(nh.gap_next[o.leaf[1]] == e.gap_ba);
+    CHECK(nh.gap_next[o.leaf[0]] == U{0});
+  }
+}
+
+namespace {
+// One split of Alg 2 l.5 that creates subruns: the run is the whole child list of the node
+// (the first split there), z is the run minimum at `min_state`, b the nominal slot end.
+struct Split {
+  bool at_root;  // R or P
+  StateId min_state;
+  U z;
+  U b;
+};
+
+// The supplemental offers of Alg 2 l.6 / Sec 4.3 l.826 for these splits, with the child order,
+// representatives, gaps and masses taken from order_children(), not from the hand trace:
+// u = max{b, z + S(i) + g(i, j)} at x_j for the child j of each new subrun adjacent to i.
+std::vector<Ev> supplemental_from_order(const OrderedFixture& o, const std::vector<Split>& splits) {
+  const auto& nh = o.nh;
+  std::vector<Ev> out;
+  for (const auto& s : splits) {
+    const NodeId x = s.at_root ? o.r : o.p;
+    NodeId i = nh.forest.leaf_of_state[s.min_state];
+    while (nh.forest.nodes[i].parent != x) i = nh.forest.nodes[i].parent;
+    const auto& ch = nh.forest.nodes[x].children;
+    std::size_t k = 0;
+    while (ch[k] != i) ++k;
+    const U base = s.z + nh.mass[i];
+    if (k > 0) {  // left subrun, adjacent child ch[k - 1]
+      const NodeId j = ch[k - 1];
+      out.push_back(ev_supplemental<U>(nh.rep[j], std::max(s.b, base + nh.gap_next[j])));
+    }
+    if (k + 1 < ch.size()) {  // right subrun, adjacent child ch[k + 1]
+      const NodeId j = ch[k + 1];
+      out.push_back(ev_supplemental<U>(nh.rep[j], std::max(s.b, base + nh.gap_next[i])));
+    }
+  }
+  return out;
+}
+
+// Every field but `node` (a free id, messages only).
+bool same_event(const Ev& a, const Ev& b) {
+  return a.kind == b.kind && a.state == b.state && a.arc == b.arc && a.states == b.states &&
+         a.value == b.value && a.origin == b.origin && a.unit == b.unit && a.mass == b.mass &&
+         a.lo == b.lo && a.hi == b.hi && a.slot_lo == b.slot_lo && a.slot_hi == b.slot_hi &&
+         a.deadline == b.deadline;
+}
+
+// Hand-derived split points of the two traces (see the file comment).
+const std::vector<Split> kChainSplits{{true, 0, 0, 4}, {false, 0, 0, 1}};
+const std::vector<Split> kAlignSplits{{true, 2, 0, 6}, {false, 1, 8, 9}};
+}  // namespace
+
+TEST_CASE("eval invariants: hand-trace supplemental offers follow order_children",
+          "[eval-invariants]") {
+  struct Case {
+    const char* name;
+    Fixture f;
+    std::vector<Ev> trace;
+    std::vector<Split> splits;
+  };
+  const auto c = chain();
+  const auto a = align();
+  for (const auto& e : {Case{"chain", c, chain_trace(c), kChainSplits},
+                        Case{"align", a, align_trace(a), kAlignSplits}}) {
+    INFO(e.name);
+    const auto want = supplemental_from_order(ordered(e.f), e.splits);
+    std::vector<Ev> got;
+    std::vector<U> slot_end;  // nominal end b of the scan each offer is posted in
+    U b = 0;
+    for (const auto& ev : e.trace) {
+      if (ev.kind == EvalEventKind::kScanBegin) b = ev.slot_hi;
+      if (ev.kind == EvalEventKind::kSupplementalOffer) {
+        got.push_back(ev);
+        slot_end.push_back(b);
+      }
+    }
+    REQUIRE(got.size() == want.size());
+    REQUIRE(got.size() == e.splits.size());  // one subrun per split in both fixtures
+    for (std::size_t k = 0; k < got.size(); ++k) {
+      INFO("supplemental offer " << k);
+      CHECK(slot_end[k] == e.splits[k].b);
+      CHECK(got[k].state == want[k].state);
+      CHECK(got[k].value == want[k].value);
+    }
+  }
+}
+
+TEST_CASE("eval invariants: Evaluate reproduces the hand traces", "[eval-invariants]") {
+  const auto c = chain();
+  const auto a = align();
+  for (const auto& [name, f, want] :
+       {std::tuple{"chain", c, chain_trace(c)}, std::tuple{"align", a, align_trace(a)}}) {
+    INFO(name);
+    RecordingObserver<U> rec;
+    ForwardingObserver<sssp::paper::EvalHooks<U>, U> adapter(rec);
+    sssp::paper::EvalOptions<U> opt;
+    opt.hooks = &adapter;
+    (void)sssp::paper::evaluate<U>(f.s, opt);
+    const auto& got = rec.events;
+    for (std::size_t k = 0; k < std::min(got.size(), want.size()); ++k) {
+      INFO("event " << k << ": got " << static_cast<int>(got[k].kind) << " state " << got[k].state
+                    << " value " << got[k].value << ", want " << static_cast<int>(want[k].kind)
+                    << " state " << want[k].state << " value " << want[k].value);
+      REQUIRE(same_event(got[k], want[k]));
+    }
+    REQUIRE(got.size() == want.size());
+  }
 }
 
 TEST_CASE("eval invariants: correct hand traces raise no violation", "[eval-invariants]") {

@@ -66,10 +66,15 @@ Integer weights (`std::uint64_t`) first; `double` only with integer-valued lengt
 | `SupplementalOffersOffEquivalent` | same instances as `RandomDirectedStateGraph` and `BaseCaseSingleSource` | run twice, `supplemental_offers = true / false` (checker with the same flag, which also asserts that no supplemental offer is posted when disabled); the protected emissions are identical and equal `state_target` (D-14); unprotected emissions may differ |
 | `ZeroLengthArcsAcyclic` | `zero_arc_instance(params, seed)` with `zero_arcs > 0`, several sources | as `RandomDirectedStateGraph`; zero-length arcs make many arcs tight, so most copies are protected; lengths are even, zero arcs never close a cycle (Q-21) |
 
-Hand example (`tests/unit/paper/hierarchy/test_evaluate_basic.cpp`, research notes 02 sec 2.11
-item 5): the two fixtures `chain` and `align` of `test_eval_invariants.cpp` spell out a correct
-hook trace, including slots, splits, supplemental offers and the second origin rule. The
-supplemental values there assume the child orders [P, c] / [a, b] and gaps g(P, c) = 5,
-g(c, P) = 8, g(a, b) = g(b, a) = 3 (or 1 in `chain`); an Evaluate run recorded with
-`RecordingObserver` can be compared with them event by event once the implementation's ranks
-and gaps (Sec 4.2) are fixed.
+Hand example (research notes 02 sec 2.11 item 5): the two fixtures `chain` and `align` of
+`tests/unit/paper/hierarchy/test_eval_invariants.cpp` spell out a correct hook trace, including
+slots, splits, supplemental offers and the second origin rule. Their child order is the one of
+Sec 4.2: neither node has light arcs, so every child is a DFS root that finishes at once, and
+the rank order is the reverse finishing order (Lemma 4.4): [c, P] at R with rep(P) = a and
+g(c, P) = D_F(a, c) (5 in `chain`, 11 in `align`), [b, a] at P with g(b, a) = D_F(a, b)
+(1 / 3); the leaf layout is c, b, a. Hence the supplemental offer of R's first slot in `align`
+goes to rep(P) = a with max{6, 0 + 0 + 11} = 11. Do not write a child order down by hand:
+`test_eval_invariants.cpp` checks the fixtures' order, representatives and gaps against
+`order_children()`, recomputes every supplemental offer of the traces from that output, and
+compares the traces with an `evaluate()` run recorded by `RecordingObserver`, event by event.
+The checker alone cannot catch a wrong order: it does not see ranks, representatives or gaps.

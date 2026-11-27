@@ -1,0 +1,59 @@
+{
+  "id": "P3-EVAL-ORACLE-TRACE-FIX",
+  "kind": "test-only",
+  "test_only_reason": "No implementation changes: order_children and Evaluate already produce the Sec 4.2 child order. The defect is in test data: the checker self-test traces (and the README) assumed child orders [P, c] / [a, b] and gaps g(P,c)=5, g(c,P)=8, so the align trace posted the supplemental offer at b = 8 instead of a = 11. The checker cannot detect child order (it checks I1-I8 and the protocol), so the wrong trace passed. The corrected traces and new checks that tie them to order_children and to Evaluate pass on the existing implementation; there is no new behaviour to drive with a RED.",
+  "spec": "The hand traces chain and align of the Evaluate invariant-checker self-tests use the Sec 4.2 child order (reverse DFS finishing order: [c, P] at R, [b, a] at P), representatives and gaps produced by order_children, and Evaluate reproduces them event by event",
+  "paper_ref": "Sec 4.2 l.725-730, Lemma 4.4, Lemma 4.5; Sec 4.3 l.811-826, Alg 2, Alg 3",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/unit/paper/hierarchy/test_eval_invariants.cpp",
+      "tests/support/paper/README.md"
+    ],
+    "covers": [
+      "src/paper/hierarchy/child_order.cpp",
+      "src/paper/hierarchy/evaluate.cpp",
+      "src/paper/hierarchy/normalize.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [
+        "eval invariants: the hand-trace fixtures have the Sec 4.2 child order"
+      ],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:12:35+09:00",
+      "output_tail": "        Start 868: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n861/868 Test #867: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.01 sec\n862/868 Test #868: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.06 sec\n863/868 Test #849: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    1.40 sec\n864/868 Test #850: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    1.42 sec\n865/868 Test #860: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    1.01 sec\n866/868 Test #856: property:name_routes: Mode A certificates against Bellman-Ford, measured acceptance .....................................................................   Passed    1.39 sec\n867/868 Test #780: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ...................................................................   Passed    8.44 sec\n868/868 Test #861: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    6.67 sec\n\n100% tests passed, 0 tests failed out of 868\n\nLabel Time Summary:\ndifferential    =  17.63 sec*proc (52 tests)\nintegration     =   0.74 sec*proc (6 tests)\nproperty        =  27.53 sec*proc (39 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 137.26 sec*proc (765 tests)\n\nTotal Test time (real) =  27.77 sec"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "eval invariants: hand-trace supplemental offers follow order_children",
+        "eval invariants: Evaluate reproduces the hand traces",
+        "eval invariants: correct hand traces raise no violation"
+      ],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:16:38+09:00",
+      "output_tail": "        Start 367: unit:local threshold never wraps around for large exponents or sizes\n863/870 Test #436: unit:generator is deterministic under a fixed seed ......................................................................................................   Passed    0.03 sec\n864/870 Test #119: unit:WeightTraits support Counted weights - U64 .........................................................................................................   Passed    0.02 sec\n865/870 Test #456: unit:outer base case: lightest edge per vertex pair (Alg 8 l.5) - double ................................................................................   Passed    0.03 sec\n866/870 Test #114: unit:Counted counts each addition and comparison - U64 ..................................................................................................   Passed    0.02 sec\n867/870 Test #363: unit:base case records path counters in Diagnostics .....................................................................................................   Passed    0.03 sec\n868/870 Test #387: unit:radial states of a hand example with K = 2 - std::uint64_t .........................................................................................   Passed    0.03 sec\n869/870 Test #368: unit:local threshold is a parameter for Mode B (N > c * L_N^e) ..........................................................................................   Passed    0.03 sec\n870/870 Test #367: unit:local threshold never wraps around for large exponents or sizes ....................................................................................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 870\n\nLabel Time Summary:\ndifferential    =  13.81 sec*proc (52 tests)\nintegration     =   0.60 sec*proc (6 tests)\nproperty        =  23.20 sec*proc (39 tests)\nregression      =   0.10 sec*proc (6 tests)\nunit            = 108.99 sec*proc (767 tests)\n\nTotal Test time (real) =  20.26 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:22:30+09:00",
+      "output_tail": "        Start 384: unit:reduced graph omits nontree edges heavier than their tree path\n863/870 Test #544: unit:growth_pass heap size counts distinct outside vertices (A11) - std::uint64_t .......................................................................   Passed    0.04 sec\n864/870 Test #558: unit:lca of a single-vertex tree is the vertex ..........................................................................................................   Passed    0.18 sec\n865/870 Test #556: unit:ordered tree records root, depths and children in increasing index order ...........................................................................   Passed    0.03 sec\n866/870 Test  #66: unit:Fibonacci-heap Dijkstra: operation counters ........................................................................................................   Passed    0.03 sec\n867/870 Test  #43: unit:Bellman-Ford detects integer distance overflow .....................................................................................................   Passed    0.02 sec\n868/870 Test #700: unit:split-findmin: double keys reject NaN - sssp::paper::SplitFindmin<double> ..........................................................................   Passed    0.05 sec\n869/870 Test #701: unit:split-findmin: block size follows Lemma 3.11 .......................................................................................................   Passed    0.06 sec\n870/870 Test #384: unit:reduced graph omits nontree edges heavier than their tree path .....................................................................................   Passed    0.11 sec\n\n100% tests passed, 0 tests failed out of 870\n\nLabel Time Summary:\ndifferential    =  21.40 sec*proc (52 tests)\nintegration     =   0.71 sec*proc (6 tests)\nproperty        =  29.85 sec*proc (39 tests)\nregression      =   0.16 sec*proc (6 tests)\nunit            = 182.02 sec*proc (767 tests)\n\nTotal Test time (real) =  29.43 sec"
+    }
+  ],
+  "commit": "0f6d0d7",
+  "test_reduction_allowed": [
+    {
+      "reason": "Correct the hand traces chain/align of test_eval_invariants.cpp (expected values change). Sec 4.2 l.726-730 and Lemma 4.4 (l.735, reverse finishing order): with no light arcs, the DFS roots at R are P (provisional rep a, F preorder 0) then c, so the rank order is [c, P], rep(P) = a, g(c, P) = D_F(a, c) (5 in chain, 11 in align); at P it is [b, a], g(b, a) = D_F(a, b). The old traces assumed [P, c] / [a, b] and g(P,c)=5, g(c,P)=8 (asymmetric, against g(i,j)=g(j,i) in Lemma 4.4): in align, Sec 4.3 l.826 then puts the R-slot supplemental offer at rep(P) = a with max{6, 0 + 0 + 11} = 11, not at b = 8. The leaf-layout intervals in on_open/on_scan_* follow the rank order (c, b, a), not (a, b, c). Evidence: the new checks (supplemental offers recomputed from order_children, event-by-event comparison with evaluate) fail on the old traces (align: state 1 vs 0, value 8 vs 11; chain: states {0,1,2} vs {2,1,0} at the root open) and the order_children output matches the hand derivation.",
+      "timestamp": "2026-11-27T12:15:26+09:00"
+    }
+  ]
+}
