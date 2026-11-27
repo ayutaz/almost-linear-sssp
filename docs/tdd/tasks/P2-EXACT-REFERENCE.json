@@ -12,7 +12,7 @@
    "tests/python/test_exact_reference.py"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -90,5 +90,5 @@
   }
  ],
  "notes": "Mutation sanity check (12 mutants of the implementation, run on a scratch copy): all killed after the strengthening above (tree-length check off, strict boundary, hops=n, decimal JSON parsing, endpoint check off, reachability check off, short Bellman-Ford, Dijkstra first-relaxation-only, negative weight accepted, m mismatch accepted; removing the cycle check makes the walk loop forever, killed by timeout).",
- "commit": null
+ "commit": "a8f4cf9"
 }

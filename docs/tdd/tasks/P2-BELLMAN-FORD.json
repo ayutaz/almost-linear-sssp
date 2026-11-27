@@ -13,7 +13,7 @@
    "tests/support/prng.hpp"
   ]
  },
- "phase": "REFACTOR",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -44,5 +44,5 @@
    "output_tail": "      Start 35: unit:verify applies the tolerance to double distances only\n33/40 Test #22: unit:library exposes version and target paper ..............................................   Passed    0.02 sec\n      Start 31: unit:verify compares against a reference when given - U64\n34/40 Test #10: unit:Bellman-Ford handles zero-weight cycles without a parent cycle - double ...............   Passed    0.02 sec\n      Start 36: unit:verify is exact for integer weights regardless of tolerance\n35/40 Test #35: unit:verify applies the tolerance to double distances only .................................   Passed    0.03 sec\n      Start 30: unit:verify does not require a particular tree among equal-length paths - double\n36/40 Test #31: unit:verify compares against a reference when given - U64 ..................................   Passed    0.03 sec\n      Start 23: unit:verify accepts a correct shortest-path tree - U64\n37/40 Test #36: unit:verify is exact for integer weights regardless of tolerance ...........................   Passed    0.03 sec\n38/40 Test #30: unit:verify does not require a particular tree among equal-length paths - double ...........   Passed    0.02 sec\n39/40 Test #23: unit:verify accepts a correct shortest-path tree - U64 .....................................   Passed    0.02 sec\n40/40 Test #39: unit:verify accepts Bellman-Ford on the required catalogue .................................   Passed    0.47 sec\n\n100% tests passed, 0 tests failed out of 40\n\nLabel Time Summary:\nunit    =   1.77 sec*proc (40 tests)\n\nTotal Test time (real) =   1.11 sec"
   }
  ],
- "commit": null
+ "commit": "10b7145"
 }
