@@ -15,7 +15,7 @@
       "src/paper/hierarchy/reference_hierarchy.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -29,5 +29,5 @@
       "output_tail": "        Start 502: unit:lightest_edge_per_pair keeps the (length, index)-least edge per pair - double\n727/734 Test   #1: unit:binary heap pops entries in non-decreasing key order ...............................................................................................   Passed    0.03 sec\n728/734 Test  #50: unit:4-ary-heap Dijkstra: invalid source and integer overflow ...........................................................................................   Passed    0.03 sec\n729/734 Test #573: unit:split-findmin: both sides of a split receive fresh interval IDs - sssp::paper::DyadicSplitFindmin<std::uint64_t> ...................................   Passed    0.02 sec\n730/734 Test  #57: unit:binary-heap Dijkstra: invalid source and integer overflow ..........................................................................................   Passed    0.04 sec\n731/734 Test #149: unit:AdjacencyList built from EdgeList matches the CSR arc order ........................................................................................   Passed    0.03 sec\n732/734 Test #220: unit:eval invariants: I5 detects a due key left in the scanned portion ..................................................................................   Passed    0.03 sec\n733/734 Test #492: unit:mst_three_pass validates edges - double ............................................................................................................   Passed    0.03 sec\n734/734 Test #502: unit:lightest_edge_per_pair keeps the (length, index)-least edge per pair - double ......................................................................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 734\n\nLabel Time Summary:\ndifferential    =   2.46 sec*proc (27 tests)\nintegration     =   0.74 sec*proc (6 tests)\nproperty        =  21.37 sec*proc (30 tests)\nregression      =   0.14 sec*proc (5 tests)\nunit            = 127.71 sec*proc (666 tests)\n\nTotal Test time (real) =  19.13 sec"
     }
   ],
-  "commit": null
+  "commit": "ae1a041"
 }

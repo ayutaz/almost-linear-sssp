@@ -14,7 +14,7 @@
       "src/paper/primitives/split_findmin.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -38,5 +38,5 @@
       "output_tail": "      Start 633: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindmin<double>\n23/32 Test #632: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::OneLevelBlockedSplitFindmin<double> ..................   Passed    0.07 sec\n24/32 Test #629: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ..........................   Passed    0.06 sec\n      Start 627: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::DyadicSplitFindmin<std::uint64_t>\n      Start 628: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t>\n25/32 Test #631: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::DyadicSplitFindmin<double> ...........................   Passed    0.07 sec\n26/32 Test #630: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindminRef<double> ..............................   Passed    0.06 sec\n27/32 Test #635: unit:Q-16: raising a key asserts with assertions and is a no-op without them - sssp::paper::DyadicSplitFindmin<std::uint64_t> ................   Passed    0.34 sec\n28/32 Test #626: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindminRef<std::uint64_t> .......................   Passed    0.06 sec\n29/32 Test #636: unit:Q-16: raising a key asserts with assertions and is a no-op without them - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t> .......   Passed    0.34 sec\n30/32 Test #633: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::SplitFindmin<double> .................................   Passed    0.08 sec\n31/32 Test #627: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::DyadicSplitFindmin<std::uint64_t> ....................   Passed    0.07 sec\n32/32 Test #628: unit:Q-16: a decrease to the current key is accepted and changes nothing - sssp::paper::OneLevelBlockedSplitFindmin<std::uint64_t> ...........   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 32\n\nLabel Time Summary:\nunit    =  28.39 sec*proc (32 tests)\n\nTotal Test time (real) =   3.61 sec"
     }
   ],
-  "commit": null
+  "commit": "ae1a041"
 }
