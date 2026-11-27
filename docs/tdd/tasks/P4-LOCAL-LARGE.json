@@ -17,7 +17,7 @@
       "src/paper/hierarchy/evaluate.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -28,5 +28,5 @@
       "output_tail": "11/20 Test #985: property:Alg 4 Mode A at k = 209953: sparse multigraph, quarter-integer doubles ................   Passed   14.67 sec\n      Start 983: property:Alg 4 Mode A at k = 209953: spider, uniform weights\n12/20 Test #893: differential:Alg 4 Mode A + Evaluate at k = 262143 (first L = 19): grid, exponential weights ...   Passed  107.13 sec\n      Start 988: property:independent Def 4.1 checker detects each violated clause\n13/20 Test #988: property:independent Def 4.1 checker detects each violated clause ..............................   Passed    0.03 sec\n14/20 Test #987: property:Alg 4 Mode A at k = 262143 (first L = 19): sparse multigraph, tied weights ............   Passed   17.45 sec\n15/20 Test #886: differential:Alg 4 Mode A + Evaluate at k = 209953: random tree, uniform weights ...............   Passed   55.78 sec\n16/20 Test #982: property:Alg 4 Mode A at k = 209953: grid, exponential weights .................................   Passed   10.44 sec\n17/20 Test #981: property:Alg 4 Mode A at k = 209953: random tree, tied weights .................................   Passed    7.73 sec\n18/20 Test #984: property:Alg 4 Mode A at k = 209953: clustered with heavy bridges ..............................   Passed    9.04 sec\n19/20 Test #980: property:Alg 4 Mode A at k = 209953: path, uniform weights .....................................   Passed    6.92 sec\n20/20 Test #983: property:Alg 4 Mode A at k = 209953: spider, uniform weights ...................................   Passed    6.03 sec\n\n100% tests passed, 0 tests failed out of 20\n\nLabel Time Summary:\ndifferential    = 760.26 sec*proc (11 tests)\nproperty        = 109.40 sec*proc (9 tests)\n\nTotal Test time (real) = 111.85 sec"
     }
   ],
-  "commit": null
+  "commit": "cae3e81"
 }
