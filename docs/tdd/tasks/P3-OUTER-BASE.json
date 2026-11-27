@@ -1,0 +1,46 @@
+{
+  "id": "P3-OUTER-BASE",
+  "spec": "On a positive (or non-negative) graph the outer base case retains a (weight, id)-lightest edge per vertex pair and computes exact source distances and a tight predecessor tree by the scan Dijkstra of Lemma 3.2 (faithful, O(N^2 + m) comparisons) or by the binary-heap Dijkstra of Lemma 3.2 (deviation D-1), always recording a FallbackRecord with the ADR 0008 reason and the input size",
+  "paper_ref": "Sec 2 (txt l.286-288), Sec 3.1 Lemma 3.2, Sec 8.3 Algorithm 8 l.4-5",
+  "files": {
+    "impl": [
+      "src/paper/outer/base_case.hpp",
+      "src/paper/outer/base_case.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper/outer/test_base_case.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --preset debug >/dev/null && cmake --build --preset debug 2>&1 && ctest --preset debug -R \"outer base case\"'",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/outer/base_case.hpp' file not found (outer_base_case / outer_base_case_d1 and the ADR 0008 reason constants do not exist yet)",
+      "timestamp": "2026-11-27T11:01:14+09:00",
+      "output_tail": "      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[171/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/graph/test_small_graphs.cpp.o\n[172/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_params.cpp.o\n[173/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_length.cpp.o\n[174/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_reference_hierarchy.cpp.o\n[175/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_random.cpp.o\n[176/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_local_base_case.cpp.o\n[177/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_dsu.cpp.o\n[178/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_ordered_hierarchy_validate.cpp.o\n[179/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_lca.cpp.o\n[180/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_level_ancestor.cpp.o\n[181/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_fib_heap.cpp.o\n[182/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_growth_pass.cpp.o\n[183/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/outer/test_contract_restore.cpp.o\n[184/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_select.cpp.o\n[185/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_mst.cpp.o\n[186/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_paper_dijkstra.cpp.o\n[187/210] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_search.cpp.o\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug 2>&1 && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:03:47+09:00",
+      "output_tail": "        Start 548: regression:Counted<double> graphs reject negative and NaN weights\n541/548 Test #548: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.01 sec\n542/548 Test #537: property:forest queries agree with binary lifting on deep and degenerate shapes .........................................................................   Passed    1.03 sec\n543/548 Test #536: property:forest queries agree with binary lifting on random forests .....................................................................................   Passed    1.24 sec\n544/548 Test #545: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    1.04 sec\n545/548 Test #524: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................................................................   Passed    1.61 sec\n546/548 Test #538: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    1.42 sec\n547/548 Test #539: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    1.40 sec\n548/548 Test #546: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.96 sec\n\n100% tests passed, 0 tests failed out of 548\n\nLabel Time Summary:\ndifferential    =   2.02 sec*proc (6 tests)\nintegration     =   0.64 sec*proc (6 tests)\nproperty        =  14.23 sec*proc (21 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  88.07 sec*proc (514 tests)\n\nTotal Test time (real) =  17.59 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "outer base case*",
+        "scan base case*"
+      ],
+      "command": "bash -c 'cmake --build --preset ci 2>&1 && ctest --preset ci'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:05:53+09:00",
+      "output_tail": "        Start 546: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds\n543/548 Test #544: property:split-findmin property: dyadic work stays within the Lemma 3.10 bounds .........................................................................   Passed    0.28 sec\n        Start 547: property:split-findmin property: blocked work per record shrinks with the blocking depth\n544/548 Test #547: property:split-findmin property: blocked work per record shrinks with the blocking depth ................................................................   Passed    0.25 sec\n        Start 548: regression:Counted<double> graphs reject negative and NaN weights\n545/548 Test #548: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.18 sec\n546/548 Test #539: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    2.17 sec\n547/548 Test #545: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    1.51 sec\n548/548 Test #546: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    8.85 sec\n\n100% tests passed, 0 tests failed out of 548\n\nLabel Time Summary:\ndifferential    =   4.28 sec*proc (6 tests)\nintegration     =   1.75 sec*proc (6 tests)\nproperty        =  23.29 sec*proc (21 tests)\nregression      =   0.18 sec*proc (1 test)\nunit            = 132.28 sec*proc (514 tests)\n\nTotal Test time (real) =  50.72 sec"
+    }
+  ],
+  "commit": null
+}
