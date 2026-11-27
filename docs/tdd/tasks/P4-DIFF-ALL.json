@@ -16,7 +16,7 @@
       "src/paper/primitives/edge_pairs*"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -27,5 +27,5 @@
       "output_tail": " 7/14 Test  #977: differential:P4-DIFF-ALL: boundary catalogues from every source - std::uint64_t ....................   Passed    0.85 sec\n      Start  978: differential:P4-DIFF-ALL: boundary catalogues from every source - double\n 8/14 Test  #981: differential:P4-DIFF-ALL: every graph on 4 vertices with weights {0, 1, 2} - double ................   Passed    3.09 sec\n      Start  983: differential:P4-DIFF-ALL: double absorption, subnormal and huge weights\n 9/14 Test  #983: differential:P4-DIFF-ALL: double absorption, subnormal and huge weights ............................   Passed    0.11 sec\n      Start  982: differential:P4-DIFF-ALL: uint64 weights near the infinity sentinel\n10/14 Test  #982: differential:P4-DIFF-ALL: uint64 weights near the infinity sentinel ................................   Passed    0.15 sec\n      Start  979: differential:P4-DIFF-ALL: an empty graph or an invalid source throws std::out_of_range\n11/14 Test  #979: differential:P4-DIFF-ALL: an empty graph or an invalid source throws std::out_of_range .............   Passed    0.07 sec\n12/14 Test  #978: differential:P4-DIFF-ALL: boundary catalogues from every source - double ...........................   Passed    0.79 sec\n13/14 Test #1050: differential:P4-DIFF-ALL: Mode A on larger graphs of every family x 20 seeds - std::uint64_t .......   Passed   44.88 sec\n14/14 Test #1051: differential:P4-DIFF-ALL: Mode A on larger graphs of every family x 20 seeds - double ..............   Passed   68.38 sec\n\n100% tests passed, 0 tests failed out of 14\n\nLabel Time Summary:\ndifferential         =  25.22 sec*proc (9 tests)\ndifferential-slow    = 134.26 sec*proc (5 tests)\n\nTotal Test time (real) =  68.40 sec"
     }
   ],
-  "commit": null
+  "commit": "ffb6ad1"
 }
