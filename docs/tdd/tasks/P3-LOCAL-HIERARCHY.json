@@ -1,6 +1,6 @@
 {
   "id": "P3-LOCAL-HIERARCHY",
-  "spec": "Alg 4 entry: decide N > c*L_N^e with saturating integer arithmetic (paper c=2, e=4; parameters for Mode B); when false run the base case and push FallbackRecord{'local: k <= 2*L_k^4 (paper base case)', k, m}; when true take the radial construction branch (explicit not-implemented error until Sec 5.4 assembly lands)",
+  "spec": "Alg 4 entry: decide N > c*L_N^e with saturating integer arithmetic (paper c=2, e=4; parameters for Mode B); when false run the base case and push FallbackRecord{'local: k <= 2*L_k^4 (paper base case)', k, m}; when true run MST/owner cells (b = L_k^4 unless overridden), radial states, threshold joins and the Sec 5.4 assembly, requiring N >= 32 and h <= N (Sec 5.4 l.1206); Evaluate from the native entry of a source equals Dijkstra at every vertex",
   "paper_ref": "Alg 4 l.2-6; Sec 2 l.284-290; Lemma 5.10",
   "files": {
     "impl": [
@@ -8,7 +8,13 @@
       "src/paper/local/local_hierarchy.cpp"
     ],
     "tests": [
-      "tests/unit/paper/local/test_local_hierarchy.cpp"
+      "tests/unit/paper/local/test_local_hierarchy.cpp",
+      "tests/differential/paper/test_local_hierarchy_vs_dijkstra.cpp",
+      "tests/unit/paper/local/clustered_graphs.hpp"
+    ],
+    "covers": [
+      "src/paper/local/assemble.cpp",
+      "src/paper/hierarchy/evaluate.cpp"
     ]
   },
   "phase": "GREEN",
@@ -35,6 +41,23 @@
       "exit_code": 0,
       "timestamp": "2026-11-27T11:02:15+09:00",
       "output_tail": "        Start 519: regression:Counted<double> graphs reject negative and NaN weights\n512/519 Test #519: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.01 sec\n513/519 Test #508: property:forest queries agree with binary lifting on deep and degenerate shapes .........................................................................   Passed    0.87 sec\n514/519 Test #507: property:forest queries agree with binary lifting on random forests .....................................................................................   Passed    1.02 sec\n515/519 Test #516: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.89 sec\n516/519 Test #495: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................................................................   Passed    1.28 sec\n517/519 Test #509: property:three-pass spanning forest equals Kruskal on seeded graph families - std::uint64_t .............................................................   Passed    1.18 sec\n518/519 Test #510: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    1.18 sec\n519/519 Test #517: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.52 sec\n\n100% tests passed, 0 tests failed out of 519\n\nLabel Time Summary:\ndifferential    =   1.43 sec*proc (4 tests)\nintegration     =   0.58 sec*proc (6 tests)\nproperty        =  12.25 sec*proc (21 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  75.96 sec*proc (487 tests)\n\nTotal Test time (real) =  15.46 sec"
+    },
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug -R \"Alg 4\"'",
+      "exit_code": 1,
+      "reason": "LocalHierarchyParams has no separator override yet (excess initializer) and the radial branch still throws logic_error; the old 'not implemented' expectations are replaced because the Sec 5.4 assembly now exists (P3-LOCAL-ASSEMBLE): Mode A k = 209953 must return a hierarchy, and Mode B k = 4 / k = 40 with b = L^4 must be rejected by the Sec 5.4 l.1206 precondition N >= 32, h <= N (invalid_argument)",
+      "timestamp": "2026-11-27T12:18:43+09:00",
+      "output_tail": "      |                                   ^~~~\n2 errors generated.\n[47/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_eval_oracle.cpp.o\n[48/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_reference_hierarchy.cpp.o\n[49/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_length.cpp.o\n[50/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_hierarchy_zero_cycles.cpp.o\n[51/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_params.cpp.o\n[52/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_eval_invariants.cpp.o\n[53/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_radial_states.cpp.o\n[54/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_reference_hierarchy_heights.cpp.o\n[55/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_local_base_case.cpp.o\n[56/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_local_assemble.cpp.o\n[57/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_owner_decomposition.cpp.o\n[58/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_threshold_joins.cpp.o\n[59/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_ordered_hierarchy_validate.cpp.o\n[60/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_normalize.cpp.o\n[61/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_seeded_instances.cpp.o\n[62/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/model/test_random.cpp.o\n[63/112] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/hierarchy/test_evaluate.cpp.o\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:22:19+09:00",
+      "output_tail": "        Start 854: property:evaluate property: per-state counts stay bounded as N grows\n877/884 Test #461: unit:outer base case searches exactly the lightest_edge_pairs survivors (Alg 8 l.5) - std::uint64_t .....................................................   Passed    0.06 sec\n878/884 Test #529: unit:lightest_edge_pairs counts one length comparison per further edge of a pair - std::uint64_t ........................................................   Passed    0.05 sec\n879/884 Test #462: unit:outer base case searches exactly the lightest_edge_pairs survivors (Alg 8 l.5) - double ............................................................   Passed    0.06 sec\n880/884 Test #530: unit:lightest_edge_pairs counts one length comparison per further edge of a pair - double ...............................................................   Passed    0.07 sec\n881/884 Test #853: property:evaluate property: Lemma 4.7 counts on base-case hierarchies ...................................................................................   Passed    0.05 sec\n882/884 Test #509: unit:name_routes names every edge through its lightest_edge_pairs representative (Alg 5 l.4) ............................................................   Passed    0.12 sec\n883/884 Test #854: property:evaluate property: per-state counts stay bounded as N grows ....................................................................................   Passed    0.58 sec\n884/884 Test #852: property:evaluate property: Lemma 4.7 counts on reference hierarchies ...................................................................................   Passed    0.65 sec\n\n100% tests passed, 0 tests failed out of 884\n\nLabel Time Summary:\ndifferential    =  31.02 sec*proc (55 tests)\nintegration     =   1.01 sec*proc (6 tests)\nproperty        =  34.12 sec*proc (41 tests)\nregression      =   0.23 sec*proc (6 tests)\nunit            = 157.83 sec*proc (776 tests)\n\nTotal Test time (real) =  28.54 sec"
     }
   ],
   "commit": null
