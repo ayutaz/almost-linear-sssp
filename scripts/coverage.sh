@@ -65,6 +65,8 @@ find_tool() { # find_tool <llvm-profdata|llvm-cov>
   return 1
 }
 
+# Expected failure: find_tool returns 1 when the tool is absent; the empty value is turned
+# into an error with a message just below.
 PROFDATA="${LLVM_PROFDATA:-$(find_tool llvm-profdata || true)}"
 COV="${LLVM_COV:-$(find_tool llvm-cov || true)}"
 if [ -z "$PROFDATA" ] || [ -z "$COV" ]; then

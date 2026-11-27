@@ -138,3 +138,55 @@ def test_runner_crash_is_recorded_as_error(build_root, tmp_path):
     assert errors == []
     assert [r["status"] for r in records] == ["error"]
     assert "exit 1" in records[0]["error"]
+
+
+def _python_failing_on(tmp_path, suffix):
+    """A BENCH_PYTHON wrapper that fails only for invocations writing ``*<suffix>``."""
+    wrapper = tmp_path / "python-wrapper"
+    wrapper.write_text(
+        "#!/bin/bash\n"
+        'for a in "$@"; do\n'
+        f'  case "$a" in *{suffix}) echo "simulated envinfo failure" >&2; exit 3 ;; esac\n'
+        "done\n"
+        f'exec "{sys.executable}" "$@"\n'
+    )
+    wrapper.chmod(wrapper.stat().st_mode | stat.S_IEXEC)
+    return str(wrapper)
+
+
+_ONE_JOB = {
+    "BENCH_ALGORITHMS": "dijkstra-binary",
+    "BENCH_GRAPH_TYPES": "er",
+    "BENCH_SIZES": "1000",
+}
+
+
+def test_end_environment_is_written_for_every_preset(build_root, tmp_path):
+    _install_stub(build_root, "exit 0\n")
+    res = _run(["smoke"], build_root, tmp_path, **_ONE_JOB)
+    assert res.returncode == 0, res.stderr
+    assert "env_end_failed=0" in res.stdout
+    raw = tmp_path / "results" / "raw"
+    for preset in ("release", "release-diag"):
+        assert (raw / f"SYNTHETIC-TEST-DATA-run.{preset}.env-end.json").is_file()
+
+
+def test_end_environment_failure_is_reported_and_fails_the_run(build_root, tmp_path):
+    # Protocol 7.3: a run is invalid if CPU_Speed_Limit < 100 at the start OR the end, so a
+    # missing end state means the run's validity cannot be established.
+    _install_stub(build_root, "exit 0\n")
+    res = _run(
+        ["smoke"],
+        build_root,
+        tmp_path,
+        BENCH_PYTHON=_python_failing_on(tmp_path, ".release-diag.env-end.json"),
+        **_ONE_JOB,
+    )
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert "終了時の環境情報" in res.stderr
+    assert "release-diag" in res.stderr
+    assert "simulated envinfo failure" in res.stderr
+    assert "env_end_failed=1" in res.stdout
+    raw = tmp_path / "results" / "raw"
+    assert (raw / "SYNTHETIC-TEST-DATA-run.release.env-end.json").is_file()
+    assert not (raw / "SYNTHETIC-TEST-DATA-run.release-diag.env-end.json").exists()

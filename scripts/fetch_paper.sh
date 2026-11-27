@@ -29,7 +29,13 @@ fi
 mv "${tmp}" "${OUT}"
 trap - EXIT
 
+# The verified PDF is the deliverable; the text copy is an optional convenience. A failed
+# extraction does not fail the fetch, but it is reported and never leaves an older copy behind.
+TXT="${PAPER_DIR}/${PAPER_ID}.txt"
 if command -v pdftotext >/dev/null 2>&1; then
-  pdftotext -layout "${OUT}" "${PAPER_DIR}/${PAPER_ID}.txt" 2>/dev/null || true
+  if ! pdftotext -layout "${OUT}" "${TXT}"; then
+    rm -f "${TXT}"
+    echo "warning: pdftotext failed; ${TXT} was not written (the PDF is fine)" >&2
+  fi
 fi
 echo "paper saved to ${OUT}"
