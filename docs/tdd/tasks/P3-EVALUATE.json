@@ -21,7 +21,7 @@
       "tests/support/paper/seeded_instances.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -79,5 +79,5 @@
       "output_tail": "659/666 Test #394: unit:paper FibHeap marks on the first child loss and cuts on the second .................................................................................   Passed    0.04 sec\n        Start 517: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindmin<double>\n660/666 Test #529: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindmin<std::uint64_t> ............................   Passed    0.02 sec\n661/666 Test #515: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::DyadicSplitFindmin<double> ...................................   Passed    0.03 sec\n662/666 Test #415: unit:growth_pass heap size counts distinct outside vertices (A11) - double ..............................................................................   Passed    0.02 sec\n663/666 Test #377: unit:contraction counters report removed vertices and edges - double ....................................................................................   Passed    0.02 sec\n664/666 Test #405: unit:singleton_quotient drops loops and keeps original indices - double .................................................................................   Passed    0.03 sec\n665/666 Test #289: unit:malformed forests are reported as structural errors without crashing - std::uint64_t ...............................................................   Passed    0.02 sec\n666/666 Test #517: unit:split-findmin: infinite keys return the smallest index of the interval - sssp::paper::SplitFindmin<double> .........................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 666\n\nLabel Time Summary:\ndifferential    =  13.97 sec*proc (35 tests)\nintegration     =   0.77 sec*proc (6 tests)\nproperty        =  14.53 sec*proc (24 tests)\nregression      =   0.13 sec*proc (5 tests)\nunit            = 127.07 sec*proc (596 tests)\n\nTotal Test time (real) =  21.13 sec"
     }
   ],
-  "commit": null
+  "commit": "c8eb21f"
 }
