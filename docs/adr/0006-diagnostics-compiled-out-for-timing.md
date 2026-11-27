@@ -1,4 +1,7 @@
 # 0006. Diagnostics compiled out in timed builds
+
+**English** | [日本語](0006-diagnostics-compiled-out-for-timing.ja.md) | [简体中文](0006-diagnostics-compiled-out-for-timing.zh-CN.md)
+
 - Status: Accepted
 - Date: 2026-11-27
 

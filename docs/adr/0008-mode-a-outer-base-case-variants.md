@@ -1,4 +1,7 @@
 # 0008. Mode A outer base case: faithful scan Dijkstra, binary-heap variant as deviation D-1
+
+**English** | [日本語](0008-mode-a-outer-base-case-variants.ja.md) | [简体中文](0008-mode-a-outer-base-case-variants.zh-CN.md)
+
 - Status: Accepted
 - Date: 2026-11-27
 

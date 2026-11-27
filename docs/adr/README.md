@@ -1,5 +1,7 @@
 # Architecture Decision Records
 
+**English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
+
 One file per decision: `NNNN-short-title.md`, numbered sequentially, never renumbered.
 A decision is changed only by a new ADR that marks the old one "Superseded by NNNN".
 

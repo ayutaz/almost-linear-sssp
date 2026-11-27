@@ -1,4 +1,7 @@
 # 0007. No fast-math; IEEE-754 semantics for correctness
+
+**English** | [日本語](0007-no-fast-math.ja.md) | [简体中文](0007-no-fast-math.zh-CN.md)
+
 - Status: Accepted
 - Date: 2026-11-27
 
