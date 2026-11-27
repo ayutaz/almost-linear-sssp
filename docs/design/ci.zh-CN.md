@@ -47,14 +47,14 @@
 - **suite 的决定方式**:push -> `smoke`,schedule -> `standard`,workflow_dispatch -> 输入 `suite`(`smoke` / `standard` / `full`)。
 - **运行的命令**:直接调用 `./scripts/run_benchmarks.sh <suite>`。只有 smoke 时才附加 `--allow-missing-runner`。
   - 脚本自己会 configure 并构建 `release` 和 `release-diag`(可用 `BENCH_BUILDS` 缩小范围)。
-  - 如果基准测试运行器(`build/<preset>/sssp_bench_runner`)还不存在,smoke 只确认构建,输出"已跳过测量",并以 exit 0 结束。CI 会检测这一点,并在 Summary 中写上"未实现"。
+  - 如果基准测试运行器(`build/<preset>/sssp_bench_runner`)还不存在,smoke 只确认构建,输出 `計測をスキップしました`(“已跳过测量”),并以 exit 0 结束。CI 会检测这一点,并在 Summary 中写上 `未実装`(“未实现”)。
   - Makefile 的 `benchmark-smoke` 不附加这个标志,所以 CI 直接调用脚本。
   - 退出码:0 为正常(超时和内存超限只做记录),1 为 job 异常终止、schema 违规或构建失败,2 为参数错误或运行器不存在(standard / full)。在运行器完成之前,每周一次的 standard 会以 exit 2 失败。
-- **运行了测量时**,接着用 `make report`(`scripts/analyze_results.py`)生成 `results/summary/*.csv` 和 `docs/reports/figures/*.png`。没有数据时输出"无数据"并以 exit 0 结束。
+- **运行了测量时**,接着用 `make report`(`scripts/analyze_results.py`)生成 `results/summary/*.csv` 和 `docs/reports/figures/*.png`。没有数据时输出 `データなし`(“无数据”)并以 exit 0 结束。
 - **手动运行的输入**:`runner`(`ubuntu-26.04` / `macos-26`)、`bench_timeout`(秒;`BENCH_TIMEOUT`)、`algorithms` / `graph_types` / `sizes` / `builds` / `params` / `order_seed`(分别对应 `BENCH_ALGORITHMS` / `BENCH_GRAPH_TYPES` / `BENCH_SIZES` / `BENCH_BUILDS` / `BENCH_PARAMS` / `BENCH_ORDER_SEED`)。
   - 空的输入不放入环境变量,交给脚本的默认值处理。规范见 `docs/design/benchmark_runner_cli.md` 第 5 节。
   - 输入一律经由 `env:` 传递,不直接展开到 `run:` 中(防止 shell 注入)。使用前会验证是否为整数,以及是否只含允许的字符(字母数字和 `_.,=:+-`)。
-- **`scripts/run_benchmarks.sh` 本身不存在时**也不会失败。在 Summary 中写上"未实现"并以成功结束。
+- **`scripts/run_benchmarks.sh` 本身不存在时**也不会失败。在 Summary 中写上 `未実装`(“未实现”)并以成功结束。
 - **artifact**(保存 30 天):`results/raw/`(`<run_id>.jsonl`、`.env.json`、`.env-end.json`、`.plan.tsv`)、`results/**/*.csv`、`results/**/*.jsonl`、`docs/reports/figures/*.png`。Summary 中列出运行期间生成的 CSV / JSONL 文件(行数、字节数),并展示 CSV 的前 30 行。
 - 只有 `full` 时 `timeout-minutes` 为 350(GitHub-hosted 的上限是 360 分钟)。其余为 90 分钟。
 

@@ -47,14 +47,14 @@ The local quality gate is `make verify`, and CI follows the same commands (CMake
 - **How the suite is chosen**: push -> `smoke`, schedule -> `standard`, workflow_dispatch -> the `suite` input (`smoke` / `standard` / `full`).
 - **Command that runs**: it calls `./scripts/run_benchmarks.sh <suite>` directly. `--allow-missing-runner` is added only for smoke.
   - The script configures and builds `release` and `release-diag` itself (narrow them down with `BENCH_BUILDS`).
-  - If the benchmark runner (`build/<preset>/sssp_bench_runner`) does not exist yet, smoke only checks the build, prints "measurement skipped", and exits 0. CI detects this and writes "not implemented" in the Summary.
+  - If the benchmark runner (`build/<preset>/sssp_bench_runner`) does not exist yet, smoke only checks the build, prints `計測をスキップしました` ("measurement skipped"), and exits 0. CI detects this and writes `未実装` ("not implemented") in the Summary.
   - The `benchmark-smoke` target of the Makefile does not pass this flag, so CI calls the script directly.
   - Exit codes: 0 is normal (timeouts and out-of-memory are only recorded), 1 is an abnormal job exit, a schema violation or a build failure, and 2 is a bad argument or a missing runner (standard / full). Until the runner exists, the weekly standard run fails with exit 2.
-- **When measurements ran**, `make report` (`scripts/analyze_results.py`) follows and produces `results/summary/*.csv` and `docs/reports/figures/*.png`. When there is no data, it prints "no data" and exits 0.
+- **When measurements ran**, `make report` (`scripts/analyze_results.py`) follows and produces `results/summary/*.csv` and `docs/reports/figures/*.png`. When there is no data, it prints `データなし` ("no data") and exits 0.
 - **Inputs of a manual run**: `runner` (`ubuntu-26.04` / `macos-26`), `bench_timeout` (seconds; `BENCH_TIMEOUT`), `algorithms` / `graph_types` / `sizes` / `builds` / `params` / `order_seed` (`BENCH_ALGORITHMS` / `BENCH_GRAPH_TYPES` / `BENCH_SIZES` / `BENCH_BUILDS` / `BENCH_PARAMS` / `BENCH_ORDER_SEED` respectively).
   - Empty inputs are not put into the environment, and the script's defaults apply. The specification is in `docs/design/benchmark_runner_cli.md` section 5.
   - Inputs are always passed through `env:` and never expanded directly into `run:` (protection against shell injection). Before use they are validated to be integers, or to contain only allowed characters (alphanumerics and `_.,=:+-`).
-- **When `scripts/run_benchmarks.sh` itself does not exist**, the job does not fail either. It writes "not implemented" in the Summary and finishes successfully.
+- **When `scripts/run_benchmarks.sh` itself does not exist**, the job does not fail either. It writes `未実装` ("not implemented") in the Summary and finishes successfully.
 - **Artifacts** (kept 30 days): `results/raw/` (`<run_id>.jsonl`, `.env.json`, `.env-end.json`, `.plan.tsv`), `results/**/*.csv`, `results/**/*.jsonl`, `docs/reports/figures/*.png`. The Summary lists the CSV / JSONL files generated during the run (row count, bytes) and shows the first 30 lines of the CSVs.
 - Only for `full`, `timeout-minutes` is 350 (the limit for GitHub-hosted runners is 360 minutes). Otherwise it is 90 minutes.
 
