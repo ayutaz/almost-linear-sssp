@@ -17,7 +17,7 @@
       "include/sssp/generators.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -45,5 +45,5 @@
       "output_tail": "        Start 1133: regression:Counted<double> graphs reject negative and NaN weights\n269/273 Test  #989: differential:paper_sssp: all-zero graph contracts to one vertex - double .............................................................   Passed    0.02 sec\n        Start 1141: unit:bench-driver:all algorithms of one input share the same graph object and sources\n270/273 Test #1133: regression:Counted<double> graphs reject negative and NaN weights ....................................................................   Passed    0.01 sec\n271/273 Test  #988: differential:paper_sssp: all-zero graph contracts to one vertex - std::uint64_t ......................................................   Passed    0.02 sec\n272/273 Test #1141: unit:bench-driver:all algorithms of one input share the same graph object and sources ................................................   Passed    0.01 sec\n273/273 Test #1068: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t .................................................................   Passed  114.37 sec\n\n100% tests passed, 0 tests failed out of 273\n\nLabel Time Summary:\ndifferential         =   4.60 sec*proc (31 tests)\ndifferential-slow    = 185.56 sec*proc (2 tests)\nintegration          =   0.71 sec*proc (6 tests)\nproperty             = 144.26 sec*proc (25 tests)\nproperty-slow        =  82.04 sec*proc (3 tests)\nregression           =   0.06 sec*proc (2 tests)\nunit                 =  13.68 sec*proc (204 tests)\n\nTotal Test time (real) = 123.61 sec"
     }
   ],
-  "commit": null
+  "commit": "bc62911"
 }
