@@ -1,0 +1,48 @@
+{
+  "id": "20261127-child-order-overflow",
+  "summary": "Sec 4.2 order_children throws std::overflow_error('integer length overflow') on a valid uint64 hierarchy from Algorithm 4 whose distances and masses all fit: the path of three edges of length ceil(2^64 / 5). The forest distance of Lemma 4.5 was accumulated as the signed pair (rd(a) + rd(b), 2 rd(lca)) of root distances of the link forest F; moving between the last two states adds 2q + 3q = 5q >= 2^64 although the distance is q. Root distances and their sums are auxiliary quantities, not path lengths. The reported inputs (path of four edges of 2^62 from vertex 2; lt::clustered(209953, 107) with bridges of 2^52 or more) also overflow the root distance itself and the Sec 4.1 mass.",
+  "algorithm": {
+    "name": "sssp::paper::local_hierarchy + sssp::paper::evaluate (fails in sssp::paper::order_children)",
+    "version": "git 2b95ed7 (library version 0.1.0)",
+    "params": {
+      "variant": "Mode A (kPaperLocalParams)",
+      "thresholds": {
+        "L_N": 3,
+        "branch": "base case (k <= 2*L_k^4)"
+      }
+    }
+  },
+  "weight_type": "uint64",
+  "graph": {
+    "n": 4,
+    "edges": [
+      [0, 1, "3689348814741910324"],
+      [1, 2, "3689348814741910324"],
+      [2, 3, "3689348814741910324"]
+    ]
+  },
+  "source": 0,
+  "found_by": {
+    "test": "P3-EVAL-ARITH-FIX: search for overflows of the same kind after saturating the Sec 4.1 mass (path 0-1-2-3-4 with four edges of 2^62, source 2); at the paper's size differential:Alg 4 Mode A + Evaluate at k = 209953: clustered, heavy uint64 bridges",
+    "generator": "sssp::test::local::clustered (tests/unit/paper/local/clustered_graphs.hpp)",
+    "seed": 107,
+    "params": {
+      "n": 209953,
+      "bridge_weight": ">= 2^52"
+    }
+  },
+  "minimised": true,
+  "failure": {
+    "kind": "exception",
+    "message": "integer length overflow"
+  },
+  "expected_dist": [
+    "0",
+    "3689348814741910324",
+    "7378697629483820648",
+    "11068046444225730972"
+  ],
+  "tolerance": null,
+  "fixed_by": "fix(child-order): exact 128-bit forest distances and saturating gaps in Sec 4.2 [P3-CHILDORDER-OVERFLOW]",
+  "expected": "the exact distances; root distances of F and the charge of Lemma 4.4 are formed in a 128-bit intermediate, and a gap that does not fit saturates at the infinity sentinel"
+}

@@ -3,12 +3,14 @@
 #include "paper/hierarchy/child_order.hpp"
 
 #include <array>
+#include <cmath>
+#include <cstdint>
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 
-#include "paper/model/length.hpp"
 #include "paper/primitives/forest_queries.hpp"
 #include "paper/primitives/search.hpp"
 
@@ -20,35 +22,75 @@ static_assert(kNoState == kNoVertex, "F parent arrays reuse kNoState as the root
 
 constexpr std::size_t kNone = std::numeric_limits<std::size_t>::max();
 
+/// Arithmetic on sums of link and arc lengths along F ("Range of the arithmetic",
+/// child_order.hpp): exact in unsigned __int128 for integer W, rounded IEEE sums for double.
+/// None of these operations raises. Every addition and subtraction of lengths is counted as one
+/// addition in Diagnostics::ops.
 template <class W>
 class Arith {
  public:
+  using Wide = ForestLength<W>;
+
   explicit Arith(Diagnostics* diag) : ops_(diag != nullptr ? &diag->ops : nullptr) {}
-  [[nodiscard]] W add(W a, W b) const { return ops_.add(L::finite(a), L::finite(b)).value(); }
+
+  /// rd(child) = rd(parent) + len. Integer: exact (a root path has fewer than 2^32 links of
+  /// less than 2^64 each). double: rounded, +infinity beyond the range.
+  [[nodiscard]] Wide extend(Wide rd, W len) const {
+    count(1);
+    return rd + Wide{len};
+  }
+
+  /// Length of the F path a ~> b from the root distances of a, b and l = lca_F(a, b):
+  /// (rd(a) - rd(l)) + (rd(b) - rd(l)). rd is nondecreasing along a root path, so both
+  /// differences are nonnegative. double: +infinity if an endpoint's root distance is (the
+  /// difference of two infinite root distances is not known).
+  [[nodiscard]] Wide forest_distance(Wide rd_a, Wide rd_b, Wide rd_l) const {
+    if (rd_a < rd_l || rd_b < rd_l) {
+      throw std::logic_error("order_children: root distance decreases along F");
+    }
+    if constexpr (std::is_floating_point_v<W>) {
+      if (!std::isfinite(rd_a) || !std::isfinite(rd_b)) {
+        return std::numeric_limits<W>::infinity();
+      }
+    }
+    count(3);
+    return (rd_a - rd_l) + (rd_b - rd_l);
+  }
+
+  /// charge + step. Integer: exact, saturated at the largest 128-bit value (out of reach, see
+  /// child_order.hpp). double: rounded, +infinity beyond the range.
+  [[nodiscard]] Wide charge(Wide c, Wide step) const {
+    count(1);
+    if constexpr (std::is_integral_v<W>) {
+      constexpr Wide kMax = ~Wide{0};
+      return c > kMax - step ? kMax : c + step;
+    } else {
+      return c + step;
+    }
+  }
+
+  /// The gap as one length of type W: exact if it is below the infinity sentinel, otherwise
+  /// WeightTraits<W>::infinity().
+  [[nodiscard]] static W materialise(Wide c) {
+    if constexpr (std::is_integral_v<W>) {
+      constexpr W kInf = WeightTraits<W>::infinity();
+      return c >= Wide{kInf} ? kInf : static_cast<W>(c);
+    } else {
+      return c;
+    }
+  }
 
  private:
-  using L = model::Len<W>;
-  model::LenOps<W> ops_;
+  void count([[maybe_unused]] std::uint64_t k) const {
+    SSSP_COUNT(if (ops_ != nullptr) ops_->additions += k);
+  }
+
+  [[maybe_unused]] OpCounters* ops_;
 };
 
 void bump([[maybe_unused]] Diagnostics* diag, [[maybe_unused]] const char* name,
           [[maybe_unused]] std::uint64_t k) {
   SSSP_COUNT(if (diag != nullptr) diag->counters[name] += k);
-}
-
-/// The running charge of the traversal as a signed pair (Sec 2, l.294-296): value = pos - neg.
-template <class W>
-struct Charge {
-  W pos{0};
-  W neg{0};
-};
-
-/// [Deviation candidate D-15, see child_order.hpp] One real from a signed pair. Both components
-/// are monotone roundings of termwise-ordered sums (pos term >= neg term), so pos >= neg.
-template <class W>
-W materialise(const Charge<W>& c) {
-  if (c.pos < c.neg) throw std::logic_error("order_children: negative charge");
-  return c.pos - c.neg;
 }
 
 }  // namespace
@@ -89,7 +131,7 @@ LinkForest<W> build_link_forest(const NormalizedHierarchy<W>& nh, Diagnostics* d
   LinkForest<W> lf;
   lf.parent.assign(n, kNoState);
   lf.parent_length.assign(n, W{0});
-  lf.root_distance.assign(n, W{0});
+  lf.root_distance.assign(n, ForestLength<W>{0});
   lf.preorder.assign(n, std::numeric_limits<std::uint32_t>::max());
   lf.order.reserve(n);
   std::size_t trees = 0;
@@ -111,7 +153,7 @@ LinkForest<W> build_link_forest(const NormalizedHierarchy<W>& nh, Diagnostics* d
       const StateId from = u;
       lf.parent[e.to] = from;
       lf.parent_length[e.to] = e.len;
-      lf.root_distance[e.to] = ar.add(lf.root_distance[from], e.len);
+      lf.root_distance[e.to] = ar.extend(lf.root_distance[from], e.len);
       lf.preorder[e.to] = static_cast<std::uint32_t>(lf.order.size());
       lf.order.push_back(e.to);
       stack.emplace_back(e.to, begin[e.to]);
@@ -141,16 +183,17 @@ void order_children(NormalizedHierarchy<W>& nh, Diagnostics* diag) {
   const auto& pre = lf.preorder;
   std::uint64_t fdist_queries = 0;
 
-  // Charge of an F move a -> b: rd(a) + rd(b) - 2 rd(lca_F(a, b)) as a signed pair.
-  const auto move_along_f = [&](Charge<W>& c, StateId a, StateId b) {
+  using Wide = ForestLength<W>;
+  // Charge of an F move a -> b: the length of the F path, from root distances and the LCA.
+  const auto move_along_f = [&](Wide& c, StateId a, StateId b) {
     if (a == b) return;
     const auto l = fq.lca(a, b);
     if (!l) throw std::invalid_argument("order_children: links do not connect a node");
     ++fdist_queries;
-    c.pos = ar.add(c.pos, ar.add(lf.root_distance[a], lf.root_distance[b]));
-    c.neg = ar.add(c.neg, ar.add(lf.root_distance[*l], lf.root_distance[*l]));
+    c = ar.charge(
+        c, ar.forest_distance(lf.root_distance[a], lf.root_distance[b], lf.root_distance[*l]));
   };
-  const auto cross_arc = [&](Charge<W>& c, W len) { c.pos = ar.add(c.pos, len); };
+  const auto cross_arc = [&](Wide& c, W len) { c = ar.charge(c, Wide{len}); };
 
   // Top-down order of the forest, then provisional representatives bottom-up: the state with the
   // least F preorder below each node (Q-25).
@@ -276,7 +319,7 @@ void order_children(NormalizedHierarchy<W>& nh, Diagnostics* diag) {
     finish.clear();
     std::vector<W> gap_of_finish;  // gap_of_finish[m] = g(f_{m-1}, f_m) for m >= 1
     gap_of_finish.reserve(children.size());
-    Charge<W> seg;  // charge since the last mark
+    Wide seg{0};  // charge since the last mark
     StateId cur = kNoState;
 
     const auto enter = [&](NodeId i, StateId entry, std::size_t entry_id) {
@@ -331,8 +374,8 @@ void order_children(NormalizedHierarchy<W>& nh, Diagnostics* diag) {
         cur = fr.entry;
         const NodeId i = fr.child;
         status[i] = 2;
-        if (!finish.empty()) gap_of_finish.push_back(materialise(seg));
-        seg = Charge<W>{};
+        if (!finish.empty()) gap_of_finish.push_back(Arith<W>::materialise(seg));
+        seg = Wide{0};
         finish.push_back(i);
         stack.pop_back();
       }

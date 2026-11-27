@@ -1,0 +1,45 @@
+{
+  "id": "P3-CHILDORDER-OVERFLOW",
+  "spec": "order_children and build_link_forest compute forest distances and gaps exactly in a 128-bit intermediate for uint64: a gap that fits the type is returned exactly, a gap beyond the range saturates at infinity, and no auxiliary sum raises std::overflow_error",
+  "paper_ref": "Sec 4.2, Lemma 4.4, Lemma 4.5 (l.725-779)",
+  "files": {
+    "impl": [
+      "src/paper/hierarchy/child_order.cpp",
+      "src/paper/hierarchy/child_order.hpp"
+    ],
+    "tests": [
+      "tests/regression/test_child_order_overflow.cpp",
+      "tests/regression/cases/20261127-child-order-overflow.json",
+      "tests/unit/paper/hierarchy/test_child_order_range.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j 4 2>&1 | tail -3 && ctest --preset debug -j 4 -R \"child-order-overflow|child order range\" 2>&1 | tail -40'",
+      "exit_code": 8,
+      "reason": "order_children / build_link_forest throw std::overflow_error (integer length overflow, floating-point length overflow) on sums of root distances of F although every gap and every distance fits the type; a root distance of 2^64 cannot be held",
+      "timestamp": "2026-11-27T15:48:29+09:00",
+      "output_tail": "\n25% tests passed, 9 tests failed out of 12\n\nLabel Time Summary:\nregression    =   0.04 sec*proc (3 tests)\nunit          =   0.27 sec*proc (9 tests)\n\nTotal Test time (real) =   2.98 sec\n\nThe following tests FAILED:\n\t257 - unit:child order range: uint64 hand example at scale 5 * 2^58 keeps exact gaps (Failed) unit\n\t258 - unit:child order range: uint64 root distances beyond 2^64 are exact (Failed) unit\n\t259 - unit:child order range: a uint64 gap that does not fit saturates at infinity (Failed) unit\n\t260 - unit:child order range: uint64 gaps are homogeneous up to the top of the type (Failed) unit\n\t261 - unit:child order range: base-case gaps equal exact F distances at the top scale - std::uint64_t (Failed) unit\n\t264 - unit:child order range: double hand example at scale 5 * 2^1018 keeps exact gaps (Failed) unit\n\t265 - unit:child order range: a double gap beyond the range is +infinity, never NaN (Failed) unit\n\t1176 - regression:20261127-child-order-overflow: Alg 4 + Evaluate on a path of three edges of ceil(2^64 / 5) (Failed) regression\n\t1178 - regression:20261127-child-order-overflow: order_children on the path of four edges of 2^62 (Failed) regression\nErrors while running CTest"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j 4 2>&1 | tail -15 && ctest --preset debug -j 4 -R \"child|link|order|hierarchy|evaluate|regression\" 2>&1 | tail -25'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:50:01+09:00",
+      "output_tail": "144/150 Test #1181: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex .............................   Passed    0.02 sec\n        Start 1182: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf\n145/150 Test #1182: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ......................................   Passed    0.01 sec\n        Start 1183: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n146/150 Test #1183: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ...................................   Passed    0.02 sec\n        Start 1184: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n147/150 Test #1184: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 .....................................   Passed    0.05 sec\n148/150 Test #1166: property:D-8 and D-11: ordered hierarchies, threshold SCCs and scale relations - std::uint64_t .....................................   Passed    2.28 sec\n149/150 Test #1167: property:D-8 and D-11: ordered hierarchies, threshold SCCs and scale relations - double ............................................   Passed    2.59 sec\n150/150 Test #1003: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ..............................................   Passed    6.41 sec\n\n100% tests passed, 0 tests failed out of 150\n\nLabel Time Summary:\ndifferential    =  15.33 sec*proc (18 tests)\nproperty        =   6.08 sec*proc (5 tests)\nregression      =   0.18 sec*proc (9 tests)\nunit            =   3.74 sec*proc (118 tests)\n\nTotal Test time (real) =  12.22 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'set -o pipefail; cmake --build --preset debug -j 4 2>&1 | tail -2 && ctest --preset debug -j 4 -R \"child|link|order|hierarchy|evaluate|regression|local|portioned\" 2>&1 | tail -12'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T15:51:21+09:00",
+      "output_tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n184/185 Test #1038: differential:Mode B local (D-8, D-11) + Evaluate equals Dijkstra; grid equals exact - double .......................................   Passed    3.46 sec\n185/185 Test #1037: differential:Mode B local (D-8, D-11) + Evaluate equals Dijkstra; grid equals exact - std::uint64_t ................................   Passed    3.47 sec\n\n100% tests passed, 0 tests failed out of 185\n\nLabel Time Summary:\ndifferential    =  22.55 sec*proc (21 tests)\nproperty        =   8.29 sec*proc (9 tests)\nregression      =   0.14 sec*proc (9 tests)\nunit            =   4.38 sec*proc (146 tests)\n\nTotal Test time (real) =   9.93 sec"
+    }
+  ],
+  "commit": null
+}
