@@ -11,7 +11,7 @@
       "tests/unit/paper/outer/test_base_case.cpp"
     ]
   },
-  "phase": "DONE",
+  "phase": "GREEN",
   "events": [
     {
       "phase": "RED",
@@ -40,6 +40,29 @@
       "exit_code": 0,
       "timestamp": "2026-11-27T11:05:53+09:00",
       "output_tail": "        Start 546: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds\n543/548 Test #544: property:split-findmin property: dyadic work stays within the Lemma 3.10 bounds .........................................................................   Passed    0.28 sec\n        Start 547: property:split-findmin property: blocked work per record shrinks with the blocking depth\n544/548 Test #547: property:split-findmin property: blocked work per record shrinks with the blocking depth ................................................................   Passed    0.25 sec\n        Start 548: regression:Counted<double> graphs reject negative and NaN weights\n545/548 Test #548: regression:Counted<double> graphs reject negative and NaN weights .......................................................................................   Passed    0.18 sec\n546/548 Test #539: property:three-pass spanning forest equals Kruskal on seeded graph families - double ....................................................................   Passed    2.17 sec\n547/548 Test #545: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    1.51 sec\n548/548 Test #546: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    8.85 sec\n\n100% tests passed, 0 tests failed out of 548\n\nLabel Time Summary:\ndifferential    =   4.28 sec*proc (6 tests)\nintegration     =   1.75 sec*proc (6 tests)\nproperty        =  23.29 sec*proc (21 tests)\nregression      =   0.18 sec*proc (1 test)\nunit            = 132.28 sec*proc (514 tests)\n\nTotal Test time (real) =  50.72 sec"
+    },
+    {
+      "phase": "RED",
+      "tests": [
+        "release build with SSSP_DIAGNOSTICS=OFF and -Werror"
+      ],
+      "command": "bash -c 'cmake --build build/release-werror --target CMakeFiles/sssp.dir/src/paper/outer/base_case.cpp.o CMakeFiles/sssp.dir/src/paper/sssp.cpp.o'",
+      "exit_code": 1,
+      "reason": "with SSSP_DIAGNOSTICS=OFF the only use of the 'ops' parameter of lightest_edge_per_pair is compiled out, so -Werror turns -Wunused-parameter into an error in base_case.cpp",
+      "timestamp": "2026-11-27T11:23:54+09:00",
+      "output_tail": "[0/2] Re-checking globbed directories...\n[1/3] Building CXX object CMakeFiles/sssp.dir/src/paper/sssp.cpp.o\n[2/3] Building CXX object CMakeFiles/sssp.dir/src/paper/outer/base_case.cpp.o\nFAILED: [code=1] CMakeFiles/sssp.dir/src/paper/outer/base_case.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=0 -I./include -I./src -O3 -DNDEBUG -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -Werror -fno-fast-math -MD -MT CMakeFiles/sssp.dir/src/paper/outer/base_case.cpp.o -MF CMakeFiles/sssp.dir/src/paper/outer/base_case.cpp.o.d -o CMakeFiles/sssp.dir/src/paper/outer/base_case.cpp.o -c ./src/paper/outer/base_case.cpp\n./src/paper/outer/base_case.cpp:42:72: error: unused parameter 'ops' [-Werror,-Wunused-parameter]\n   42 | PairFilter<W> lightest_edge_per_pair(const CsrGraph<W>& g, OpCounters& ops) {\n      |                                                                        ^\n1 error generated.\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "release build with SSSP_DIAGNOSTICS=OFF and -Werror",
+        "outer base case*",
+        "scan base case*"
+      ],
+      "command": "bash -c 'cmake --build build/release-werror --target CMakeFiles/sssp.dir/src/paper/outer/base_case.cpp.o CMakeFiles/sssp.dir/src/paper/sssp.cpp.o && cmake --build --preset release && ctest --preset release && cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:25:37+09:00",
+      "output_tail": "        Start 266: unit:outer base case: hand-computed distances and tree - std::uint64_t\n552/559 Test #126: unit:ParseError message names the line and the problem ..................................................................................................   Passed    0.46 sec\n553/559 Test #490: unit:SplitMix64 matches the reference sequence ..........................................................................................................   Passed    0.20 sec\n554/559 Test #277: unit:outer base case reports integer distance overflow ..................................................................................................   Passed    0.17 sec\n555/559 Test #272: unit:outer base case: zero weights are non-negative lengths - std::uint64_t .............................................................................   Passed    0.06 sec\n556/559 Test #273: unit:outer base case: zero weights are non-negative lengths - double ....................................................................................   Passed    0.09 sec\n557/559 Test #268: unit:outer base case: one vertex - std::uint64_t ........................................................................................................   Passed    0.11 sec\n558/559 Test #275: unit:outer base case: lightest edge per vertex pair (Alg 8 l.5) - double ................................................................................   Passed    0.13 sec\n559/559 Test #266: unit:outer base case: hand-computed distances and tree - std::uint64_t ..................................................................................   Passed    0.09 sec\n\n100% tests passed, 0 tests failed out of 559\n\nLabel Time Summary:\ndifferential    =   2.47 sec*proc (17 tests)\nintegration     =   0.52 sec*proc (6 tests)\nproperty        =  11.84 sec*proc (21 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  92.74 sec*proc (514 tests)\n\nTotal Test time (real) =  14.84 sec"
     }
   ],
   "commit": "7a0058d"

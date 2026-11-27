@@ -12,7 +12,7 @@
       "tests/differential/paper/test_paper_sssp_differential.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -58,5 +58,5 @@
       "output_tail": "        Start 531: differential:paper_sssp equals Bellman-Ford and Dijkstra on every generator family - std::uint64_t\n554/559 Test #528: differential:paper_sssp: all-zero graph contracts to one vertex - std::uint64_t .........................................................................   Passed    0.01 sec\n        Start 532: differential:paper_sssp equals Bellman-Ford and Dijkstra on every generator family - double\n555/559 Test #529: differential:paper_sssp: all-zero graph contracts to one vertex - double ................................................................................   Passed    0.01 sec\n        Start 533: differential:paper-faithful-d1 at N = 90000 with zero edges equals baseline Dijkstra\n556/559 Test #530: differential:paper_sssp rejects an invalid source .......................................................................................................   Passed    0.01 sec\n557/559 Test #533: differential:paper-faithful-d1 at N = 90000 with zero edges equals baseline Dijkstra ....................................................................   Passed    0.18 sec\n558/559 Test #532: differential:paper_sssp equals Bellman-Ford and Dijkstra on every generator family - double .............................................................   Passed    0.31 sec\n559/559 Test #531: differential:paper_sssp equals Bellman-Ford and Dijkstra on every generator family - std::uint64_t ......................................................   Passed    0.32 sec\n\n100% tests passed, 0 tests failed out of 559\n\nLabel Time Summary:\ndifferential    =   2.47 sec*proc (17 tests)\nintegration     =   0.53 sec*proc (6 tests)\nproperty        =  12.00 sec*proc (21 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  68.57 sec*proc (514 tests)\n\nTotal Test time (real) =  23.28 sec"
     }
   ],
-  "commit": null
+  "commit": "298e25b"
 }

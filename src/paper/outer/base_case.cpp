@@ -39,7 +39,8 @@ std::vector<EdgeId> counting_sort(const std::vector<EdgeId>& ids, std::size_t n,
 /// pair in increasing id order; one comparison per further group member keeps the least weight,
 /// the earliest id on ties. O(m + N) word operations plus m comparisons of lengths.
 template <class W>
-PairFilter<W> lightest_edge_per_pair(const CsrGraph<W>& g, OpCounters& ops) {
+PairFilter<W> lightest_edge_per_pair(const CsrGraph<W>& g,
+                                     [[maybe_unused]] OpCounters& ops) {  // unused if counts off
   const std::size_t n = g.num_vertices();
   const std::size_t m = g.num_edges();
   auto lo = [&g](EdgeId id) {
