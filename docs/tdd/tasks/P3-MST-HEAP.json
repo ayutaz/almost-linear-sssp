@@ -1,0 +1,69 @@
+{
+ "id": "P3-MST-HEAP",
+ "spec": "Indexed Fibonacci heap for the GrowthPass boundary (Lemma 3.3): insert/decrease/extract-min with cut and cascading cut, size = number of distinct ids present, O(1) discard that starts a fresh membership generation, degree array of size 3+2*ceil(log2(capacity+1)), invariant validator including the Fibonacci subtree-size bound",
+ "paper_ref": "Sec 3.2, Lemma 3.3; Algorithm 1 line 5 (fresh heap per growth)",
+ "files": {
+  "impl": [
+   "src/paper/primitives/fib_heap.hpp"
+  ],
+  "tests": [
+   "tests/unit/paper/primitives/test_fib_heap.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "paper FibHeap extracts in key order after decreases",
+    "paper FibHeap links equal-degree roots on extraction",
+    "paper FibHeap marks on the first child loss and cuts on the second",
+    "paper FibHeap size counts distinct ids",
+    "paper FibHeap discard releases every entry and starts a fresh generation",
+    "paper FibHeap degree array has the size 3 + 2 ceil(log2(s + 1)) of Lemma 3.3",
+    "paper FibHeap rejects invalid operations",
+    "paper FibHeap orders composite keys lexicographically",
+    "paper FibHeap counts key comparisons",
+    "paper FibHeap matches an ordered-set model under random operations with discards"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E 'fatal error|error:' | sort -u | head -8; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/primitives/fib_heap.hpp' file not found (boundary heap not implemented yet)",
+   "timestamp": "2026-11-27T10:37:59+09:00",
+   "output_tail": "tests/unit/paper/primitives/test_fib_heap.cpp:10:10: fatal error: 'paper/primitives/fib_heap.hpp' file not found"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "cmake --build --preset debug -j8 2>&1 | tail -1 && ctest --preset debug -R 'paper FibHeap' 2>&1 | grep -E 'tests passed|Failed' && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:39:05+09:00",
+   "output_tail": "ninja: no work to do.\n100% tests passed, 0 tests failed out of 10\n100% tests passed, 0 tests failed out of 79"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "paper FibHeap counts key comparisons"
+   ],
+   "command": "set -o pipefail; cmake --build --preset release -j8 2>&1 | tail -1 && ctest --preset release -R 'paper FibHeap counts key comparisons' 2>&1 | grep -E 'tests passed|Failed|REQUIRE|with expansion|^  [0-9]'",
+   "exit_code": 8,
+   "reason": "regression: with SSSP_DIAGNOSTICS=0 (release preset) SSSP_COUNT is compiled out, so comparisons() stays 0 and the test's comparisons() > 0 fails; the test must state the expected counter in both builds",
+   "timestamp": "2026-11-27T10:49:52+09:00",
+   "output_tail": "ninja: no work to do.\n1/1 Test #62: unit:paper FibHeap counts key comparisons ...***Failed    0.01 sec\n  REQUIRE( h.comparisons() > 0 )\nwith expansion:\n  0 > 0\n0% tests passed, 1 tests failed out of 1\n\t 62 - unit:paper FibHeap counts key comparisons (Failed) unit"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "paper FibHeap counts key comparisons",
+    "full suite in debug and release"
+   ],
+   "command": "set -o pipefail; cmake --build --preset release -j8 2>&1 | tail -1 && ctest --preset release 2>&1 | grep -E 'tests passed|Failed' && cmake --build --preset debug -j8 2>&1 | tail -1 && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:50:13+09:00",
+   "output_tail": "[3/4] Linking CXX executable tests/sssp_unit_tests\n100% tests passed, 0 tests failed out of 120\n[3/4] Linking CXX executable tests/sssp_unit_tests\n100% tests passed, 0 tests failed out of 128"
+  }
+ ],
+ "commit": "ab64fa6"
+}
