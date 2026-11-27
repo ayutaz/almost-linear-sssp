@@ -1,0 +1,38 @@
+{
+ "id": "P2-DIFF-SSSP-RUN",
+ "spec": "tools/sssp_run: reads an edge-list or DIMACS graph (uint64 or double), runs --algorithm bellman_ford|dijkstra_binary|dijkstra_4ary|dijkstra_fibonacci|dijkstra_radix from --source and prints sssp::write_result_json; --verify reports verify_sssp on stderr; exit 0 ok / 1 runtime error / 2 usage / 3 verification failed. Cross-checked from Python against the exact rational oracle (exact_sssp.py) and check_double.py.",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "tools/sssp_run.cpp"
+  ],
+  "tests": [
+   "tests/python/test_cross_language.py"
+  ]
+ },
+ "phase": "GREEN",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "tests/python/test_cross_language.py::*"
+   ],
+   "command": "uv run pytest tests/python/test_cross_language.py -q",
+   "exit_code": 1,
+   "reason": "build/debug/sssp_gen exists but build/debug/sssp_run does not: all 156 cross-language tests fail on 'sssp_run is missing next to sssp_gen' (the CLI under test is not written yet)",
+   "timestamp": "2026-11-27T10:47:46+09:00",
+   "output_tail": "E       AssertionError: sssp_run is missing next to sssp_gen\nE       AssertionError: sssp_run is missing next to sssp_gen\n...\nFAILED tests/python/test_cross_language.py::test_cli_errors[args2-2] - Assert...\nFAILED tests/python/test_cross_language.py::test_cli_errors[args3-2] - Assert...\nFAILED tests/python/test_cross_language.py::test_cli_errors[args4-2] - Assert...\nFAILED tests/python/test_cross_language.py::test_cli_errors[args5-2] - Assert...\nFAILED tests/python/test_cross_language.py::test_cli_errors[args6-2] - Assert...\nFAILED tests/python/test_cross_language.py::test_cli_rejects_missing_and_malformed_files"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all ctest (debug) and all pytest"
+   ],
+   "command": "bash -c 'cmake --build --preset debug && ctest --preset debug && uv run pytest'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:52:34+09:00",
+   "output_tail": "230/230 Test #159: unit:constant weights all equal lo - double .............................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 230\n\nLabel Time Summary:\ndifferential    =   2.47 sec*proc (25 tests)\nintegration     =   0.80 sec*proc (6 tests)\nproperty        =   0.91 sec*proc (7 tests)\nregression      =   0.03 sec*proc (2 tests)\nunit            =  12.11 sec*proc (190 tests)\n\nTotal Test time (real) =   2.93 sec\n........................................................................ [ 33%]\n........................................................................ [ 67%]\n......................................................................   [100%]\n214 passed in 8.22s"
+  }
+ ],
+ "commit": null
+}
