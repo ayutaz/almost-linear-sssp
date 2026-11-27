@@ -3,11 +3,13 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <limits>
 #include <map>
 #include <numeric>
 #include <set>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 #include <vector>
 

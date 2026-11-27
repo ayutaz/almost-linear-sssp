@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <set>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 #include "sssp/generators.hpp"
