@@ -102,7 +102,7 @@ CMake ≥ 3.24,Ninja,以及用于管理 Python ≥ 3.12 的 [uv](https://docs.as
 CI 和贡献者还需要 clang-format 与 clang-tidy。
 
 ```bash
-make bootstrap                 # 检查工具链,安装缺失的工具,运行 `uv sync`
+make bootstrap                 # 检查工具链,安装缺失的工具,运行 `uv sync` 并配置 debug 预设
                                # (./scripts/bootstrap.sh --check 只报告,不安装任何东西)
 make build                     # 配置并构建 debug preset,输出到 build/debug/
 make test                      # 运行 C++ 测试(ctest)和 Python 测试(pytest)

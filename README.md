@@ -110,7 +110,7 @@ Clang), CMake â‰¥ 3.24, Ninja, and [uv](https://docs.astral.sh/uv/) for Python â
 contributors also need clang-format and clang-tidy.
 
 ```bash
-make bootstrap                 # check the toolchain, install what is missing, run `uv sync`
+make bootstrap                 # check the toolchain, install what is missing, run `uv sync`, configure the debug preset
                                # (./scripts/bootstrap.sh --check only reports, installs nothing)
 make build                     # configure and build the debug preset into build/debug/
 make test                      # run the C++ tests (ctest) and the Python tests (pytest)

@@ -86,7 +86,7 @@ Iman Gholami と MohammadTaghi Hajiaghayi の論文 **「Linear Single-Source Sh
 必要なもの: macOS または Linux、C++20 のコンパイラ(開発とテストは Apple Clang と LLVM Clang で行っています)、CMake ≥ 3.24、Ninja、Python ≥ 3.12 を管理する [uv](https://docs.astral.sh/uv/)。CI と貢献者には clang-format と clang-tidy も必要です。
 
 ```bash
-make bootstrap                 # ツールを確かめ、足りないものを入れ、`uv sync` を実行
+make bootstrap                 # ツールを確かめ、足りないものを入れ、`uv sync` と debug プリセットの設定を実行
                                # (./scripts/bootstrap.sh --check は報告だけで、何も入れない)
 make build                     # debug プリセットを build/debug/ に設定・ビルド
 make test                      # C++ のテスト(ctest)と Python のテスト(pytest)を実行
