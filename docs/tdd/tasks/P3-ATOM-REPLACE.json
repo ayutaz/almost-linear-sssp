@@ -18,7 +18,7 @@
       "src/paper/hierarchy/evaluate.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -46,5 +46,5 @@
       "output_tail": "        Start 874: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances\n926/933 Test #870: differential:every baseline rejects an invalid source with std::out_of_range - std::uint64_t ............................................................   Passed    0.02 sec\n927/933 Test #930: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.02 sec\n928/933 Test #875: differential:double overflow: large but finite sums are not reported ....................................................................................   Passed    0.02 sec\n929/933 Test #931: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.01 sec\n930/933 Test #869: differential:overflow: Bellman-Ford and Dijkstra differ by design (uint64) ..............................................................................   Passed    0.03 sec\n931/933 Test #868: differential:every generator family is covered by the differential test .................................................................................   Passed    0.02 sec\n932/933 Test #874: differential:double overflow: Dijkstra checks every scanned arc, Bellman-Ford only distances ............................................................   Passed    0.02 sec\n933/933 Test #890: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  114.57 sec\n\n100% tests passed, 0 tests failed out of 933\n\nLabel Time Summary:\ndifferential    =  44.77 sec*proc (59 tests)\nintegration     =   1.17 sec*proc (6 tests)\nproperty        = 196.51 sec*proc (47 tests)\nregression      =   0.15 sec*proc (6 tests)\nunit            = 245.68 sec*proc (815 tests)\n\nTotal Test time (real) = 118.42 sec"
     }
   ],
-  "commit": null
+  "commit": "f6a7f93"
 }
