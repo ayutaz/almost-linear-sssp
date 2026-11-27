@@ -115,3 +115,57 @@ TEST_CASE("level ancestor equals naive for all (v, j) on small random trees", "[
     }
   }
 }
+
+// ---------------------------------------------------------------- Lemma 3.9 (forests)
+
+namespace {
+
+template <class Q>
+void check_forest_all_queries(const Q& q, const Parents& parent) {
+  for (Vertex v = 0; v < parent.size(); ++v) {
+    const auto dv = forest_gen::naive_depth(parent, v);
+    REQUIRE(q.depth(v) == dv);
+    REQUIRE(q.component(v) == forest_gen::naive_root(parent, v));
+    for (std::uint32_t j = 0; j <= dv; ++j) {
+      INFO("v " << v << " j " << j);
+      REQUIRE(q.level_ancestor(v, j) == forest_gen::naive_level_ancestor(parent, v, j));
+    }
+    // Lemma 3.9: the requested depth must lie between zero and the original depth.
+    REQUIRE_THROWS_AS(q.level_ancestor(v, dv + 1), std::out_of_range);
+  }
+}
+
+}  // namespace
+
+TEST_CASE("forest level ancestor uses original depths and stays inside the tree",
+          "[paper][la][forest]") {
+  // Trees {0 -> 1 -> 2}, {3 -> 4}; roots have depth 0 in the original forest.
+  const Parents parent{kNoVertex, 0, 1, kNoVertex, 3};
+  const sssp::paper::ForestQueries fq(parent);
+  REQUIRE(fq.depth(0) == 0);
+  REQUIRE(fq.depth(2) == 2);
+  REQUIRE(fq.level_ancestor(2, 0) == 0);
+  REQUIRE(fq.level_ancestor(2, 1) == 1);
+  REQUIRE(fq.level_ancestor(4, 0) == 3);
+  REQUIRE(fq.level_ancestor(3, 0) == 3);
+  REQUIRE_THROWS_AS(fq.level_ancestor(3, 1), std::out_of_range);
+  check_forest_all_queries(fq, parent);
+  check_forest_all_queries(sssp::paper::BinaryLiftingRef(parent), parent);
+}
+
+TEST_CASE("forest level ancestor equals naive for all (v, j) in small random forests",
+          "[paper][la][forest]") {
+  for (const std::uint64_t seed : {41u, 42u, 43u, 44u, 45u}) {
+    std::mt19937_64 rng(seed);
+    for (std::size_t n = 1; n <= 90; n += 1 + n / 4) {
+      for (const std::size_t trees : {std::size_t{1}, std::size_t{3}, n / 2 + 1}) {
+        const auto parent =
+            forest_gen::shuffle_labels(forest_gen::random_forest(n, trees, rng), rng);
+        check_forest_all_queries(sssp::paper::ForestQueries(parent), parent);
+        check_forest_all_queries(sssp::paper::ForestQueries(parent, 3), parent);
+        check_forest_all_queries(sssp::paper::ForestQueries(parent, 5), parent);
+        check_forest_all_queries(sssp::paper::BinaryLiftingRef(parent), parent);
+      }
+    }
+  }
+}

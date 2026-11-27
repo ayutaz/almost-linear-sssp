@@ -432,4 +432,125 @@ Vertex LevelAncestor::query(Vertex v, std::uint32_t j) const {
   return ladder_[ladder_pos_[x] - (d - h)];
 }
 
+// -------------------------------------------------------------------------- ForestQueries
+
+ForestQueries::ForestQueries(std::span<const Vertex> parent) {
+  build(parent, 0);
+}
+
+ForestQueries::ForestQueries(std::span<const Vertex> parent, std::uint32_t block_size) {
+  if (block_size < 2 || block_size > 8) {
+    throw std::invalid_argument("ForestQueries: block size must lie in [2, 8]");
+  }
+  build(parent, block_size);
+}
+
+void ForestQueries::build(std::span<const Vertex> parent, std::uint32_t block_size) {
+  // Lemma 3.9 / Sec 3.4: augment the forest by a common root R = n.
+  const std::size_t n = parent.size();
+  if (n + 1 >= static_cast<std::size_t>(kNoVertex)) {
+    throw std::length_error("ForestQueries: too many vertices");
+  }
+  const auto aug_root = static_cast<Vertex>(n);
+  std::vector<Vertex> aug(n + 1, kNoVertex);
+  for (std::size_t v = 0; v < n; ++v) {
+    const Vertex p = parent[v];
+    if (p != kNoVertex && p >= n) throw std::out_of_range("ForestQueries: parent out of range");
+    aug[v] = p == kNoVertex ? aug_root : p;
+  }
+  const OrderedTree tree(aug);  // rejects cycles
+  // Record the original component (the original root) of every vertex.
+  component_.assign(n, kNoVertex);
+  for (const Vertex v : tree.preorder()) {
+    if (v == aug_root) continue;
+    component_[v] = aug[v] == aug_root ? v : component_[aug[v]];
+  }
+  if (block_size == 0) {
+    lca_ = LcaTable(tree);
+    la_ = LevelAncestor(tree);
+  } else {
+    lca_ = LcaTable(tree, block_size);
+    la_ = LevelAncestor(tree, block_size);
+  }
+}
+
+std::optional<Vertex> ForestQueries::lca(Vertex u, Vertex v) const {
+  if (component_[u] != component_[v]) return std::nullopt;  // different original trees
+  return lca_.lca(u, v);
+}
+
+Vertex ForestQueries::level_ancestor(Vertex v, std::uint32_t j) const {
+  if (j > depth(v)) throw std::out_of_range("ForestQueries: depth exceeds the vertex's depth");
+  return la_.query(v, j + 1);  // augmented depth = original depth + 1
+}
+
+// ----------------------------------------------------------------------- BinaryLiftingRef
+
+BinaryLiftingRef::BinaryLiftingRef(std::span<const Vertex> parent)
+    : depth_(parent.size(), 0), root_(parent.size(), kNoVertex) {
+  const std::size_t n = parent.size();
+  for (std::size_t v = 0; v < n; ++v) {
+    if (parent[v] != kNoVertex && parent[v] >= n) {
+      throw std::out_of_range("BinaryLiftingRef: parent out of range");
+    }
+  }
+  // Depths and roots by walking up to a resolved vertex (0 unseen, 1 on this walk, 2 resolved).
+  std::vector<std::uint8_t> state(n, 0);
+  std::vector<Vertex> walk;
+  std::uint32_t max_depth = 0;
+  for (std::size_t s = 0; s < n; ++s) {
+    auto x = static_cast<Vertex>(s);
+    walk.clear();
+    while (state[x] == 0) {
+      state[x] = 1;
+      walk.push_back(x);
+      if (parent[x] == kNoVertex) break;
+      x = parent[x];
+    }
+    if (state[x] == 1 && parent[x] != kNoVertex) {
+      throw std::invalid_argument("BinaryLiftingRef: parent array has a cycle");
+    }
+    for (std::size_t i = walk.size(); i-- > 0;) {
+      const Vertex w = walk[i];
+      const Vertex p = parent[w];
+      depth_[w] = p == kNoVertex ? 0 : depth_[p] + 1;
+      root_[w] = p == kNoVertex ? w : root_[p];
+      state[w] = 2;
+      if (depth_[w] > max_depth) max_depth = depth_[w];
+    }
+  }
+  up_.emplace_back(parent.begin(), parent.end());
+  for (std::uint64_t step = 2; step <= max_depth; step <<= 1) {
+    const auto& prev = up_.back();
+    std::vector<Vertex> next(n, kNoVertex);
+    for (std::size_t v = 0; v < n; ++v) {
+      if (prev[v] != kNoVertex) next[v] = prev[prev[v]];
+    }
+    up_.push_back(std::move(next));
+  }
+}
+
+Vertex BinaryLiftingRef::level_ancestor(Vertex v, std::uint32_t j) const {
+  if (j > depth_[v]) throw std::out_of_range("BinaryLiftingRef: depth exceeds the vertex's depth");
+  std::uint32_t d = depth_[v] - j;
+  for (std::size_t i = 0; d != 0; ++i, d >>= 1) {
+    if ((d & 1u) != 0) v = up_[i][v];
+  }
+  return v;
+}
+
+std::optional<Vertex> BinaryLiftingRef::lca(Vertex u, Vertex v) const {
+  if (root_[u] != root_[v]) return std::nullopt;
+  if (depth_[u] < depth_[v]) std::swap(u, v);
+  u = level_ancestor(u, depth_[v]);
+  if (u == v) return u;
+  for (std::size_t i = up_.size(); i-- > 0;) {
+    if (up_[i][u] != up_[i][v]) {
+      u = up_[i][u];
+      v = up_[i][v];
+    }
+  }
+  return up_[0][u];
+}
+
 }  // namespace sssp::paper

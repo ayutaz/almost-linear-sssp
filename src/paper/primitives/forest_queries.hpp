@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -150,6 +151,57 @@ class LevelAncestor {
   std::vector<Vertex> ladder_;
   std::vector<std::uint32_t> ladder_pos_;  ///< position of v in its own path's extended array
   detail::FloorLogTable lg_;
+};
+
+/// Lemma 3.9: LCA and level-ancestor queries on a rooted forest (parent array, kNoVertex marks
+/// roots). The forest is augmented by one common root, Lemmas 3.7 and 3.8 are applied to the
+/// augmented tree, and depths are translated back. O(k) preprocessing, O(1) queries.
+/// Throws std::out_of_range for a parent index >= n and std::invalid_argument for a cycle.
+class ForestQueries {
+ public:
+  explicit ForestQueries(std::span<const Vertex> parent);
+  /// Test hook: explicit block size in [2, 8] for both tables. Mode A callers use the above.
+  ForestQueries(std::span<const Vertex> parent, std::uint32_t block_size);
+
+  /// Lowest common ancestor; nullopt if u and v lie in different original trees (component
+  /// test, Lemma 3.9).
+  [[nodiscard]] std::optional<Vertex> lca(Vertex u, Vertex v) const;
+  /// Ancestor of v at original depth j; throws std::out_of_range unless 0 <= j <= depth(v).
+  [[nodiscard]] Vertex level_ancestor(Vertex v, std::uint32_t j) const;
+  /// Original depth (a root has depth 0).
+  [[nodiscard]] std::uint32_t depth(Vertex v) const { return la_.depth(v) - 1; }
+  /// Root of v's original tree.
+  [[nodiscard]] Vertex component(Vertex v) const { return component_[v]; }
+  [[nodiscard]] std::size_t size() const noexcept { return component_.size(); }
+
+  [[nodiscard]] const LcaTable& lca_table() const noexcept { return lca_; }
+  [[nodiscard]] const LevelAncestor& level_ancestors() const noexcept { return la_; }
+
+ private:
+  void build(std::span<const Vertex> parent, std::uint32_t block_size);
+
+  std::vector<Vertex> component_;
+  LcaTable lca_;
+  LevelAncestor la_;
+};
+
+/// Reference implementation (not from the paper): binary lifting with O(k log k) preprocessing
+/// and space and O(log k) queries. Same API and validation as ForestQueries on an independent
+/// code path; used for differential testing.
+class BinaryLiftingRef {
+ public:
+  explicit BinaryLiftingRef(std::span<const Vertex> parent);
+
+  [[nodiscard]] std::optional<Vertex> lca(Vertex u, Vertex v) const;
+  [[nodiscard]] Vertex level_ancestor(Vertex v, std::uint32_t j) const;
+  [[nodiscard]] std::uint32_t depth(Vertex v) const { return depth_[v]; }
+  [[nodiscard]] Vertex component(Vertex v) const { return root_[v]; }
+  [[nodiscard]] std::size_t size() const noexcept { return depth_.size(); }
+
+ private:
+  std::vector<std::vector<Vertex>> up_;  ///< up_[i][v]: ancestor 2^i edges above, or kNoVertex
+  std::vector<std::uint32_t> depth_;
+  std::vector<Vertex> root_;
 };
 
 }  // namespace sssp::paper
