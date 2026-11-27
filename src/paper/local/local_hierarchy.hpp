@@ -16,10 +16,14 @@
 // reason names the coefficient and exponent actually used). With Mode A constants every input
 // with k <= 209952 takes this branch.
 //
-// Status: the radial branch (l.6-12) needs the Sec 5.4 assembly, which is not implemented yet.
-// The branch throws std::logic_error instead of substituting the base case or any other
-// construction, so a run that needs it can never be reported as the paper's algorithm.
+// Radial branch (l.6-12): owner_decomposition(g, b) with b = L_k^4 (Sec 5.1 l.967),
+// local_radial_states (Sec 5.2), compute_joins (Sec 5.3) and assemble_local_hierarchy (Sec 5.4,
+// Lemma 5.10). The assembly needs N >= 32 and h = b + 1 <= N (Sec 5.4 l.1206), which the paper
+// derives from N > 2 L_N^4; with other parameters the branch checks them up front and throws
+// std::invalid_argument instead of substituting another construction. Mode B (and tests) may
+// override b through LocalHierarchyParams::separator (Q-03); Mode A leaves it at 0.
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
@@ -35,6 +39,8 @@ namespace sssp::paper {
 struct LocalHierarchyParams {
   std::uint64_t threshold_coeff = model::kLocalCoeff;   ///< paper: 2 (Sec 2 l.286)
   unsigned threshold_exponent = model::kLocalExponent;  ///< paper: 4 (Sec 2 l.286)
+  /// Separator size b of the owner cells; 0 means the paper's b = L_k^4 (Sec 5.1 l.967).
+  std::size_t separator = 0;
 
   friend constexpr bool operator==(const LocalHierarchyParams&,
                                    const LocalHierarchyParams&) = default;
@@ -56,12 +62,14 @@ std::string local_base_case_reason(const LocalHierarchyParams& p);
 /// Algorithm 4 on `g` (k = g.num_vertices(), m = g.num_edges()).
 /// * k <= c L_k^e: returns local_hierarchy_base_case(g) and pushes
 ///   FallbackRecord{local_base_case_reason(p), k, m} into diag->fallbacks.
-/// * otherwise: the radial construction. Requires a connected input (Sec 5.1 l.961; throws
-///   std::invalid_argument otherwise). Not implemented yet: throws std::logic_error.
+/// * otherwise: the radial construction (Sec 5.1-5.4), c0 = 2, no FallbackRecord. Requires a
+///   connected input (Sec 5.1 l.961) and local_assembly_applies(k, b) (Sec 5.4 l.1206); throws
+///   std::invalid_argument otherwise.
 /// Throws std::invalid_argument for a zero (or, for integers, infinity-sentinel) weight: Alg 4
 /// requires positive lengths and zero components are contracted by the caller (Sec 5.1 l.962).
 /// Counters (if `diag` is non-null): local_hierarchy_calls, local_hierarchy_base_case,
-/// local_hierarchy_radial, plus those of the branch taken.
+/// local_hierarchy_radial, local_hierarchy_states, local_hierarchy_arcs, local_hierarchy_nodes,
+/// plus those of the branch taken.
 template <class W>
 LocalHierarchyResult<W> local_hierarchy(const CsrGraph<W>& g, Diagnostics* diag = nullptr,
                                         const LocalHierarchyParams& p = kPaperLocalParams);

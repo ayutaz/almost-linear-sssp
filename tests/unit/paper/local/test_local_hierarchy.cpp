@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include "paper/hierarchy/ordered_hierarchy.hpp"
 #include "paper/local/base_case.hpp"
 #include "paper/local/local_hierarchy.hpp"
 #include "paper/model/params.hpp"
@@ -146,17 +147,21 @@ TEST_CASE("Alg 4 base case rejects zero weights (contracted by the caller)") {
 }
 
 TEST_CASE("Alg 4 above the threshold does not take the base case") {
-  // Mode A at the first size where the radial construction applies (k = 209953), and Mode B
-  // with c = 1, e = 1 at k = 4. The radial construction needs the Sec 5.4 assembly
-  // (P3-LOCAL-ASSEMBLE); until then the branch must fail loudly rather than fall back.
+  // Mode A at the first size where the radial construction applies (k = 209953, b = L_k^4 =
+  // 18^4), and Mode B with c = 1, e = 1. The radial branch runs Sec 5.1-5.4 and records no
+  // fallback; it requires N >= 32 and h = b + 1 <= N (Sec 5.4 l.1206).
   SECTION("Mode A, k = 209953") {
     const auto g = path_graph<std::uint64_t>(209953);
     Diagnostics diag;
-    CHECK_THROWS_AS(local_hierarchy(g, &diag), std::logic_error);
+    const auto r = local_hierarchy(g, &diag);
     CHECK(diag.fallbacks.empty());
+    CHECK(r.hierarchy.c0 == 2);
+    REQUIRE(r.native_entry.size() == 209953);
+    for (Vertex v = 0; v < 209953; v += 997) CHECK(r.hierarchy.projection[r.native_entry[v]] == v);
 #if SSSP_DIAGNOSTICS
     CHECK(diag.counters["local_hierarchy_radial"] == 1);
     CHECK(diag.counters["local_hierarchy_base_case"] == 0);
+    CHECK(diag.counters["local_assemble_calls"] == 1);
 #endif
   }
   SECTION("Mode A, k = 209952 still takes the base case") {
@@ -168,19 +173,67 @@ TEST_CASE("Alg 4 above the threshold does not take the base case") {
     CHECK(diag.fallbacks[0].vertices == 209952);
     CHECK(diag.fallbacks[0].edges == 209951);
   }
-  SECTION("Mode B, k = 4 with N > L_N") {
+  SECTION("Mode B, k = 4 with N > L_N violates N >= 32 of Sec 5.4") {
     const auto g = path_graph<double>(4);
     Diagnostics diag;
-    CHECK_THROWS_AS(local_hierarchy(g, &diag, LocalHierarchyParams{1, 1}), std::logic_error);
+    CHECK_THROWS_AS(local_hierarchy(g, &diag, LocalHierarchyParams{1, 1}), std::invalid_argument);
     CHECK(diag.fallbacks.empty());
   }
+  SECTION("Mode B, k = 40 with the paper's b = L_k^4 > k violates h <= N") {
+    const auto g = path_graph<double>(40);
+    CHECK_THROWS_AS(local_hierarchy(g, nullptr, LocalHierarchyParams{1, 1}), std::invalid_argument);
+  }
+}
+
+TEMPLATE_TEST_CASE("Alg 4 radial branch with a separator override yields Def 4.1 (c0 = 2)", "",
+                   std::uint64_t, double) {
+  using W = TestType;
+  // A 6 x 6 grid with varied weights, b = 3: several pivots, macros and corridors.
+  std::vector<Edge<W>> e;
+  for (Vertex v = 0; v < 36; ++v) {
+    if (v % 6 != 5) e.push_back({v, v + 1, static_cast<W>(1 + (v * 7) % 13)});
+    if (v + 6 < 36) e.push_back({v, v + 6, static_cast<W>(1 + (v * 5) % 11)});
+  }
+  const auto g = CsrGraph<W>::from_edges(36, e);
+  Diagnostics diag;
+  const LocalHierarchyParams p{1, 1, 3};
+  CHECK_FALSE(p == kPaperLocalParams);
+  const auto r = local_hierarchy(g, &diag, p);
+  CHECK(diag.fallbacks.empty());
+  CHECK(r.hierarchy.c0 == 2);
+  const auto report = sssp::paper::validate_ordered_hierarchy(r.hierarchy, g);
+  INFO(report.summary());
+  CHECK(report.ok());
+  REQUIRE(r.native_entry.size() == 36);
+  for (Vertex v = 0; v < 36; ++v) CHECK(r.hierarchy.projection[r.native_entry[v]] == v);
+  CHECK(r.arc_edge.size() == r.hierarchy.graph.arcs.size());
+#if SSSP_DIAGNOSTICS
+  CHECK(diag.counters["local_hierarchy_radial"] == 1);
+  CHECK(diag.counters["owner_decomposition_calls"] == 1);
+  CHECK(diag.counters["threshold_joins_calls"] == 1);
+  CHECK(diag.counters["local_assemble_calls"] == 1);
+  CHECK(diag.counters["local_hierarchy_states"] == r.hierarchy.num_states());
+  CHECK(diag.counters["local_hierarchy_arcs"] == r.hierarchy.graph.arcs.size());
+  CHECK(diag.counters["local_hierarchy_nodes"] == r.hierarchy.nodes.size());
+#endif
+  // Zero weights are rejected in the radial branch as well (Sec 5.1 l.962).
+  auto z = e;
+  z[0].weight = W{0};
+  CHECK_THROWS_AS(local_hierarchy(CsrGraph<W>::from_edges(36, z), nullptr, p),
+                  std::invalid_argument);
 }
 
 TEST_CASE("Alg 4 radial branch requires a connected input") {
   // Alg 4 assumes a connected graph (Sec 5.1 l.961); the base case tolerates more, but the
   // radial construction (MST, owner cells) does not.
+  std::vector<Edge<std::uint64_t>> two;  // two paths of 20 vertices: N = 40 >= 32, b = 3
+  for (Vertex v = 0; v + 1 < 40; ++v) {
+    if (v != 19) two.push_back({v, v + 1, 1 + v % 3});
+  }
+  const auto g40 = CsrGraph<std::uint64_t>::from_edges(40, two);
+  CHECK_THROWS_AS(local_hierarchy(g40, nullptr, LocalHierarchyParams{1, 1, 3}),
+                  std::invalid_argument);
   const auto g = CsrGraph<std::uint64_t>::from_edges(5, {{0, 1, 1}, {2, 3, 1}, {3, 4, 2}});
-  CHECK_THROWS_AS(local_hierarchy(g, nullptr, LocalHierarchyParams{1, 1}), std::invalid_argument);
   Diagnostics diag;
   const auto r = local_hierarchy(g, &diag);  // base case: one tree per component
   CHECK(r.hierarchy.roots.size() == 2);
