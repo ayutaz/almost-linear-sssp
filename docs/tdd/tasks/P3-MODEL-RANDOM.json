@@ -11,7 +11,7 @@
    "tests/unit/paper/model/test_random.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -48,5 +48,5 @@
    "output_tail": "      Start 45: unit:uniform_below(1) is zero and draws no bits\n44/53 Test #16: unit:comparisons order every finite length below infinity - double ................   Passed    0.01 sec\n      Start 42: unit:SplitMix64 matches the published reference sequence\n45/53 Test #13: unit:infinity flag absorbs addition - std::uint64_t ...............................   Passed    0.01 sec\n      Start 50: unit:random_permutation returns a permutation and is deterministic\n46/53 Test #15: unit:comparisons order every finite length below infinity - std::uint64_t .........   Passed    0.02 sec\n47/53 Test #46: unit:uniform_below rejects outcomes at least h instead of reducing modulo h .......   Passed    0.02 sec\n48/53 Test #22: unit:mul_pow2 on integers is exact and detects overflow ...........................   Passed    0.02 sec\n49/53 Test #44: unit:next_bits returns the c most significant bits of the next word ...............   Passed    0.02 sec\n50/53 Test #42: unit:SplitMix64 matches the published reference sequence ..........................   Passed    0.01 sec\n51/53 Test #45: unit:uniform_below(1) is zero and draws no bits ...................................   Passed    0.02 sec\n52/53 Test #50: unit:random_permutation returns a permutation and is deterministic ................   Passed    0.01 sec\n53/53 Test #41: unit:Mode B thresholds follow injected parameters exactly .........................   Passed    0.19 sec\n\n100% tests passed, 0 tests failed out of 53\n\nLabel Time Summary:\nunit    =   1.33 sec*proc (53 tests)\n\nTotal Test time (real) =   0.62 sec"
   }
  ],
- "commit": null
+ "commit": "ab559fe"
 }

@@ -11,7 +11,7 @@
    "tests/unit/paper/model/test_length.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -61,5 +61,5 @@
    "output_tail": "      Start 27: unit:signed pair rejects infinite components - std::uint64_t\n33/42 Test  #2: unit:CSR keeps multi-edges, self-loops and isolated vertices ......................   Passed    0.03 sec\n      Start 10: unit:word logarithms are undefined at zero\n34/42 Test #15: unit:comparisons order every finite length below infinity - std::uint64_t .........   Passed    0.01 sec\n      Start 30: unit:EdgeKey ties broken by index - double\n35/42 Test #32: unit:EdgeKey is a strict total order - double .....................................   Passed    0.01 sec\n36/42 Test  #1: unit:CSR stores both orientations of every undirected edge ........................   Passed    0.01 sec\n37/42 Test  #8: unit:ilog table rejects indices outside 1..K ......................................   Passed    0.02 sec\n38/42 Test #10: unit:word logarithms are undefined at zero ........................................   Passed    0.01 sec\n39/42 Test #27: unit:signed pair rejects infinite components - std::uint64_t ......................   Passed    0.01 sec\n40/42 Test #30: unit:EdgeKey ties broken by index - double ........................................   Passed    0.01 sec\n41/42 Test  #6: unit:ilog table equals bit_width-1 for 1..2^20 ....................................   Passed    0.12 sec\n42/42 Test #41: unit:Mode B thresholds follow injected parameters exactly .........................   Passed    0.16 sec\n\n100% tests passed, 0 tests failed out of 42\n\nLabel Time Summary:\nunit    =   0.87 sec*proc (42 tests)\n\nTotal Test time (real) =   0.57 sec"
   }
  ],
- "commit": null
+ "commit": "e9a0d7b"
 }

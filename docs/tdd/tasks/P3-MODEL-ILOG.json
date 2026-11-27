@@ -11,7 +11,7 @@
    "tests/unit/paper/model/test_ilog.cpp"
   ]
  },
- "phase": "GREEN",
+ "phase": "DONE",
  "events": [
   {
    "phase": "RED",
@@ -41,5 +41,5 @@
    "output_tail": "      Start 10: unit:word logarithms are undefined at zero\n 4/13 Test #13: unit:library exposes version and target paper .....................................   Passed    0.02 sec\n      Start 11: unit:word logarithms agree with the table on its range\n 5/13 Test  #1: unit:CSR stores both orientations of every undirected edge ........................   Passed    0.02 sec\n      Start 12: unit:word logarithms are usable in constant expressions\n 6/13 Test  #2: unit:CSR keeps multi-edges, self-loops and isolated vertices ......................   Passed    0.02 sec\n 7/13 Test  #9: unit:word floor_log2 and ceil_log2 match definitions at power-of-two boundaries ...   Passed    0.01 sec\n 8/13 Test  #8: unit:ilog table rejects indices outside 1..K ......................................   Passed    0.02 sec\n 9/13 Test #10: unit:word logarithms are undefined at zero ........................................   Passed    0.01 sec\n10/13 Test  #7: unit:ilog table ceil_log2 matches the defining inequality .........................   Passed    0.03 sec\n11/13 Test #11: unit:word logarithms agree with the table on its range ............................   Passed    0.02 sec\n12/13 Test #12: unit:word logarithms are usable in constant expressions ...........................   Passed    0.02 sec\n13/13 Test  #6: unit:ilog table equals bit_width-1 for 1..2^20 ....................................   Passed    0.16 sec\n\n100% tests passed, 0 tests failed out of 13\n\nLabel Time Summary:\nunit    =   0.38 sec*proc (13 tests)\n\nTotal Test time (real) =   0.59 sec"
   }
  ],
- "commit": null
+ "commit": "d23154b"
 }
