@@ -1,0 +1,39 @@
+{
+  "id": "P2-GRAPH-GEOMETRIC",
+  "spec": "random_geometric(n, radius, geo, opt): n seeded uniform points in the unit square, an edge for every pair with squared distance <= radius^2 found through a cell grid in expected O(n+m), edges in (u,v) lexicographic order, weights from the weight spec or the Euclidean length (uint64: round(len*integer_scale)); radius may be derived as sqrt(avg_degree/(pi n)); deterministic, existing generators unchanged; sssp_gen --type geometric",
+  "paper_ref": "none",
+  "files": {
+    "impl": [
+      "include/sssp/generators.hpp",
+      "src/graph/generators*.cpp",
+      "tools/sssp_gen.cpp",
+      "docs/design/graph_library.md"
+    ],
+    "tests": [
+      "tests/unit/graph/test_geometric.cpp",
+      "tests/integration/test_io_roundtrip.cpp",
+      "tests/differential/test_baselines_differential.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug 2>&1 | grep -E \"error:\" | head -8; exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "error: no member named 'random_geometric' / 'random_geometric_points' / 'GeometricWeights' in namespace 'sssp::gen' (feature absent). Expected values are independent of the implementation: edges from an all-pairs brute force over the documented predicate, complete graph n(n-1)/2 for r >= sqrt(2), mean degree from the unit-square pair-distance CDF pi r^2 - 8/3 r^3 + 1/2 r^4, Euclidean weights recomputed from the points",
+      "timestamp": "2026-11-27T11:27:40+09:00",
+      "output_tail": "./tests/unit/graph/test_geometric.cpp:31:18: error: no member named 'GeometricOptions' in namespace 'sssp::gen'\n./tests/unit/graph/test_geometric.cpp:32:18: error: no member named 'GeometricWeights' in namespace 'sssp::gen'\n./tests/unit/graph/test_geometric.cpp:33:18: error: no member named 'Point2' in namespace 'sssp::gen'\n./tests/unit/graph/test_geometric.cpp:42:46: error: use of undeclared identifier 'Point2'\n./tests/unit/graph/test_geometric.cpp:101:33: error: use of undeclared identifier 'Point2'\n./tests/unit/graph/test_geometric.cpp:111:7: error: unknown type name 'GeometricOptions'\n./tests/unit/graph/test_geometric.cpp:112:7: error: unknown type name 'GeometricOptions'\n./tests/unit/graph/test_geometric.cpp:112:43: error: use of undeclared identifier 'GeometricWeights'"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:43:23+09:00",
+      "output_tail": "        Start 651: differential:baselines agree on generated graphs: geometric (random/euclidean weights) - double\n688/695 Test  #76: unit:bench cli: multiple algorithms, source list and verify modes .......................................................................................   Passed    0.03 sec\n689/695 Test #641: differential:baselines agree on generated graphs: ba - double ...........................................................................................   Passed    0.03 sec\n690/695 Test #243: unit:eval oracle: target distance by hand on a path with one and several sources ........................................................................   Passed    0.04 sec\n691/695 Test #655: differential:every baseline rejects an invalid source with std::out_of_range - double ...................................................................   Passed    0.03 sec\n692/695 Test  #48: unit:4-ary-heap Dijkstra: single vertex .................................................................................................................   Passed    0.04 sec\n693/695 Test #654: differential:every baseline rejects an invalid source with std::out_of_range - std::uint64_t ............................................................   Passed    0.03 sec\n694/695 Test #651: differential:baselines agree on generated graphs: geometric (random/euclidean weights) - double .........................................................   Passed    0.04 sec\n695/695 Test #650: differential:baselines agree on generated graphs: geometric (random/euclidean weights) - std::uint64_t ..................................................   Passed    0.07 sec\n\n100% tests passed, 0 tests failed out of 695\n\nLabel Time Summary:\ndifferential    =   6.47 sec*proc (29 tests)\nintegration     =   1.90 sec*proc (6 tests)\nproperty        =  50.23 sec*proc (30 tests)\nregression      =   0.20 sec*proc (5 tests)\nunit            = 301.92 sec*proc (625 tests)\n\nTotal Test time (real) =  45.95 sec"
+    }
+  ],
+  "commit": "88cb969"
+}

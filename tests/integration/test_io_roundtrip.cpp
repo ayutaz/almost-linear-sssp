@@ -60,6 +60,12 @@ std::vector<sssp::gen::NamedGraph<W>> corpus() {
            100, 6, sssp::gen::MultiEdgePolicy::kKeep,
            {.weights = {.dist = WeightDist::kConstant, .lo = 3}, .seed = 1, .connected = false}),
        0, "multi-edges and self-loops"});
+  // geometric graph weighted by point distances (17-digit doubles; uint64 lengths scaled)
+  out.push_back({"geometric_euclidean",
+                 sssp::gen::random_geometric<W>(
+                     300, 0.1, {.weights = sssp::gen::GeometricWeights::kEuclidean},
+                     {.weights = {}, .seed = 3, .connected = true}),
+                 0, "Euclidean weights, joined components"});
   for (auto& g : sssp::gen::small_graph_suite<W>()) out.push_back(std::move(g));
   return out;
 }

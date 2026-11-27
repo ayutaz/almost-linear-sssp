@@ -155,6 +155,13 @@ on every platform and standard library. The rules below make that hold.
 
 ### Output changes between versions
 
+- **P2-GRAPH-GEOMETRIC (new type `geometric`).** Adding the generator did not change the
+  output of any existing type. We compared `sssp_gen` before and after the change on 2,526
+  argument sets: the nine existing types × both weight types × all seven weight
+  distributions × seeds {1, 2, 3, 17, 1000} × n ∈ {50, 1000} × with and without
+  `--connected` (regular cycling through keep/drop/switch), plus road with `--int-scale` and
+  DIMACS output. All hashes are identical, and `--list` only gains the new entry at the end.
+
 - **P2-DIFF-REGULAR-SWITCH (`random_regular`, `kSwitchToSimple`; `sssp_gen --type regular
   --multi switch`).** Before this fix, some valid arguments threw "switching did not converge",
   most often for small dense cases (d = n − 1, about 3–10% of seeds for n ≤ 12; e.g.
@@ -204,6 +211,7 @@ Every generator returns `EdgeList<W>` and takes `GenOptions{weights, seed = 1, c
 | `chung_lu` | `chung_lu(n, avg_degree, exponent, opt)` | exponent > 2; m ≤ n(n−1)/4 | m = round(n·avg_degree/2) | yes (self-loops and duplicates are redrawn) | only with `connected` |
 | `adversarial_decrease_key` | `adversarial_decrease_key(k)`, k = n−1 for the CLI | k | k + k(k−1)/2 | yes | yes |
 | `adversarial_long_path` | `adversarial_long_path(n)` | n | (n−1) + (n−2) | yes | yes |
+| `geometric` | `random_geometric(n, r, GeometricOptions, opt)` | r ≥ 0 finite (default `geometric_radius(n, avg_degree)` = √(avg_degree/(πn))); weights `kFromSpec` or `kEuclidean`; integer_scale (1000) | ≈ n·(n−1)·F(r)/2, F below | yes | only with `connected` |
 
 More detail on the less obvious generators:
 
@@ -220,6 +228,40 @@ More detail on the less obvious generators:
 - **Barabási–Albert.** It starts from a clique on m+1 vertices. Each new vertex links to m
   distinct targets, sampled proportionally to degree from a list of edge endpoints.
 - **Adversarial generators.** Their weights are fixed by the construction and do not use `opt.weights`.
+- **Random geometric** (`geometric`). See the next subsection.
+
+### Random geometric graph
+
+`random_geometric<W>(n, r, GeometricOptions{weights, integer_scale}, opt)` builds G(n, r) in
+the unit square.
+
+- **Points.** `random_geometric_points(n, seed)` returns the points: vertex i is at the i-th
+  point, drawn from the topology sub-stream (0) as `x = uniform01()`, then `y = uniform01()`.
+  The points are therefore the same for every radius and every weight choice.
+- **Edges.** `{u, v}` with u < v is an edge iff `dx*dx + dy*dy <= r*r` in IEEE double
+  (dx = x_u − x_v, dy = y_u − y_v, no FMA). This expression is the contract: a test can
+  recompute it over all pairs. Edges are listed in lexicographic (u, v) order, so the output
+  does not depend on how the neighbours are found. r = 0 gives no edges (two points would have
+  to coincide). r ≥ √2, the diameter of the square, gives the complete graph.
+- **Neighbour search.** Points are bucketed into k × k cells with k·r ≤ 1 − 10⁻⁹ and k² ≤ n.
+  Every pair within distance r then lies in the same or an adjacent cell (the 10⁻⁹ margin
+  absorbs the rounding of the predicate and of the cell coordinate; proof in
+  `geometric_cells_per_side`). A counting sort groups the points by cell, each vertex v scans
+  its 3 × 3 block for u < v, and a stable counting sort by u puts the pairs in order. The expected time is O(n + m) and the memory O(n + m).
+- **Radius from a degree.** `geometric_radius(n, d)` = √(d/(πn)) (0 for n < 2). It ignores
+  the boundary. The expected mean degree is (n−1)·F(r), where
+  F(r) = πr² − (8/3)r³ + r⁴/2 (r ≤ 1) is the probability that two uniform points of the square
+  are within distance r. The realised mean degree is lower than d by a relative ≈ 8r/(3π)
+  (about 1% for n = 2·10⁴, d = 8).
+- **Weights.** `GeometricWeights::kFromSpec` (CLI `--geo-weights random`, the default) draws
+  from `opt.weights` in edge order, from the weight sub-stream, like every other generator.
+  `kEuclidean` (CLI `--geo-weights euclidean`) uses the edge length √(dx² + dy²). `double`
+  keeps it as is, and integer W uses `round(length · integer_scale)` (nearest, ties up). This
+  can be 0 for very close points; zero weights are legal. integer_scale must be in (0, 2⁵²].
+  With `kEuclidean`, `opt.weights` is ignored and not validated.
+- **`connected`.** `connect_components` joins the components with the connect sub-stream (2),
+  as for the other generators. With `kEuclidean`, the joining edges are then weighted by their
+  length too, so every weight is a Euclidean distance.
 
 ### Adversarial constructions
 
@@ -254,9 +296,11 @@ vertex counting as one.
 
 - `generator_catalog()` returns `{name, description, parameters}` for each generator type.
 - `generate<W>(GraphSpec)` dispatches on `GraphSpec::type`. `GraphSpec` holds `n`,
-  `avg_degree`, `degree`, `attach`, `rows`, `cols`, `exponent`, `multi`, `road` and `options`.
-  An unknown type throws `std::invalid_argument`.
+  `avg_degree`, `degree`, `attach`, `rows`, `cols`, `exponent`, `multi`, `road`, `radius`
+  (`std::optional<double>`; unset means `geometric_radius(n, avg_degree)`), `geometric` and
+  `options`. An unknown type throws `std::invalid_argument`.
 - `parse_multi_edge_policy("keep"|"drop"|"switch")` converts the CLI name of the regular-graph policy.
+- `parse_geometric_weights("random"|"euclidean")` converts the CLI name of the geometric weight choice.
 
 ## 7. Small test graphs
 
@@ -291,6 +335,8 @@ sssp_gen --type er --n 1000 --avg-degree 4 --weights uniform_int --seed 1 --out 
 sssp_gen --type road --rows 100 --cols 100 --weight-type double --format dimacs --out road.gr
 sssp_gen --type regular --n 1000 --degree 3 --multi switch --weights wide_range --wide-log2 50 --out r.txt
 sssp_gen --type er --n 10000 --avg-degree 1 --connected --weights zero_mixed --zero-prob 0.3 --out z.txt
+sssp_gen --type geometric --n 100000 --avg-degree 8 --geo-weights euclidean --weight-type double --out geo.txt
+sssp_gen --type geometric --n 5000 --radius 0.03 --weights log_uniform --lo 1 --hi 1000 --connected --out geo2.txt
 ```
 
 | Group | Options |
@@ -299,6 +345,7 @@ sssp_gen --type er --n 10000 --avg-degree 1 --connected --weights zero_mixed --z
 | Weights | `--weights <dist>`, `--lo`, `--hi`, `--mean`, `--zero-prob`, `--wide-log2` |
 | Shape | `--n`, `--avg-degree`, `--degree`, `--attach`, `--rows`, `--cols`, `--exponent`, `--multi keep\|drop\|switch` |
 | Road | `--jitter`, `--keep-prob`, `--shortcut-prob`, `--shortcut-radius`, `--int-scale` |
+| Geometric | `--radius` (default from `--avg-degree`), `--geo-weights random\|euclidean`, `--int-scale` (shared with road: sets both) |
 | Other | `--connected`, `--seed`, `--stats` (n, m, components to stderr), `--list`, `--help` |
 
 Exit codes: 0 on success, 2 for a usage error (unknown option, malformed number), 1 for a
@@ -319,6 +366,8 @@ always produce byte-identical output.
   only if 100 configurations fail. A single configuration failed for at most 31 of 300 seeds
   per (n, d) with n ≤ 12, so this has not been observed. Dense cases (d close to n) are slow,
   because most proposals are rejected.
+- `random_geometric` has m ≈ n²·F(r)/2 edges, so a radius that is not small (for example the
+  complete graph at r ≥ √2) makes the output quadratic in n. Use `--avg-degree` for sparse graphs.
 - `DimacsArcMode::kMergeReversePairs` keeps a hash table of unmatched arcs, so its memory grows
   in proportion to the number of arcs on large road networks.
 - `det_log` and `det_exp` are accurate to a few ulp, not correctly rounded. They are exactly
