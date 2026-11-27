@@ -1,0 +1,59 @@
+{
+ "id": "P3-MST-GROWTH",
+ "spec": "GrowthPass (Algorithm 1) on a quotient graph with limit B: edges ordered by (length, index), boundary heap keyed per distinct outside vertex, growth stops on empty heap / heap size > B / reaching an earlier growth; returns the selected original indices and the loop-free quotient by the components of F; every selected edge lies in the unique MST (Kruskal reference), at most c+2l'/B quotient vertices remain for finite B",
+ "paper_ref": "Sec 3.2, Algorithm 1 lines 1-15, Lemma 3.4",
+ "files": {
+  "impl": [
+   "src/paper/primitives/mst.hpp",
+   "src/paper/primitives/mst.cpp"
+  ],
+  "tests": [
+   "tests/unit/paper/primitives/test_growth_pass.cpp",
+   "tests/unit/paper/primitives/mst_test_support.hpp"
+  ]
+ },
+ "phase": "REFACTOR",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "MstEdgeKey orders by length, then input index",
+    "singleton_quotient drops loops and keeps original indices",
+    "growth_pass with B = infinity grows one tree over a connected path",
+    "growth_pass stops a growth whose heap exceeds B (Alg 1 l.9)",
+    "growth_pass leaves the quotient by the components of F",
+    "growth_pass keeps the lightest parallel edge by (length, index)",
+    "growth_pass heap size counts distinct outside vertices (A11)",
+    "growth_pass handles a single vertex and an edgeless quotient",
+    "growth_pass rejects B = 0 and malformed quotients",
+    "mst_kruskal_ref returns the minimum spanning forest under (length, index)",
+    "growth_pass selects only MST edges, each once, within the Lemma 3.4 bounds"
+   ],
+   "command": "cmake --build --preset debug -j8 -k 0 2>&1 | grep -E 'fatal error|error:' | sort -u | head -8; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'paper/primitives/mst.hpp' file not found (GrowthPass, quotient and Kruskal reference not implemented yet)",
+   "timestamp": "2026-11-27T10:41:48+09:00",
+   "output_tail": "tests/unit/paper/primitives/test_growth_pass.cpp:10:10: fatal error: 'paper/primitives/mst.hpp' file not found"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests of the task"
+   ],
+   "command": "set -o pipefail; cmake --build --preset debug -j8 2>&1 | tail -1 && ctest --preset debug -R 'growth_pass|MstEdgeKey|singleton_quotient|kruskal' 2>&1 | grep -E 'tests passed|Failed' && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:42:59+09:00",
+   "output_tail": "ninja: no work to do.\n100% tests passed, 0 tests failed out of 22\n100% tests passed, 0 tests failed out of 101"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [],
+   "command": "set -o pipefail; cmake --build --preset debug -j8 2>&1 | tail -1 && ctest --preset debug 2>&1 | grep -E 'tests passed|Failed'",
+   "exit_code": 0,
+   "reason": "replace the instantiation macro by explicit instantiations (clang-tidy bugprone-macro-parentheses)",
+   "timestamp": "2026-11-27T10:43:53+09:00",
+   "output_tail": "[4/5] Linking CXX executable tests/sssp_unit_tests\n100% tests passed, 0 tests failed out of 101"
+  }
+ ],
+ "commit": null
+}
