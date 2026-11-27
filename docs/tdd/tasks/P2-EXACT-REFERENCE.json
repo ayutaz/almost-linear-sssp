@@ -1,0 +1,94 @@
+{
+ "id": "P2-EXACT-REFERENCE",
+ "spec": "Exact rational (fractions.Fraction) SSSP oracle: edge-list parser (int, p/q, decimal weights read exactly; comments/blank lines ignored; m mismatch, out-of-range vertex, negative weight rejected), Dijkstra and round-based Bellman-Ford with parent trees and a CLI; plus an exact checker for C++ double results (%.17g JSON read as exact doubles, tolerance |dist-d*| <= gamma_k*d* + abs with u=2^-53, gamma_k=k*u/(1-k*u), k=n-1 by default; source distance, reachability, parent edge existence, parent cycles and parent-tree path length checks) with a CLI",
+ "paper_ref": "none (test oracle; tolerance from Higham, Accuracy and Stability of Numerical Algorithms, eq. (4.4))",
+ "files": {
+  "impl": [
+   "tests/python/reference/__init__.py",
+   "tests/python/reference/exact_sssp.py",
+   "tests/python/reference/check_double.py"
+  ],
+  "tests": [
+   "tests/python/test_exact_reference.py"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "tests/python/test_exact_reference.py (all 115 cases)"
+   ],
+   "command": "uv run pytest tests/python -q",
+   "exit_code": 2,
+   "reason": "collection error: ImportError: cannot import name 'check_double' from 'reference' -- the reference package is importable (only an empty __init__.py exists) but exact_sssp/check_double are absent (feature absent)",
+   "timestamp": "2026-11-27T10:24:52+0900",
+   "output_tail": "tests/python/test_exact_reference.py:23: in <module>\n    from reference import check_double, exact_sssp\nE   ImportError: cannot import name 'check_double' from 'reference' (.../tests/python/reference/__init__.py)\n=========================== short test summary info ============================\nERROR tests/python/test_exact_reference.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all 115"
+   ],
+   "command": "uv run pytest tests/python -q",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:26:20+0900",
+   "output_tail": "........................................................................ [ 62%]\n...........................................                              [100%]"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "all 115"
+   ],
+   "command": "uv run ruff format tests/python && uv run ruff check tests/python && uv run pytest tests/python -q",
+   "exit_code": 0,
+   "reason": "ruff format; import order fix; %-formatting replaced by f-strings/concatenation in the test helpers (UP031). No expected value changed.",
+   "timestamp": "2026-11-27T10:26:44+0900",
+   "output_tail": "4 files left unchanged\nAll checks passed!\n........................................................................ [ 62%]\n...........................................                              [100%]"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "TestReject::test_source_distance_not_zero_even_within_abs_tolerance"
+   ],
+   "command": "mutation run (scratch copy of tests/python with check_double's `if dist[source] != 0:` replaced by `if False:`): python -m pytest <copy> -q",
+   "exit_code": 1,
+   "reason": "mutation analysis found the source-distance check unprotected (with d*(source)=0 the tolerance check also caught it unless abs>0); new test requires dist[source]==0 exactly even within an abs tolerance and fails against the mutant: 1 failed, 115 passed. Against the real implementation it passes (behaviour already specified by the task, test was too weak)",
+   "timestamp": "2026-11-27T10:31:57+0900",
+   "output_tail": "[no-source-check] exit=1 1 failed, 115 passed in 1.08s"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all 116"
+   ],
+   "command": "uv run ruff format tests/python && uv run ruff check tests/python && uv run pytest tests/python -q",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:32:16+0900",
+   "output_tail": "4 files left unchanged\nAll checks passed!\n........................................................................ [ 62%]\n............................................                             [100%]\n116 passed in 1.10s"
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "test_tree_bound_allows_rounding_on_both_sides"
+   ],
+   "command": "uv run pytest tests/python -q -k tree_bound_allows",
+   "exit_code": 1,
+   "reason": "regression (reviewer): with the old tree bound L <= (1+rel) d* + abs, a legitimate rel-accurate result (dist = 1.01 = (1+rel) d*, tree edge L = 1.015, (1-rel) L <= dist) is falsely rejected; the sound bound is ((1+rel) d* + abs)/(1-rel)",
+   "timestamp": "2026-11-27T10:34:23+09:00",
+   "output_tail": "=================================== FAILURES ===================================\n________________ test_tree_bound_allows_rounding_on_both_sides _________________\n\n    def test_tree_bound_allows_rounding_on_both_sides():\n        # Regression: the tree-path bound must be ((1+rel) d* + abs) / (1-rel), not (1+rel) d* + abs.\n        # d* = 1 via edge 0; the result reports 1 + rel (allowed) through the heavier edge 1 whose\n        # exact length L = 1.015 is itself within rel of that value, so it is a legitimate\n        # rel-accurate result: (1 - rel) L <= dist <= (1 + rel) d*.\n        result = {\"n\": 2, \"source\": 0, \"dist\": [F(0), F(101, 100)], \"parent\": [-1, 0]}\n        result[\"parent_edge\"] = [-1, 1]\n        edges = [(0, 1, F(1)), (0, 1, F(1015, 1000))]\n        report = check_double.check(2, edges, result, rel=F(1, 100), weights=\"exact\")\n>       assert report.ok, report.failures\nE       AssertionError: ['vertex 1: parent tree path length 1.0149999999999999 outside [1, 1.01]']\nE       assert False\nE        +  where False = Report(failures=['vertex 1: parent tree path length 1.0149999999999999 outside [1, 1.01]'], rel=Fraction(1, 100), abs_tol=Fraction(0, 1), hops=1).ok\n\ntests/python/test_exact_reference.py:759: AssertionError\n=========================== short test summary info ============================\nFAILED tests/python/test_exact_reference.py::test_tree_bound_allows_rounding_on_both_sides"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all tests/python (incl. tree bound regression and C++ dump contract)"
+   ],
+   "command": "uv run pytest tests/python -q",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:34:32+09:00",
+   "output_tail": "........................................................................ [ 61%]\n..............................................                           [100%]"
+  }
+ ],
+ "notes": "Mutation sanity check (12 mutants of the implementation, run on a scratch copy): all killed after the strengthening above (tree-length check off, strict boundary, hops=n, decimal JSON parsing, endpoint check off, reachability check off, short Bellman-Ford, Dijkstra first-relaxation-only, negative weight accepted, m mismatch accepted; removing the cycle check makes the walk loop forever, killed by timeout).",
+ "commit": "a8f4cf9"
+}

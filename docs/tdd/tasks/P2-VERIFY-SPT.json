@@ -1,0 +1,73 @@
+{
+ "id": "P2-VERIFY-SPT",
+ "spec": "verify_sssp checks a single-source result without trusting the algorithm: sizes, dist[source]=0, parent edge existence/endpoints, tree distance consistency, acyclic parent pointers reaching the source, unreachable <=> infinite with no parent (checked by BFS), the optimality certificate dist[v] <= dist[u]+w on every arc, and optional reference agreement; exact for integers, gamma_k tolerance for doubles; JSON dump for exact rational checking",
+ "paper_ref": "none (comparison-addition model, Sec 2, is the reason exact and rounded checks are separated)",
+ "files": {
+  "impl": [
+   "include/sssp/verify.hpp",
+   "src/verify/verify.cpp"
+  ],
+  "tests": [
+   "tests/unit/verify/test_verify.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "verify *",
+    "Tolerance follows the gamma_k bound for k-hop rounded sums",
+    "write_result_json dumps round-trippable distances"
+   ],
+   "command": "bash -c cmake --build --preset debug 2>&1 | grep -E \"error\" | head -5; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'sssp/verify.hpp' file not found (feature absent)",
+   "timestamp": "2026-11-27T10:27:04+09:00",
+   "output_tail": "tests/unit/verify/test_verify.cpp:17:10: fatal error: 'sssp/verify.hpp' file not found\n1 error generated."
+  },
+  {
+   "phase": "RED",
+   "tests": [
+    "verify detects broken results",
+    "verify detects a zero-weight parent cycle that every distance check misses",
+    "verify compares against a reference when given",
+    "verify applies the tolerance to double distances only"
+   ],
+   "command": "bash -c cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 8,
+   "reason": "against an accept-everything stub (verify_sssp returns ok, for_path_hops returns 0, dump writes nothing) every corrupted-result case (wrong distance, parent cycle, missing parent edge, reachable-but-inf, ...) fails: the tests detect broken results",
+   "timestamp": "2026-11-27T10:28:05+09:00",
+   "output_tail": "Label Time Summary:\nunit    =   0.94 sec*proc (40 tests)\n\nTotal Test time (real) =   0.24 sec\n\nThe following tests FAILED:\n\t 25 - unit:verify detects broken results - U64 (Failed) unit\n\t 26 - unit:verify detects broken results - double (Failed) unit\n\t 27 - unit:verify detects a zero-weight parent cycle that every distance check misses - U64 (Failed) unit\n\t 28 - unit:verify detects a zero-weight parent cycle that every distance check misses - double (Failed) unit\n\t 31 - unit:verify compares against a reference when given - U64 (Failed) unit\n\t 32 - unit:verify compares against a reference when given - double (Failed) unit\n\t 33 - unit:verify rejects NaN and negative double distances (Failed) unit\n\t 34 - unit:Tolerance follows the gamma_k bound for k-hop rounded sums (Failed) unit\n\t 35 - unit:verify applies the tolerance to double distances only (Failed) unit\n\t 36 - unit:verify is exact for integer weights regardless of tolerance (Failed) unit\n\t 37 - unit:verify reports integer overflow on a tree edge (Failed) unit\n\t 38 - unit:verify caps recorded failures but counts all of them (Failed) unit\n\t 40 - unit:write_result_json dumps round-trippable distances (Failed) unit\nErrors while running CTest"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all verify cases"
+   ],
+   "command": "bash -c cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:29:26+09:00",
+   "output_tail": "      Start 26: unit:verify detects broken results - double\n31/40 Test #24: unit:verify accepts a correct shortest-path tree - double ..................................   Passed    0.01 sec\n      Start  1: unit:Bellman-Ford rejects an invalid source - U64\n32/40 Test #23: unit:verify accepts a correct shortest-path tree - U64 .....................................   Passed    0.01 sec\n      Start 25: unit:verify detects broken results - U64\n33/40 Test #30: unit:verify does not require a particular tree among equal-length paths - double ...........   Passed    0.01 sec\n34/40 Test #20: unit:weight traits define infinity per weight type .........................................   Passed    0.01 sec\n35/40 Test #26: unit:verify detects broken results - double ................................................   Passed    0.01 sec\n36/40 Test  #1: unit:Bellman-Ford rejects an invalid source - U64 ..........................................   Passed    0.01 sec\n37/40 Test #25: unit:verify detects broken results - U64 ...................................................   Passed    0.01 sec\n38/40 Test #12: unit:Bellman-Ford with double weights matches Floyd-Warshall where sums are exact ..........   Passed    0.12 sec\n39/40 Test #11: unit:Bellman-Ford matches Floyd-Warshall on the required graph catalogue - U64 .............   Passed    0.13 sec\n40/40 Test #39: unit:verify accepts Bellman-Ford on the required catalogue .................................   Passed    0.22 sec\n\n100% tests passed, 0 tests failed out of 40\n\nLabel Time Summary:\nunit    =   0.97 sec*proc (40 tests)\n\nTotal Test time (real) =   0.22 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "command": "bash -c cmake --build --preset ci && ctest --preset ci",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:30:33+09:00",
+   "output_tail": "      Start 13: unit:Bellman-Ford with double weights is exact in the IEEE-754 path algebra\n33/40 Test  #7: unit:Bellman-Ford uses the lighter of parallel edges and ignores self-loops - U64 ..........   Passed    0.01 sec\n      Start  8: unit:Bellman-Ford uses the lighter of parallel edges and ignores self-loops - double\n34/40 Test #23: unit:verify accepts a correct shortest-path tree - U64 .....................................   Passed    0.01 sec\n      Start 18: unit:CSR keeps multi-edges, self-loops and isolated vertices\n35/40 Test #27: unit:verify detects a zero-weight parent cycle that every distance check misses - U64 ......   Passed    0.01 sec\n      Start 19: unit:CSR rejects invalid input with clear errors\n36/40 Test #13: unit:Bellman-Ford with double weights is exact in the IEEE-754 path algebra ................   Passed    0.02 sec\n      Start 25: unit:verify detects broken results - U64\n37/40 Test  #8: unit:Bellman-Ford uses the lighter of parallel edges and ignores self-loops - double .......   Passed    0.02 sec\n38/40 Test #18: unit:CSR keeps multi-edges, self-loops and isolated vertices ...............................   Passed    0.02 sec\n39/40 Test #19: unit:CSR rejects invalid input with clear errors ...........................................   Passed    0.02 sec\n40/40 Test #25: unit:verify detects broken results - U64 ...................................................   Passed    0.01 sec\n\n100% tests passed, 0 tests failed out of 40\n\nLabel Time Summary:\nunit    =   1.65 sec*proc (40 tests)\n\nTotal Test time (real) =   0.43 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "tests": [
+    "verify accepts Bellman-Ford on the required catalogue"
+   ],
+   "command": "bash -c cmake --build --preset ci && ctest --preset ci",
+   "exit_code": 0,
+   "reason": "tolerance for comparing two rounded results set to gamma_{2k} per docs/design/numerics.md 3.2 (2 gamma_k/(1-gamma_k) = gamma_{2k}); no expected value changed",
+   "timestamp": "2026-11-27T10:36:37+09:00",
+   "output_tail": "51/58 Test #33: unit:required catalogue contains every mandatory family ....................................   Passed    0.01 sec\n      Start 19: unit:Counted copies, constructions and value() are free\n52/58 Test #20: unit:CountedScope measures the delta of a region ...........................................   Passed    0.01 sec\n      Start 23: unit:WeightTraits support Counted weights - double\n53/58 Test #35: unit:Floyd-Warshall on a hand-computed graph ...............................................   Passed    0.01 sec\n      Start 21: unit:Counted statistics are per thread\n54/58 Test #19: unit:Counted copies, constructions and value() are free ....................................   Passed    0.01 sec\n      Start 22: unit:WeightTraits support Counted weights - U64\n55/58 Test #23: unit:WeightTraits support Counted weights - double .........................................   Passed    0.01 sec\n56/58 Test #21: unit:Counted statistics are per thread .....................................................   Passed    0.01 sec\n57/58 Test #22: unit:WeightTraits support Counted weights - U64 ............................................   Passed    0.01 sec\n58/58 Test #56: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} ....................   Passed    1.20 sec\n\n100% tests passed, 0 tests failed out of 58\n\nLabel Time Summary:\ndifferential    =   1.38 sec*proc (4 tests)\nunit            =   1.03 sec*proc (54 tests)\n\nTotal Test time (real) =   1.74 sec"
+  }
+ ],
+ "commit": "cd433dc"
+}

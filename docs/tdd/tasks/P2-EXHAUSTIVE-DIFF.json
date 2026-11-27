@@ -1,0 +1,49 @@
+{
+ "id": "P2-EXHAUSTIVE-DIFF",
+ "spec": "Test support: deterministic SplitMix64, required graph catalogue, exhaustive enumeration of all weighted simple graphs (n<=4 x {0,1,2}, n=5 x {0,1}); Bellman-Ford vs in-test Floyd-Warshall on every graph and source, each result also passing verify_sssp",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "tests/support/enumerate.hpp",
+   "tests/support/graphs.hpp",
+   "tests/support/prng.hpp"
+  ],
+  "tests": [
+   "tests/differential/test_exhaustive_small.cpp",
+   "tests/unit/support/test_support.cpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "exhaustive: *",
+    "small-graph enumeration is complete and duplicate-free"
+   ],
+   "command": "bash -c cmake --build --preset debug 2>&1 | grep -E \"error\" | head -4; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "fatal error: 'support/enumerate.hpp' file not found: the enumerator (a draft written before these tests) was moved out of the tree to confirm the tests depend on it",
+   "timestamp": "2026-11-27T10:32:45+09:00",
+   "output_tail": "tests/unit/support/test_support.cpp:11:10: fatal error: 'support/enumerate.hpp' file not found\n1 error generated.\ntests/differential/test_exhaustive_small.cpp:12:10: fatal error: 'support/enumerate.hpp' file not found\n1 error generated."
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all differential and support cases"
+   ],
+   "command": "bash -c cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:33:02+09:00",
+   "output_tail": "49/58 Test #37: unit:verify accepts a correct shortest-path tree - U64 .....................................   Passed    0.02 sec\n      Start 39: unit:verify detects broken results - U64\n50/58 Test #53: unit:verify accepts Bellman-Ford on the required catalogue .................................   Passed    0.21 sec\n      Start 30: unit:SplitMix64 matches the reference sequence\n51/58 Test #28: unit:weight traits define infinity per weight type .........................................   Passed    0.02 sec\n52/58 Test #17: unit:Counted counts each addition and comparison - U64 .....................................   Passed    0.02 sec\n53/58 Test  #1: unit:Bellman-Ford rejects an invalid source - U64 ..........................................   Passed    0.03 sec\n54/58 Test #16: unit:Bellman-Ford fills comparison-addition counters - double ..............................   Passed    0.05 sec\n55/58 Test #30: unit:SplitMix64 matches the reference sequence .............................................   Passed    0.02 sec\n56/58 Test #50: unit:verify is exact for integer weights regardless of tolerance ...........................   Passed    0.08 sec\n57/58 Test #39: unit:verify detects broken results - U64 ...................................................   Passed    0.03 sec\n58/58 Test #56: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} ....................   Passed    1.19 sec\n\n100% tests passed, 0 tests failed out of 58\n\nLabel Time Summary:\ndifferential    =   1.35 sec*proc (4 tests)\nunit            =   1.41 sec*proc (54 tests)\n\nTotal Test time (real) =   1.19 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "command": "bash -c cmake --build --preset ci && ctest --preset ci",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:33:06+09:00",
+   "output_tail": "52/58 Test #35: unit:Floyd-Warshall on a hand-computed graph ...............................................   Passed    0.01 sec\n      Start 56: differential:exhaustive: all simple graphs with n = 5 and weights {0,1}\n53/58 Test #32: unit:small-graph enumeration is complete and duplicate-free ................................   Passed    0.02 sec\n      Start 57: differential:exhaustive: double weights {0, 0.5, 1} on n <= 4 (dyadic sums are exact)\n54/58 Test #55: differential:exhaustive: all simple graphs with n <= 4 and weights {0,1,2} .................   Passed    0.07 sec\n      Start 58: differential:random multigraphs: Bellman-Ford vs Floyd-Warshall\n55/58 Test #57: differential:exhaustive: double weights {0, 0.5, 1} on n <= 4 (dyadic sums are exact) ......   Passed    0.07 sec\n56/58 Test #58: differential:random multigraphs: Bellman-Ford vs Floyd-Warshall ............................   Passed    0.03 sec\n57/58 Test #34: unit:catalogue shapes have their defining properties .......................................   Passed    0.12 sec\n58/58 Test #56: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} ....................   Passed    1.19 sec\n\n100% tests passed, 0 tests failed out of 58\n\nLabel Time Summary:\ndifferential    =   1.35 sec*proc (4 tests)\nunit            =   1.01 sec*proc (54 tests)\n\nTotal Test time (real) =   2.23 sec\n-- GLOB mismatch!\n-- GLOB mismatch!"
+  }
+ ],
+ "commit": "8c7a462"
+}

@@ -1,0 +1,48 @@
+{
+ "id": "P2-BELLMAN-FORD",
+ "spec": "Round-based, queue-free Bellman-Ford oracle for uint64_t and double: exact distances, a shortest-path tree with parent edge ids, unreachable = infinity, integer overflow of a true distance throws, comparison/addition counters",
+ "paper_ref": null,
+ "files": {
+  "impl": [
+   "src/baseline/bellman_ford.cpp"
+  ],
+  "tests": [
+   "tests/unit/baseline/test_bellman_ford.cpp",
+   "tests/support/graphs.hpp",
+   "tests/support/floyd_warshall.hpp",
+   "tests/support/prng.hpp"
+  ]
+ },
+ "phase": "DONE",
+ "events": [
+  {
+   "phase": "RED",
+   "tests": [
+    "Bellman-Ford *"
+   ],
+   "command": "bash -c cmake --build --preset debug 2>&1 | grep -E \"error|Undefined|undefined|FAILED|ld:\" | head -20; exit ${PIPESTATUS[0]}",
+   "exit_code": 1,
+   "reason": "link error: undefined symbol sssp::baseline::bellman_ford<...> (feature absent)",
+   "timestamp": "2026-11-27T10:25:15+09:00",
+   "output_tail": "FAILED: [code=1] tests/sssp_unit_tests \nUndefined symbols for architecture arm64:\nld: symbol(s) not found for architecture arm64\nclang++: error: linker command failed with exit code 1 (use -v to see invocation)"
+  },
+  {
+   "phase": "GREEN",
+   "tests": [
+    "all Bellman-Ford cases"
+   ],
+   "command": "bash -c cmake --build --preset debug && ctest --preset debug",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:25:37+09:00",
+   "output_tail": "      Start 20: unit:weight traits define infinity per weight type\n13/22 Test #22: unit:library exposes version and target paper ..........................................   Passed    0.01 sec\n      Start  4: unit:Bellman-Ford on a single vertex - double\n14/22 Test #18: unit:CSR keeps multi-edges, self-loops and isolated vertices ...........................   Passed    0.01 sec\n      Start  1: unit:Bellman-Ford rejects an invalid source - U64\n15/22 Test #14: unit:Bellman-Ford detects integer distance overflow ....................................   Passed    0.02 sec\n16/22 Test #10: unit:Bellman-Ford handles zero-weight cycles without a parent cycle - double ...........   Passed    0.01 sec\n17/22 Test #20: unit:weight traits define infinity per weight type .....................................   Passed    0.01 sec\n18/22 Test  #1: unit:Bellman-Ford rejects an invalid source - U64 ......................................   Passed    0.01 sec\n19/22 Test  #4: unit:Bellman-Ford on a single vertex - double ..........................................   Passed    0.02 sec\n20/22 Test  #3: unit:Bellman-Ford on a single vertex - U64 .............................................   Passed    0.02 sec\n21/22 Test #12: unit:Bellman-Ford with double weights matches Floyd-Warshall where sums are exact ......   Passed    0.12 sec\n22/22 Test #11: unit:Bellman-Ford matches Floyd-Warshall on the required graph catalogue - U64 .........   Passed    0.13 sec\n\n100% tests passed, 0 tests failed out of 22\n\nLabel Time Summary:\nunit    =   0.59 sec*proc (22 tests)\n\nTotal Test time (real) =   0.13 sec"
+  },
+  {
+   "phase": "REFACTOR",
+   "command": "bash -c cmake --build --preset ci && ctest --preset ci",
+   "exit_code": 0,
+   "timestamp": "2026-11-27T10:30:33+09:00",
+   "output_tail": "      Start 35: unit:verify applies the tolerance to double distances only\n33/40 Test #22: unit:library exposes version and target paper ..............................................   Passed    0.02 sec\n      Start 31: unit:verify compares against a reference when given - U64\n34/40 Test #10: unit:Bellman-Ford handles zero-weight cycles without a parent cycle - double ...............   Passed    0.02 sec\n      Start 36: unit:verify is exact for integer weights regardless of tolerance\n35/40 Test #35: unit:verify applies the tolerance to double distances only .................................   Passed    0.03 sec\n      Start 30: unit:verify does not require a particular tree among equal-length paths - double\n36/40 Test #31: unit:verify compares against a reference when given - U64 ..................................   Passed    0.03 sec\n      Start 23: unit:verify accepts a correct shortest-path tree - U64\n37/40 Test #36: unit:verify is exact for integer weights regardless of tolerance ...........................   Passed    0.03 sec\n38/40 Test #30: unit:verify does not require a particular tree among equal-length paths - double ...........   Passed    0.02 sec\n39/40 Test #23: unit:verify accepts a correct shortest-path tree - U64 .....................................   Passed    0.02 sec\n40/40 Test #39: unit:verify accepts Bellman-Ford on the required catalogue .................................   Passed    0.47 sec\n\n100% tests passed, 0 tests failed out of 40\n\nLabel Time Summary:\nunit    =   1.77 sec*proc (40 tests)\n\nTotal Test time (real) =   1.11 sec"
+  }
+ ],
+ "commit": "10b7145"
+}
