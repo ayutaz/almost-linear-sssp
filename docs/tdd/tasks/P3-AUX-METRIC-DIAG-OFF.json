@@ -15,7 +15,7 @@
       "include/sssp/result.hpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -26,5 +26,5 @@
       "output_tail": "        Start 925: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n918/925 Test #919: property:split-findmin property: blocked work per record shrinks with the blocking depth ................................................................   Passed    0.14 sec\n919/925 Test #925: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.06 sec\n920/925 Test #917: property:split-findmin property: one blocking step stays within the Lemma 3.11 bounds ...................................................................   Passed    0.94 sec\n921/925 Test #913: property:name_routes: Mode A certificates against Bellman-Ford, measured acceptance .....................................................................   Passed    1.24 sec\n922/925 Test #828: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ...................................................................   Passed    7.33 sec\n923/925 Test #918: property:split-findmin property: two blocking steps stay within the Lemma 3.11 bounds ...................................................................   Passed    5.68 sec\n924/925 Test #883: property:Lemmas 7.1 and 7.2 on seeded graph families - double ...........................................................................................   Passed   11.80 sec\n925/925 Test #882: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed   67.65 sec\n\n100% tests passed, 0 tests failed out of 925\n\nLabel Time Summary:\ndifferential    =  21.18 sec*proc (55 tests)\nintegration     =   0.66 sec*proc (6 tests)\nproperty        = 105.40 sec*proc (45 tests)\nregression      =   0.11 sec*proc (6 tests)\nunit            = 134.27 sec*proc (813 tests)\n\nTotal Test time (real) =  91.75 sec"
     }
   ],
-  "commit": null
+  "commit": "8060c5f"
 }
