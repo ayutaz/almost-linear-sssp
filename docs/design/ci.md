@@ -16,7 +16,7 @@ The local quality gate is `make verify`, and CI follows the same commands (CMake
 
 ### ci.yml
 
-- **matrix**: `os = [macos-26, ubuntu-26.04]` x `preset = [ci, ci-release]` x `shard = [labels, slow]` (`fail-fast: false`). The `slow` shard runs only the `slow` label on its own runner, so that each job stays under its 45-minute limit.
+- **matrix**: `os = [macos-26, ubuntu-26.04]` x `preset = [ci, ci-release]` x `shard = [labels, slow-1, slow-2]` (`fail-fast: false`). The `labels` shard runs the per-label steps and pytest. The `slow-1` and `slow-2` shards split the `<category>-slow` tests between them with `ctest -I <n>,,2` (every second test of the selection, starting at the n-th), each on its own runner, so that each job stays under its 45-minute limit. The two shards are disjoint and together cover every slow test.
 - **CTest runs as a separate step per label**: `unit`, `integration`, `differential`, `property`, `regression`.
   - Each label is selected with an exact-match regex such as `-L '^unit$'`.
   - `--no-tests=ignore` is passed, so a label with zero tests does not fail.
@@ -32,6 +32,10 @@ The local quality gate is `make verify`, and CI follows the same commands (CMake
 
 ### sanitizer.yml
 
+- **matrix**: `os = [ubuntu-26.04, macos-26]` x `shard = [fast, slow-1, slow-2, slow-3]` (`fail-fast: false`). Every shard configures and builds on its own runner (about 7 minutes of build), then runs a disjoint part of the tests, so the single 27 / 39 minute job becomes four parallel ones.
+  - `fast`: the non-slow labels (`-L '^(unit|integration|differential|property|regression)$'`) and the unlabelled safety net (`-LE '^(unit|integration|differential|property|regression)(-slow)?$'`).
+  - `slow-1`, `slow-2`, `slow-3`: the `<category>-slow` tests (`-L '^(unit|integration|differential|property|regression)-slow$'`), dealt out with `ctest -I <n>,,3`. The slow tests are about 95% of the run time, and every third test of the selection goes to one shard, so the three shards take a similar time.
+  - Every test runs in exactly one shard: the label sets of `fast` and the slow shards are disjoint, the `-LE` step catches tests without a known label, and `-I 1,,3` / `2,,3` / `3,,3` partition the slow selection. The CTest logs of a failed shard are saved as `sanitizer-logs-<os>-<shard>`.
 - `ASAN_OPTIONS` differs per OS.
   - Linux: `detect_leaks=1` (LeakSanitizer enabled), `strict_string_checks`, `detect_stack_use_after_return`, `check_initialization_order`, and so on.
   - macOS: `detect_leaks=0`. ASan in Apple clang does not support LeakSanitizer on macOS. Leak detection is the job of the Linux job.
@@ -189,7 +193,7 @@ CLAUDE.md ("Quality gate") allows a task branch to run the full gate on GitHub A
 
 These workflow settings are required by the flow:
 - The `concurrency.group` includes `inputs.ref` (benchmark: runner and suite). Without it, dispatches started in parallel cancel each other.
-- The `shard = [labels, slow]` matrix axis of the build job (see ci.yml above).
+- The `shard = [labels, slow-1, slow-2]` matrix axis of the build job (see ci.yml above) and the `shard = [fast, slow-1, slow-2, slow-3]` axis of the sanitizer job (see sanitizer.yml above). Add a shard rather than raise a timeout.
 
 ## Verifying with actionlint
 

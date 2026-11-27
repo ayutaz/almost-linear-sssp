@@ -129,9 +129,10 @@ jobs:
         os: [macos-26, ubuntu-26.04]
         # ci = Debug + -Werror, ci-release = Release + -Werror (CMakePresets.json)
         preset: [ci, ci-release]
-        # labels = the per-label ctest steps + pytest; slow = the [slow] (paper-size) tests. Two
-        # runners in parallel keep each job well under timeout-minutes as the suite grows.
-        shard: [labels, slow]
+        # labels = the per-label ctest steps + pytest; slow-1/slow-2 = the [slow] (paper-size) tests,
+        # dealt out by `ctest -I <n>,,2` (every second test of the selection, starting at the n-th).
+        # Parallel runners keep each job well under timeout-minutes as the suite grows.
+        shard: [labels, slow-1, slow-2]
         # workflow_dispatch with os=ubuntu drops the macOS jobs (push events leave inputs empty).
         exclude:
           - os: ${{ inputs.os == 'ubuntu' && 'macos-26' || 'none' }}
@@ -199,8 +200,10 @@ jobs:
         run: ctest --preset "${{ matrix.preset }}" -L '^regression$' --no-tests=ignore
       # Tests tagged [slow] in Catch2 (paper-size inputs) carry the label <category>-slow.
       - name: ctest slow (paper-size inputs)
-        if: ${{ !cancelled() && matrix.shard == 'slow' && steps.build.outcome == 'success' }}
-        run: ctest --preset "${{ matrix.preset }}" -L '^(unit|integration|differential|property|regression)-slow$' --no-tests=ignore
+        if: ${{ !cancelled() && startsWith(matrix.shard, 'slow-') && steps.build.outcome == 'success' }}
+        run: ctest --preset "${{ matrix.preset }}" -L '^(unit|integration|differential|property|regression)-slow$' -I "${SHARD#slow-},,2" --no-tests=ignore
+        env:
+          SHARD: ${{ matrix.shard }}
       - name: ctest unlabelled (safety net)
         if: ${{ !cancelled() && matrix.shard == 'labels' && steps.build.outcome == 'success' }}
         run: ctest --preset "${{ matrix.preset }}" -LE '^(unit|integration|differential|property|regression)(-slow)?$' --no-tests=ignore

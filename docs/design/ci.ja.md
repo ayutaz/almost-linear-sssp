@@ -16,7 +16,7 @@
 
 ### ci.yml
 
-- **matrix**: `os = [macos-26, ubuntu-26.04]` × `preset = [ci, ci-release]` × `shard = [labels, slow]`（`fail-fast: false`）。`slow` の shard は `slow` のラベルだけを別の runner で回す。これで、各ジョブが 45 分の上限に収まる。
+- **matrix**: `os = [macos-26, ubuntu-26.04]` × `preset = [ci, ci-release]` × `shard = [labels, slow-1, slow-2]`（`fail-fast: false`）。`labels` の shard は、ラベルごとの段と pytest を回す。`slow-1` と `slow-2` の shard は、`<category>-slow` のテストを `ctest -I <n>,,2`（選んだテストのうち、n 番目から数えて 1 つおき）で分け合い、それぞれ別の runner で回す。これで、各ジョブが 45 分の上限に収まる。2 つの shard は重ならず、合わせて slow のテスト全部を覆う。
 - **CTest はラベルごとに別ステップ**: `unit`、`integration`、`differential`、`property`、`regression`。
   - `-L '^unit$'` のように完全一致の正規表現で指定する。
   - `--no-tests=ignore` を付けるので、テストが0件のラベルでは失敗しない。
@@ -31,6 +31,11 @@
 - 失敗時は `build/<preset>/Testing/Temporary/` を artifact として保存する。
 
 ### sanitizer.yml
+
+- **matrix**: `os = [ubuntu-26.04, macos-26]` × `shard = [fast, slow-1, slow-2, slow-3]`（`fail-fast: false`）。各 shard は自分の runner で configure とビルドを行い（ビルドは約 7 分）、重ならないテストの一部を回す。これで、27 分 / 39 分かかっていた 1 つのジョブが、並列の 4 つになる。
+  - `fast`: slow でないラベル（`-L '^(unit|integration|differential|property|regression)$'`）と、ラベルの無いテストを拾う段（`-LE '^(unit|integration|differential|property|regression)(-slow)?$'`）。
+  - `slow-1`、`slow-2`、`slow-3`: `<category>-slow` のテスト（`-L '^(unit|integration|differential|property|regression)-slow$'`）を `ctest -I <n>,,3` で分ける。slow のテストが実行時間の約 95% を占め、選んだテストを 3 つおきに 1 つの shard へ渡すので、3 つの shard の所要時間はおおむね揃う。
+  - どのテストも、ちょうど 1 つの shard で回る。`fast` と slow の shard のラベルの組は重ならず、`-LE` の段が既知のラベルを持たないテストを拾い、`-I 1,,3` / `2,,3` / `3,,3` が slow の選択を分割する。失敗した shard の CTest のログは `sanitizer-logs-<os>-<shard>` として保存する。
 
 - `ASAN_OPTIONS` は OS ごとに分ける。
   - Linux: `detect_leaks=1`（LeakSanitizer 有効）、`strict_string_checks`、`detect_stack_use_after_return`、`check_initialization_order` など。
@@ -189,7 +194,7 @@ CLAUDE.md（「Quality gate」）では、タスクのブランチの全体の�
 
 この流れには、次のワークフローの設定が要る。
 - `concurrency.group` に `inputs.ref`（benchmark では runner と suite）を入れる。入れないと、並べて起動した実行が互いを取り消す。
-- ビルドのジョブの matrix の `shard = [labels, slow]`（上の ci.yml を参照）。
+- ビルドのジョブの matrix の `shard = [labels, slow-1, slow-2]`（上の ci.yml を参照）と、sanitizer のジョブの `shard = [fast, slow-1, slow-2, slow-3]`（上の sanitizer.yml を参照）。timeout を延ばす代わりに、shard を足す。
 
 ## actionlint での検証
 
