@@ -26,7 +26,7 @@
       "src/paper/hierarchy/ordered_hierarchy.hpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -62,5 +62,5 @@
       "output_tail": "          Start 1094: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle\n1096/1103 Test #1100: unit:bench-driver:size limits of the registry are refusals, not results .................................................................................   Passed    0.03 sec\n1097/1103 Test #1093: regression:20261127-double-sum-overflow: double checked_add throws iff the rounded sum is inf ...........................................................   Passed    0.03 sec\n1098/1103 Test #1008: differential:every baseline rejects an invalid source with std::out_of_range - double ...................................................................   Passed    0.08 sec\n1099/1103 Test #1102: unit:bench-driver:driver arguments are parsed and validated .............................................................................................   Passed    0.03 sec\n1100/1103 Test #1091: regression:20261127-double-sum-overflow: bellman_ford reports the unrepresentable distance ..............................................................   Passed    0.03 sec\n1101/1103 Test #1092: regression:20261127-double-sum-overflow: Dijkstra baselines must not return inf for a reachable vertex ..................................................   Passed    0.03 sec\n1102/1103 Test #1094: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.04 sec\n1103/1103 Test #1037: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  172.09 sec\n\n100% tests passed, 0 tests failed out of 1103\n\nLabel Time Summary:\ndifferential    = 183.25 sec*proc (76 tests)\nintegration     =   2.57 sec*proc (7 tests)\nproperty        = 365.93 sec*proc (72 tests)\nregression      =   0.30 sec*proc (6 tests)\nunit            = 513.55 sec*proc (942 tests)\n\nTotal Test time (real) = 172.12 sec"
     }
   ],
-  "commit": null
+  "commit": "3098e11"
 }
