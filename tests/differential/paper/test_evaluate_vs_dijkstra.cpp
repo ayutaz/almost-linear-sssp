@@ -381,7 +381,7 @@ SeededInstance<double> scaled(const SeededInstance<U>& u, double f) {
 TEST_CASE("evaluate vs dijkstra: non-integer doubles stay within a rounding tolerance (D-15)",
           "[evaluate][differential][double]") {
   // Lengths k * 0.1 are not representable, so the sums of Evaluate, the masses S, the gaps g of
-  // order_children (materialised from a signed pair, D-15) and the origin b - j nu (D-16) are
+  // order_children (materialised from a signed pair, D-15) and the origin b - j nu (D-19) are
   // rounded. Reference: the EXACT integer instance (protected set and delta in uint64), scaled.
   // Tolerance (test-only, documented, deliberately not tight): every real Evaluate compares is
   // a sum, or for g a difference of two sums, of at most K = 4 (N + M + L + H) rounded terms
