@@ -16,7 +16,7 @@
 
 ### ci.yml
 
-- **matrix**:`os = [macos-26, ubuntu-26.04]` x `preset = [ci, ci-release]`(`fail-fast: false`)。
+- **matrix**:`os = [macos-26, ubuntu-26.04]` x `preset = [ci, ci-release]` x `shard = [labels, slow]`(`fail-fast: false`)。`slow` 这个 shard 只在单独的 runner 上运行 `slow` 标签,使每个 job 都在 45 分钟的上限之内。
 - **CTest 按标签分成独立的步骤**:`unit`、`integration`、`differential`、`property`、`regression`。
   - 用 `-L '^unit$'` 这样的完全匹配正则来指定。
   - 附带 `--no-tests=ignore`,所以测试数为 0 的标签不会失败。
@@ -130,7 +130,7 @@
 
 ### concurrency、timeout、paths filter
 
-- `concurrency.group = <workflow>-<ref>`,`cancel-in-progress: true`。同一分支或 PR 上有新的 push 到来时,停止旧的运行。只有 release 是例外(见上文)。
+- `concurrency.group = <workflow>-<ref>-<inputs.ref>`(benchmark 为 `<workflow>-<ref>-<inputs.runner>-<inputs.suite>`),`cancel-in-progress: true`。有了 `inputs` 这一部分,并行手动启动的运行不会互相取消。同一分支或 PR 上有新的 push 到来时,停止旧的运行。只有 release 是例外(见上文)。
 - 所有 job 都设置 `timeout-minutes`(lint 25、构建 45、sanitizer 60、release 60、benchmark 90 / full 350)。
 - `ci.yml` 和 `sanitizer.yml` 使用 `paths-ignore: docs/**, **/*.md, LICENSE, .gitignore`。只改动文档时不会构建。
   - **注意**:对于因 paths filter 而没有启动 workflow 的 PR,必需检查会一直处于"挂起"状态。如果要在分支保护中把 `ci result` 设为必需检查,就要配置成"只改文档的 PR 不要求该检查",或者把 paths filter 改为在 job 内部判断。
@@ -162,6 +162,34 @@
    - Homebrew 的 llvm
    - PATH
    - `.profraw` 的格式随 LLVM 版本而不同,所以必须使用与编译器相同版本的工具。
+
+## 把任务分支的完整检查转移到 GitHub Actions
+
+按照 CLAUDE.md("Quality gate"),任务分支的完整检查可以不在本地机器上,而在 GitHub Actions 上运行。工具位于 `scripts/ci/`。详细步骤见 `git-workflow` skill(`.claude/skills/git-workflow/SKILL.md`)。
+
+| 工具 | 作用 |
+|---|---|
+| `scripts/ci/offload.sh <name> [<sha>]` | public-safety 检查、不使用 force 推送到 `wip/<name>`、启动 `ci` 和 `sanitizer` |
+| `scripts/ci/wait.py <sha>... [--since ISO]` | 以很少的 API 调用等待这些运行;只有全部为 `success` 时退出码才为 0 |
+| `scripts/ci/changed_tidy.sh <base>` | 对 `<base>..HEAD` 中变更的 `src/` 和 `tools/` 下的 `.cpp` 运行 clang-tidy,设置与 `make tidy` 相同(`build/<preset>/compile_commands.json`) |
+
+1. 在本地运行最小检查:该任务自己的测试、`make format-check`、`scripts/ci/changed_tidy.sh main`、`uv run python scripts/tdd.py check`。
+2. `scripts/ci/offload.sh <name>`
+   - 对自与 main 的 merge base 以来变更的文件(`<sha>` 时的内容)运行 `scripts/check_public_safety.py`,并检查提交信息中是否含有本地路径。只要发现问题,就在 push 之前停止。
+   - 不使用 force 推送到 `wip/<name>`。如果该分支已存在且不是 `<sha>` 的祖先,则改为推送到 `wip/<name>-<sha7>`。
+   - 推送目标为 `SSSP_REPO_URL`,未设置时为 `origin`。绝不添加或更改 remote。
+   - 对 `ci` 和 `sanitizer` 运行 `gh workflow run <workflow>.yml --ref main -f os=ubuntu -f ref=<sha>`。`--ref main` 表示从 main 取得 workflow 的定义,`ref` 是要检查的提交,`os=ubuntu` 去掉 macOS 的 job(macOS 的 runner 容易拥堵)。
+   - 输出 `ref=... sha=... since=...` 以及等待用的命令。设置 `SSSP_DRY_RUN=1` 时,只显示 push 和启动的命令而不执行。
+3. `scripts/ci/wait.py <sha> --since <since>`
+   - 启动的运行的标题(`run-name`)为 `<workflow> <sha> os=<os>`,例如 `ci <sha> os=ubuntu`。按标题中的 SHA 匹配运行。
+   - 每 90 秒、每个 workflow 只调用一次 `gh run list`,并对所有 SHA 一并判定。同时运行多个 `gh run watch` 曾达到 GitHub API 的上限(每小时 5000 次)。
+   - 只计入在 `--since` 及之后创建的运行,因此不会把同一 SHA 的旧运行(例如已取消的运行)误认为新的运行。
+   - 对每个 SHA 输出 `<sha7> GREEN` 或 `<sha7> RED`。退出码:所有运行都为 `success` 时为 0,否则为 1,超时(`--timeout-min`,默认 240)或无法确定仓库时为 2。仓库取自 `SSSP_REPO`(`owner/name`)或 `gh repo view`。
+4. 两者都为 green 后,用 `git merge --no-ff` 把分支合并到 main,然后删除 `wip/<name>`。
+
+这个流程需要以下 workflow 设置:
+- `concurrency.group` 中包含 `inputs.ref`(benchmark 为 runner 和 suite)。否则,并行启动的运行会互相取消。
+- 构建 job 的 matrix 中的 `shard = [labels, slow]`(见上文 ci.yml)。
 
 ## 用 actionlint 验证
 

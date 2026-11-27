@@ -16,7 +16,7 @@ The local quality gate is `make verify`, and CI follows the same commands (CMake
 
 ### ci.yml
 
-- **matrix**: `os = [macos-26, ubuntu-26.04]` x `preset = [ci, ci-release]` (`fail-fast: false`).
+- **matrix**: `os = [macos-26, ubuntu-26.04]` x `preset = [ci, ci-release]` x `shard = [labels, slow]` (`fail-fast: false`). The `slow` shard runs only the `slow` label on its own runner, so that each job stays under its 45-minute limit.
 - **CTest runs as a separate step per label**: `unit`, `integration`, `differential`, `property`, `regression`.
   - Each label is selected with an exact-match regex such as `-L '^unit$'`.
   - `--no-tests=ignore` is passed, so a label with zero tests does not fail.
@@ -130,7 +130,7 @@ Sources checked:
 
 ### concurrency, timeout, paths filter
 
-- `concurrency.group = <workflow>-<ref>` with `cancel-in-progress: true`. When a new push arrives on the same branch or PR, the old run is stopped. Only release is an exception (see above).
+- `concurrency.group = <workflow>-<ref>-<inputs.ref>` (benchmark: `<workflow>-<ref>-<inputs.runner>-<inputs.suite>`) with `cancel-in-progress: true`. The `inputs` part keeps parallel manual dispatches from cancelling each other. When a new push arrives on the same branch or PR, the old run is stopped. Only release is an exception (see above).
 - Every job has `timeout-minutes` (lint 25, build 45, sanitizer 60, release 60, benchmark 90 / full 350).
 - `ci.yml` and `sanitizer.yml` use `paths-ignore: docs/**, **/*.md, LICENSE, .gitignore`. A documentation-only change does not trigger a build.
   - **Note**: for a PR where the workflow did not start because of the paths filter, the required check stays "pending". If you make `ci result` a required check in branch protection, either configure "do not require the check for docs-only PRs" or move the paths filter into a decision inside the jobs.
@@ -162,6 +162,34 @@ Sources checked:
    - Homebrew llvm
    - PATH
    - The `.profraw` format differs between LLVM versions, so you must use tools of the same version as the compiler.
+
+## Offloading the full gate of a task branch
+
+CLAUDE.md ("Quality gate") allows a task branch to run the full gate on GitHub Actions instead of the local machine. The tools are in `scripts/ci/`. The step-by-step procedure is in the `git-workflow` skill (`.claude/skills/git-workflow/SKILL.md`).
+
+| Tool | What it does |
+|---|---|
+| `scripts/ci/offload.sh <name> [<sha>]` | public-safety audit, push to `wip/<name>` without force, dispatch of `ci` and `sanitizer` |
+| `scripts/ci/wait.py <sha>... [--since ISO]` | waits for those runs with few API calls; exit code 0 only if all of them are `success` |
+| `scripts/ci/changed_tidy.sh <base>` | clang-tidy on the `src/` and `tools/` `.cpp` files changed in `<base>..HEAD`, with the settings of `make tidy` (`build/<preset>/compile_commands.json`) |
+
+1. Locally, run the minimum checks: the task's own tests, `make format-check`, `scripts/ci/changed_tidy.sh main` and `uv run python scripts/tdd.py check`.
+2. `scripts/ci/offload.sh <name>`
+   - It runs `scripts/check_public_safety.py` on the files changed since the merge base with main (their contents at `<sha>`), and checks the commit messages for local paths. Any finding stops it before the push.
+   - It pushes to `wip/<name>` without force. If that branch already exists and is not an ancestor of `<sha>`, it pushes to `wip/<name>-<sha7>` instead.
+   - The destination is `SSSP_REPO_URL`, otherwise `origin`. It never adds or changes a remote.
+   - It runs `gh workflow run <workflow>.yml --ref main -f os=ubuntu -f ref=<sha>` for `ci` and `sanitizer`. `--ref main` takes the workflow definition from main, `ref` is the commit that is checked out, and `os=ubuntu` drops the macOS jobs (the macOS runner queue jams easily).
+   - It prints `ref=... sha=... since=...` and the wait command. `SSSP_DRY_RUN=1` prints the push and dispatch commands instead of running them.
+3. `scripts/ci/wait.py <sha> --since <since>`
+   - The run title (`run-name`) of a dispatched run is `<workflow> <sha> os=<os>`, for example `ci <sha> os=ubuntu`. Runs are matched by the SHA in the title.
+   - It calls `gh run list` once per workflow every 90 s, for all SHAs together. Running several `gh run watch` at the same time reached the GitHub API limit (5000 requests per hour).
+   - Only runs created at or after `--since` count, so an older run of the same SHA (for example a cancelled one) is never taken for the new dispatch.
+   - It prints `<sha7> GREEN` or `<sha7> RED` for each SHA. Exit code: 0 if every run is `success`, 1 otherwise, 2 on timeout (`--timeout-min`, default 240) or when the repository is unknown. The repository comes from `SSSP_REPO` (`owner/name`) or `gh repo view`.
+4. When both are green, merge the branch into main with `git merge --no-ff`, then delete `wip/<name>`.
+
+These workflow settings are required by the flow:
+- The `concurrency.group` includes `inputs.ref` (benchmark: runner and suite). Without it, dispatches started in parallel cancel each other.
+- The `shard = [labels, slow]` matrix axis of the build job (see ci.yml above).
 
 ## Verifying with actionlint
 
