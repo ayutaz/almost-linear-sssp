@@ -17,7 +17,7 @@
       "src/experimental/paper_experimental/name_routes.cpp"
     ]
   },
-  "phase": "GREEN",
+  "phase": "DONE",
   "events": [
     {
       "phase": "GREEN",
@@ -28,5 +28,5 @@
       "output_tail": "      Start 1124: property:P4-RANDOMIZED Mode B D-9 + D-10 NameRoutes: cap hits with the paper's P\n 5/12 Test #1111: property:P4-RANDOMIZED Mode A Estimate: separation at one scale (Lemma 6.5) ...................   Passed   10.61 sec\n      Start 1125: property:P4-RANDOMIZED Mode B D-17 NameRoutes: certificates, measured acceptance, cap hits\n 6/12 Test #1124: property:P4-RANDOMIZED Mode B D-9 + D-10 NameRoutes: cap hits with the paper's P ..............   Passed    4.36 sec\n      Start 1126: property:P4-RANDOMIZED Mode B D-9 Estimate: Z >= d_S and the scan bound (Q-64)\n 7/12 Test #1106: property:P4-RANDOMIZED Mode A NameRoutes: certificates and acceptance, uint64 .................   Passed   16.44 sec\n      Start 1127: property:P4-RANDOMIZED Mode B D-9 Estimate: the P3-ESTIMATE scan bound configuration (Q-64)\n 8/12 Test #1126: property:P4-RANDOMIZED Mode B D-9 Estimate: Z >= d_S and the scan bound (Q-64) ................   Passed    3.28 sec\n      Start 1128: property:P4-RANDOMIZED Mode B D-9 Estimate: separation at one scale (Lemma 6.5, Q-64)\n 9/12 Test #1127: property:P4-RANDOMIZED Mode B D-9 Estimate: the P3-ESTIMATE scan bound configuration (Q-64) ...   Passed    1.57 sec\n10/12 Test #1123: property:P4-RANDOMIZED Mode B D-9 NameRoutes: certificates and acceptance .....................   Passed   13.10 sec\n11/12 Test #1128: property:P4-RANDOMIZED Mode B D-9 Estimate: separation at one scale (Lemma 6.5, Q-64) .........   Passed    5.15 sec\n12/12 Test #1125: property:P4-RANDOMIZED Mode B D-17 NameRoutes: certificates, measured acceptance, cap hits ....   Passed   18.56 sec\n\n100% tests passed, 0 tests failed out of 12\n\nLabel Time Summary:\nproperty    =  89.68 sec*proc (12 tests)\n\nTotal Test time (real) =  38.67 sec"
     }
   ],
-  "commit": null
+  "commit": "b0e1f4f"
 }
