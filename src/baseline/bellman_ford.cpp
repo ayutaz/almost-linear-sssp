@@ -9,9 +9,12 @@
 // is always a tree (no cycle can be closed by a strict decrease), and the result is the exact
 // minimum over paths of the left-to-right rounded path sums (see docs/design/numerics.md).
 //
-// Integer overflow: a candidate sum that would reach infinity() is skipped. If, after
-// convergence, a vertex adjacent to a finite one is still at infinity, its true distance is not
-// representable and std::overflow_error is thrown.
+// Overflow (uint64 and double): a candidate sum that would reach infinity() (uint64: >= 2^64 - 1;
+// double: rounds to +inf) is skipped. If, after convergence, a vertex adjacent to a finite one is
+// still at infinity, its (rounded) distance is not representable and std::overflow_error is
+// thrown. The check is deliberately written here instead of calling
+// WeightTraits<W>::checked_add, which the Dijkstra baselines use: the oracle detects overflow
+// independently of the code under test (docs/design/baselines.md).
 
 #include <cstddef>
 #include <cstdint>
@@ -54,7 +57,7 @@ SsspResult<W> bellman_ford(const CsrGraph<W>& g, Vertex source) {
   r.parent.assign(n, kNoVertex);
   r.parent_edge.assign(n, kNoEdge);
   r.dist[source] = WeightTraits<W>::zero();
-  auto& ops = r.diag.ops;
+  [[maybe_unused]] OpCounters& ops = r.diag.ops;  // unused when SSSP_DIAGNOSTICS=0
 
   std::uint64_t rounds = 0;
   bool changed = true;

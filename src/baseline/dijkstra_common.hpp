@@ -1,7 +1,8 @@
 #pragma once
 // Shared pieces of the Dijkstra baselines. Every variant runs the same scan loop so that they
 // differ only in the priority queue (see docs/design/baselines.md):
-//   - every arc of a scanned vertex costs one addition (checked for integers) and one
+//   - every arc of a scanned vertex costs one addition (WeightTraits::checked_add, which throws
+//     std::overflow_error if the sum is not a finite distance, for uint64 and double) and one
 //     comparison, including arcs back to already-settled vertices and self-loops;
 //   - a vertex's parent / parent_edge are updated on every strict improvement only.
 
