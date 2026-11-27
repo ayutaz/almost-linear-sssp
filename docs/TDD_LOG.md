@@ -192,7 +192,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 - GREEN (exit 0, 2026-11-27T10:55:22+09:00) — `uv run pytest tests/harness/test_tdd_cli.py`
 - RED (exit 1, 2026-11-27T11:09:12+09:00): test-only tasks (kind=test-only + test_only_reason) are not supported: GREEN-first evidence is always rejected, start has no --test-only, green requires RED — `uv run pytest tests/harness/test_tdd_cli.py`
 - GREEN (exit 0, 2026-11-27T11:11:31+09:00) — `uv run pytest tests/harness/test_tdd_cli.py`
-- RED (exit 1, 2026-11-27T11:26:51+09:00): redact() only replaces exact known prefixes: pytest-truncated temp paths ('$TMPDIR'), other /var/folders, /private/tmp and /Users/<name>/ paths still reach the evidence and trip check_public_safety LINE_RULES — `uv run pytest tests/harness/test_tdd_cli.py`
+- RED (exit 1, 2026-11-27T11:26:51+09:00): redact() only replaces exact known prefixes: pytest-truncated temp paths ('$TMPDIR'), other /var/folders, /private/tmp and ~/ paths still reach the evidence and trip check_public_safety LINE_RULES — `uv run pytest tests/harness/test_tdd_cli.py`
 - GREEN (exit 0, 2026-11-27T11:27:26+09:00) — `uv run pytest tests/harness/test_tdd_cli.py`
 
 ## P0-PUBLIC-SAFETY

@@ -15,6 +15,7 @@
 
 #include "paper/primitives/edge_pairs.hpp"
 #include "sssp/graph.hpp"
+#include "sssp/result.hpp"
 
 using sssp::Edge;
 using sssp::EdgeId;
@@ -128,3 +129,36 @@ TEST_CASE("lightest_edge_pairs on many vertices and few edges", "[paper][edge_pa
   REQUIRE(r.kept == std::vector<EdgeId>{0, 4});
   REQUIRE(r.representative == std::vector<EdgeId>{0, 0, kNoEdge, 4, 4});
 }
+
+#if SSSP_DIAGNOSTICS  // operation counts are compiled out when SSSP_DIAGNOSTICS=0
+TEMPLATE_TEST_CASE("lightest_edge_pairs counts one length comparison per further edge of a pair",
+                   "[paper][edge_pairs]", std::uint64_t, double) {
+  using T = TestType;
+  // Groups {0,1}: 3 edges (2 comparisons), {1,2}: 2 edges (1), {0,2}: 1 edge (0); the loop is
+  // dropped without a comparison (Sec 2: lengths are compared only to pick a survivor).
+  const std::vector<Edge<T>> edges{{0, 1, T(5)}, {1, 0, T(3)}, {0, 1, T(3)}, {2, 2, T(1)},
+                                   {1, 2, T(4)}, {2, 1, T(4)}, {0, 2, T(9)}};
+  sssp::OpCounters ops;
+  ops.comparisons = 10;  // counts accumulate into the caller's sink
+  const auto r = lightest_edge_pairs<T>(3, edges, &ops);
+  REQUIRE(ops.comparisons == 13);
+  REQUIRE(r.kept == lightest_edge_pairs<T>(3, edges).kept);
+  REQUIRE(r.representative == lightest_edge_pairs<T>(3, edges).representative);
+  REQUIRE(ops.additions == 0);
+
+  for (std::uint64_t seed = 1; seed <= 200; ++seed) {
+    const std::size_t n = 1 + seed % 17;
+    const std::size_t m = (seed * 11) % (6 * n + 1);
+    const auto g = random_multigraph<T>(n, m, seed % 4, seed);
+    std::uint64_t non_loops = 0;
+    for (const auto& e : g) non_loops += e.u != e.v ? 1 : 0;
+    sssp::OpCounters c;
+    const auto counted = lightest_edge_pairs<T>(n, g, &c);
+    const auto [kept, rep] = map_reference(g);
+    INFO("seed " << seed << " n " << n << " m " << m);
+    REQUIRE(counted.kept == kept);
+    REQUIRE(counted.representative == rep);
+    REQUIRE(c.comparisons == non_loops - kept.size());
+  }
+}
+#endif
