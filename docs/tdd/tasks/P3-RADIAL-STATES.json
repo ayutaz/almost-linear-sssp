@@ -1,0 +1,63 @@
+{
+  "id": "P3-RADIAL-STATES",
+  "spec": "Radial state representation (Def 5.4) with coordinate, shell ratio K and radial/macro classification as parameters, plus the local classification (macro iff intercell and w <= N^3 sigma, K = least power of two >= 8h): two-shell inward/outward copies, blocks, near/far transfers, switches, pivot arcs, macro resets; min over copies equals physical Dijkstra, copies never below physical, block quotient without macros is a DAG, Lemmas 5.5/5.6 on shortest paths, states <= 4N, arcs <= 8m + 2N",
+  "paper_ref": "Sec 5.2 l.1020-1107, Def 5.4, Lemma 5.5, Lemma 5.6, Lemma 5.7",
+  "files": {
+    "impl": [
+      "src/paper/local/radial_states.hpp",
+      "src/paper/local/radial_states.cpp",
+      "src/paper/local/saturating.hpp"
+    ],
+    "tests": [
+      "tests/unit/paper/local/test_radial_states.cpp",
+      "tests/property/paper/test_local_radial_property.cpp",
+      "tests/unit/paper/local/local_test_support.hpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "unit:radial states*",
+        "unit:local shell ratio*",
+        "unit:local classification*",
+        "unit:shell powers*",
+        "unit:omitted edges*",
+        "unit:radial state builder*"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 2>&1 | grep -E \"error|FAILED\" | head -5; exit ${PIPESTATUS[0]}'",
+      "exit_code": 1,
+      "reason": "fatal error: 'paper/local/radial_states.hpp' file not found (Sec 5.2 radial state representation absent)",
+      "timestamp": "2026-11-27T11:24:47+09:00",
+      "output_tail": "FAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/local/test_radial_states.cpp.o \n./tests/unit/paper/local/test_radial_states.cpp:17:10: fatal error: 'paper/local/radial_states.hpp' file not found\n1 error generated."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "unit:radial states of a hand example with K = 2 (uint64_t, double)",
+        "unit:local shell ratio*",
+        "unit:local classification* (2)",
+        "unit:shell powers saturate*",
+        "unit:omitted edges*",
+        "unit:radial state builder rejects*",
+        "property:local radial states satisfy Def 5.4 and Lemmas 5.5-5.7 (6 families x 3 weight laws x 5 seeds x 6 b)"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:30:40+09:00",
+      "output_tail": "        Start 222: unit:Alg 4 below the threshold runs the base case and records the fallback - double\n533/540 Test  #35: unit:Bellman-Ford computes distances and a tree on a small graph - double ...............................................................................   Passed    0.02 sec\n534/540 Test #224: unit:Alg 4 on a single vertex is a base case with one leaf ..............................................................................................   Passed    0.02 sec\n535/540 Test #219: unit:local threshold never wraps around for large exponents or sizes ....................................................................................   Passed    0.02 sec\n536/540 Test #218: unit:local threshold uses the paper constants c = 2, e = 4 by default ...................................................................................   Passed    0.02 sec\n537/540 Test #223: unit:Alg 4 records path counters and accepts a null Diagnostics .........................................................................................   Passed    0.02 sec\n538/540 Test #220: unit:local threshold is a parameter for Mode B (N > c * L_N^e) ..........................................................................................   Passed    0.03 sec\n539/540 Test #222: unit:Alg 4 below the threshold runs the base case and records the fallback - double .....................................................................   Passed    0.03 sec\n540/540 Test #221: unit:Alg 4 below the threshold runs the base case and records the fallback - std::uint64_t ..............................................................   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 540\n\nLabel Time Summary:\ndifferential    =   1.85 sec*proc (4 tests)\nintegration     =   0.58 sec*proc (6 tests)\nproperty        =  18.29 sec*proc (25 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            =  88.28 sec*proc (504 tests)\n\nTotal Test time (real) =  15.59 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [
+        "all (after clang-format)"
+      ],
+      "command": "bash -c 'cmake --build --preset debug -j8 && ctest --preset debug -j8'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T11:31:15+09:00",
+      "output_tail": "        Start 219: unit:local threshold never wraps around for large exponents or sizes\n533/540 Test  #33: unit:Bellman-Ford on a single vertex - double ...........................................................................................................   Passed    0.04 sec\n534/540 Test #321: unit:growth_pass keeps the lightest parallel edge by (length, index) - double ...........................................................................   Passed    0.02 sec\n535/540 Test  #19: unit:Fibonacci heap performs a cascading cut when a marked node loses a second child ....................................................................   Passed    0.02 sec\n536/540 Test   #6: unit:binary heap counts key comparisons .................................................................................................................   Passed    0.02 sec\n537/540 Test #273: unit:LenOps without a counter sink performs the same operations .........................................................................................   Passed    0.02 sec\n538/540 Test #434: unit:split-findmin: split at an existing boundary is rejected and changes nothing - sssp::paper::SplitFindminRef<std::uint64_t> .........................   Passed    0.02 sec\n539/540 Test #319: unit:growth_pass leaves the quotient by the components of F - double ....................................................................................   Passed    0.02 sec\n540/540 Test #219: unit:local threshold never wraps around for large exponents or sizes ....................................................................................   Passed    0.02 sec\n\n100% tests passed, 0 tests failed out of 540\n\nLabel Time Summary:\ndifferential    =   2.91 sec*proc (4 tests)\nintegration     =   0.70 sec*proc (6 tests)\nproperty        =  28.74 sec*proc (25 tests)\nregression      =   0.01 sec*proc (1 test)\nunit            = 129.29 sec*proc (504 tests)\n\nTotal Test time (real) =  20.25 sec"
+    }
+  ],
+  "commit": null
+}
