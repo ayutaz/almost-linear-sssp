@@ -1,0 +1,30 @@
+{
+  "id": "P3-EVAL-PROPERTY-DIAG-OFF",
+  "kind": "test-only",
+  "test_only_reason": "No implementation change: evaluate already behaves as specified. check_counts and the growth test asserted SSSP_COUNT counters unconditionally; with SSSP_DIAGNOSTICS=OFF (ci-release, release) every eval_* counter is 0, so the upper bounds, eval_interval_splits == eval_sfm_splits and the scans/N, failed/N growth checks passed vacuously and the Release build checked nothing about the visit accounting. The fix guards the counter assertions and adds hook/result-based checks (scans, opens, emissions, relaxations, supplemental offers, retirements) that hold in every build. The tests pass against the current implementation, so a RED event would need a manufactured break (docs/tdd/README.md forbids it); the new checks were instead shown to detect injected defects in a diagnostics-OFF build of an out-of-tree copy, reported to the lead.",
+  "spec": "The Lemma 4.7 evaluate property tests check something in every build: counter assertions run only when SSSP_DIAGNOSTICS is on, and the bounds that can be observed are checked from EvalHooks tallies and the returned EvalResult in every build",
+  "paper_ref": "Sec 4.3, Lemma 4.7, Alg 2-3 (tests only)",
+  "files": {
+    "impl": [],
+    "tests": [
+      "tests/differential/paper/test_evaluate_vs_dijkstra.cpp",
+      "tests/property/paper/test_evaluate_property.cpp"
+    ],
+    "covers": [
+      "src/paper/hierarchy/evaluate.hpp",
+      "src/paper/hierarchy/evaluate.cpp"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset ci-release && ctest --preset ci-release && cmake --build --preset debug && ctest --preset debug'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T13:22:23+09:00",
+      "output_tail": "        Start 998: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50\n991/998 Test #934: differential:double overflow: baselines match the independent rounded oracle on huge weights ............................................................   Passed    0.26 sec\n992/998 Test #997: regression:20261127-regular-switch-dead-end: switching from three self-loops yields the triangle ........................................................   Passed    0.02 sec\n993/998 Test #998: regression:20261127-regular-switch-dead-end: every small valid (n, d) succeeds for seeds 1..50 ..........................................................   Passed    0.08 sec\n994/998 Test #884: differential:Alg 4 + Evaluate from a native entry equals Dijkstra at every vertex - std::uint64_t .......................................................   Passed    5.79 sec\n995/998 Test #885: differential:Alg 4 + Evaluate from a native entry equals Dijkstra at every vertex - double ..............................................................   Passed    5.82 sec\n996/998 Test #936: differential:exhaustive: all simple graphs with n = 5 and weights {0,1} .................................................................................   Passed    2.03 sec\n997/998 Test #882: differential:evaluate vs dijkstra: I1-I8 hold on 10^4 random hierarchies with N <= 60 ...................................................................   Passed   12.37 sec\n998/998 Test #948: property:Lemmas 7.1 and 7.2 on seeded graph families - std::uint64_t ....................................................................................   Passed  112.83 sec\n\n100% tests passed, 0 tests failed out of 998\n\nLabel Time Summary:\ndifferential    =  59.52 sec*proc (69 tests)\nintegration     =   1.73 sec*proc (6 tests)\nproperty        = 254.71 sec*proc (54 tests)\nregression      =   0.16 sec*proc (6 tests)\nunit            = 286.72 sec*proc (863 tests)\n\nTotal Test time (real) = 112.84 sec"
+    }
+  ],
+  "commit": "7fd9125"
+}
