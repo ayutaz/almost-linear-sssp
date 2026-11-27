@@ -13,7 +13,7 @@
       "tests/unit/paper/hierarchy/test_seeded_instances.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -70,5 +70,5 @@
       "output_tail": "        Start 120: unit:edge-list round-trips uint64 weights including 2^64-1\n390/397 Test #303: unit:ordered tree rejects parent arrays that are not one rooted tree ....................................   Passed    0.05 sec\n391/397 Test #296: unit:dsu on a single item ...............................................................................   Passed    0.04 sec\n392/397 Test   #4: unit:binary heap does not reallocate within reserved capacity ...........................................   Passed    0.04 sec\n393/397 Test #375: unit:write_result_json dumps round-trippable distances ..................................................   Passed    0.04 sec\n394/397 Test #224: unit:every violation kind maps to its Def 4.1 condition .................................................   Passed    0.04 sec\n395/397 Test #198: unit:H2: a zero height is reported - double .............................................................   Passed    0.04 sec\n396/397 Test #215: unit:H5: a link shorter than every physical walk is reported - double ...................................   Passed  119.80 sec\n397/397 Test #120: unit:edge-list round-trips uint64 weights including 2^64-1 ..............................................   Passed  119.92 sec\n\n100% tests passed, 0 tests failed out of 397\n\nLabel Time Summary:\ndifferential    =   4.82 sec*proc (4 tests)\nintegration     =   1.35 sec*proc (6 tests)\nproperty        =   8.95 sec*proc (11 tests)\nregression      =   0.02 sec*proc (1 test)\nunit            = 339.83 sec*proc (375 tests)\n\nTotal Test time (real) = 135.59 sec"
     }
   ],
-  "commit": null
+  "commit": "8087cb9"
 }
