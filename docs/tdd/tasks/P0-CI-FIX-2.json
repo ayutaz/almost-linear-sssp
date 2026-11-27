@@ -1,0 +1,41 @@
+{
+  "id": "P0-CI-FIX-2",
+  "spec": "Google Benchmark (third-party: benchmark, benchmark_main) builds under its own unconditional -pedantic-errors with every clang 22.x, including apt clang 22.1.2 where -Wno-error=X does not downgrade -pedantic-errors diagnostics (that override only exists from clang 22.1.4, llvm-project #184756): the __COUNTER__ C2y-extension diagnostic is disabled outright (-Wno-c2y-extensions, added only when the compiler knows the flag) for those dependency targets, so their build emits no -Wc2y-extensions diagnostic at all; our own targets keep their warning set and -Werror",
+  "paper_ref": null,
+  "files": {
+    "impl": [
+      "cmake/Dependencies.cmake"
+    ],
+    "tests": [
+      "clang 22 ci-release build of benchmark and benchmark_main emits no -Wc2y-extensions diagnostic"
+    ]
+  },
+  "phase": "DONE",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [
+        "clang 22 ci-release build of benchmark and benchmark_main emits no -Wc2y-extensions diagnostic"
+      ],
+      "command": "sh -c 'cmake --build build/clang22-ci-release --target benchmark benchmark_main --clean-first > build/clang22-ci-release-bm.log 2>&1 || { tail -20 build/clang22-ci-release-bm.log; exit 2; }; if grep -n \"Wc2y-extensions\" build/clang22-ci-release-bm.log | head -6; then grep -m1 -oE \"pedantic-errors.*-Wno-error=c2y-extensions\" build/clang22-ci-release-bm.log; exit 1; fi; echo \"benchmark/benchmark_main: no -Wc2y-extensions diagnostic\"'",
+      "exit_code": 1,
+      "reason": "Dependencies.cmake only adds -Wno-error=c2y-extensions to benchmark/benchmark_main, which merely downgrades the __COUNTER__ C2y-extension diagnostic (benchmark.h:1461) that Google Benchmark's unconditional -pedantic-errors turns into an error. The downgrade of a -pedantic-errors diagnostic by -Wno-error=X exists only from clang 22.1.4 (llvm-project 10be0a255205, #184756); apt clang 22.1.2 on ubuntu-26.04 keeps it an error (runs 45933415417 ci/ci-release and 45933415430 benchmark). Local Homebrew clang 22.1.7 shows the same root cause as the diagnostic still being emitted (as a warning) by the dependency build, so the build depends on that compiler-version-specific override instead of the diagnostic being disabled",
+      "timestamp": "2026-11-27T12:29:55+09:00",
+      "output_tail": "8:./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:30: warning: '__COUNTER__' is a C2y extension [-Wc2y-extensions]\n11:./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:49: warning: '__COUNTER__' is a C2y extension [-Wc2y-extensions]\n19:./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:30: warning: '__COUNTER__' is a C2y extension [-Wc2y-extensions]\n22:./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:49: warning: '__COUNTER__' is a C2y extension [-Wc2y-extensions]\n29:./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:30: warning: '__COUNTER__' is a C2y extension [-Wc2y-extensions]\n32:./build/clang22-ci-release/_deps/benchmark-src/include/benchmark/benchmark.h:1461:49: warning: '__COUNTER__' is a C2y extension [-Wc2y-extensions]"
+    },
+    {
+      "phase": "GREEN",
+      "tests": [
+        "clang 22 ci-release build of benchmark and benchmark_main emits no -Wc2y-extensions diagnostic",
+        "-Wno-c2y-extensions only on benchmark-src translation units (compile_commands.json)",
+        "clang 22 ci-release build of all targets with -Werror",
+        "clang 22 ci (Debug, -Werror) build + ctest"
+      ],
+      "command": "sh -c 'set -e; cmake --build build/clang22-ci-release --target benchmark benchmark_main --clean-first > build/clang22-ci-release-bm.log 2>&1 || { tail -20 build/clang22-ci-release-bm.log; exit 2; }; if grep -n \"Wc2y-extensions\" build/clang22-ci-release-bm.log; then exit 1; fi; echo \"benchmark/benchmark_main: no -Wc2y-extensions diagnostic\"; for b in build/clang22-ci-release build/clang22-ci; do python3 -c \"import json,sys;cc=json.load(open(sys.argv[1]+\\\"/compile_commands.json\\\"));bm=[c for c in cc if \\\"/benchmark-src/\\\" in c[\\\"file\\\"]];own=[c for c in cc if \\\"/_deps/\\\" not in c[\\\"file\\\"]];assert bm and all(\\\"-Wno-c2y-extensions\\\" in c[\\\"command\\\"] for c in bm);assert own and not any(\\\"c2y\\\" in c[\\\"command\\\"] for c in own) and all(\\\"-Werror\\\" in c[\\\"command\\\"] for c in own if \\\"/src/\\\" in c[\\\"file\\\"]);print(sys.argv[1]+\\\": flag on\\\",len(bm),\\\"benchmark TUs, on none of\\\",len(own),\\\"own TUs\\\")\" $b; done; cmake --build build/clang22-ci-release -j 8 > build/clang22-ci-release-all.log 2>&1 || { tail -30 build/clang22-ci-release-all.log; exit 3; }; echo \"ci-release: all targets built\"; cmake --build build/clang22-ci -j 8 > build/clang22-ci-all.log 2>&1 || { tail -30 build/clang22-ci-all.log; exit 5; }; ctest --test-dir build/clang22-ci -j 8 --output-on-failure > build/clang22-ci-ctest.log 2>&1 || { tail -30 build/clang22-ci-ctest.log; exit 4; }; tail -4 build/clang22-ci-ctest.log'",
+      "exit_code": 0,
+      "timestamp": "2026-11-27T12:34:30+09:00",
+      "output_tail": "benchmark/benchmark_main: no -Wc2y-extensions diagnostic\nbuild/clang22-ci-release: flag on 20 benchmark TUs, on none of 129 own TUs\nbuild/clang22-ci: flag on 20 benchmark TUs, on none of 129 own TUs\nci-release: all targets built\nregression      =   0.11 sec*proc (6 tests)\nunit            = 134.27 sec*proc (790 tests)\n\nTotal Test time (real) =  83.54 sec"
+    }
+  ],
+  "commit": "76f3930"
+}
