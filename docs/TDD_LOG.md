@@ -111,6 +111,7 @@ Do not edit by hand; edit the evidence files and regenerate.
 | P4-LOCAL-LARGE | DONE (test-only) | 0 | Sec 5.4 Algorithm 4 l.2 and l.6-12, Lemma 5.10; Def 4.1, Def 4.2; Sec 4.3 Lemma 4.6 | cae3e81 | Mode A Algorithm 4 at the paper's radial sizes (k >= 209953) yields a hierarchy satisfying Def 4.1 (project validator and an independent checker), records no fallback, realizes every geodesic from the native entry, and Evaluate from a native entry equals an independent Dijkstra at every vertex; k = 209952 takes the recorded base case |
 | P4-SLOW-LABELS | DONE | 1 | - | 0c3767b | Catch2 tests tagged [slow] get the ctest label <category>-slow (others keep <category>); CI runs the slow labels in a separate step so nothing is dropped |
 | P5-EXP-LOCAL | DONE | 1 | Sec 5.4 l.1182-1243 (alignment c = 10 l.1206, support N^16 l.1216, grid and merges), Alg 4 l.2-12, Lemma 5.9 l.1152, Lemma 5.10 l.1265-1300 | 3098e11 | Mode B local hierarchy entry: branches on PaperParams::local_branch (base case recorded as a FallbackRecord, unsupported is a failure), reproduces paper::local_hierarchy exactly for the paper alignment and grid, and provides the Lambda alignment and support (D-8) and the exact-height assembly (D-11), each validating Def 4.1 and giving Evaluate distances equal to Dijkstra |
+| P5-EXP-NAMEROUTES | DONE | 1 | Sec 6.1 Alg 5 l.2-17, Def 6.1, Lemma 6.8; Sec 6.2 l.1491 (H), Lemma 6.7 | e69419f | Mode B NameRoutes entry: runs the shared Alg 5 with PaperParams (D-9 H, D-10 retry cap, D-17 factors), equals Mode A exactly under the paper's parameters, keeps every certificate valid under the deviations, records the cap fallback and reports the used constants next to the paper's |
 | P5-EXP-PARAMS | DONE | 1 | Sec 2 l.286; Sec 5.1 l.967; Sec 5.2 l.1021-1029; Sec 5.4 l.1206-1216; Alg 5 l.2-6; Sec 6.2 l.1473-1491; Sec 7.1 l.1644; Sec 7.3; Sec 8.1 l.1977; Sec 8.2 l.2080; Sec 4.1 | 391f507 | Mode B parameter set: PaperParams validates LocalParams/OuterParams at construction (rejecting the constants that PAPER_MAPPING §2 marks not changeable), rederives h, K, P, T, H, F from b and t, decides the local branch per instance, and logs every parameter with its deviation ID into Diagnostics |
 
 ## P0-BOOTSTRAP
@@ -1132,6 +1133,17 @@ Do not edit by hand; edit the evidence files and regenerate.
 - GREEN (exit 0, 2026-11-27T14:31:32+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
 - REFACTOR (exit 0, 2026-11-27T14:33:39+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
 - REFACTOR (exit 0, 2026-11-27T14:37:47+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug'`
+
+## P5-EXP-NAMEROUTES
+
+- Spec: Mode B NameRoutes entry: runs the shared Alg 5 with PaperParams (D-9 H, D-10 retry cap, D-17 factors), equals Mode A exactly under the paper's parameters, keeps every certificate valid under the deviations, records the cap fallback and reports the used constants next to the paper's
+- Impl: `src/experimental/paper_experimental/name_routes.hpp`, `src/experimental/paper_experimental/name_routes.cpp`
+- Tests: `tests/unit/paper_experimental/test_experimental_name_routes.cpp`, `tests/property/paper_experimental/test_experimental_name_routes_property.cpp`
+- Covers: `src/paper/pivots/name_routes.hpp`, `src/paper/pivots/name_routes.cpp`, `src/experimental/paper_experimental/params.hpp`, `src/experimental/paper_experimental/params.cpp`
+- RED (exit 1, 2026-11-27T14:23:09+09:00): missing header experimental/paper_experimental/name_routes.hpp: the Mode B NameRoutes entry (name_routes, name_routes_setting, ExperimentalRouteNames) does not exist yet — `bash -c 'cmake --build --preset debug && ctest --preset debug -R "name_routes"'`
+- GREEN (exit 0, 2026-11-27T14:30:08+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug -j8'`
+- REFACTOR (exit 0, 2026-11-27T14:34:03+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug -j8'`
+- REFACTOR (exit 0, 2026-11-27T14:40:10+09:00) — `bash -c 'cmake --build --preset debug && ctest --preset debug -j8'`
 
 ## P5-EXP-PARAMS
 
