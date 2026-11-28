@@ -16,7 +16,7 @@
       "tests/differential/paper_experimental/test_thresholds_vs_bellman_ford.cpp"
     ]
   },
-  "phase": "REFACTOR",
+  "phase": "DONE",
   "events": [
     {
       "phase": "RED",
@@ -44,5 +44,5 @@
       "output_tail": "14/21 Test #1041: unit:Mode B paper_sssp rejects an unsupported local setting before the outer branch ..................................   Passed    0.13 sec\n      Start 1037: unit:Mode B thresholds: least size at which k > c * L_k^e holds\n15/21 Test #1046: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - double .............................   Passed    0.25 sec\n      Start 1045: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - std::uint64_t\n16/21 Test #1037: unit:Mode B thresholds: least size at which k > c * L_k^e holds ......................................................   Passed    0.29 sec\n      Start 1038: unit:Mode B thresholds: least radial and least unsupported local size\n17/21 Test #1045: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - std::uint64_t ......................   Passed    0.46 sec\n      Start 1039: unit:Mode B thresholds: the Q-03 conservative local setting\n18/21 Test #1038: unit:Mode B thresholds: least radial and least unsupported local size ................................................   Passed    0.42 sec\n19/21 Test #1039: unit:Mode B thresholds: the Q-03 conservative local setting ..........................................................   Passed    0.22 sec\n20/21 Test #1186: differential:Q-03 scaled setting: base case below the outer threshold, both constructions above it - std::uint64_t ...   Passed   21.04 sec\n21/21 Test #1187: differential:Q-03 scaled setting: base case below the outer threshold, both constructions above it - double ..........   Passed   20.88 sec\n\n100% tests passed, 0 tests failed out of 21\n\nLabel Time Summary:\ndifferential    = 3964.52 sec*proc (6 tests)\nunit            =  10.95 sec*proc (15 tests)\n\nTotal Test time (real) = 2856.67 sec"
     }
   ],
-  "commit": null
+  "commit": "4e66270"
 }
