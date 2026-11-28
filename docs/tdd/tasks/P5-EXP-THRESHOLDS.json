@@ -1,0 +1,48 @@
+{
+  "id": "P5-EXP-THRESHOLDS",
+  "spec": "Mode B offers Q-03 threshold settings under which both the outer construction (Alg 8 l.8-15) and the local radial construction (Alg 4 l.6-12) run on feasible N, records in Diagnostics which branch every construction took (also with SSSP_DIAGNOSTICS = 0), and rejects up front a local setting for which the paper's grid assembly would be unsupported at some size",
+  "paper_ref": "Sec 2 l.286, Alg 8 l.4, Alg 4 l.2, Sec 5.4 l.1206, Sec 7.1 l.1644, Sec 5.1 l.967; Q-03 (D-7)",
+  "files": {
+    "impl": [
+      "src/experimental/paper_experimental/params.hpp",
+      "src/experimental/paper_experimental/params.cpp",
+      "src/experimental/paper_experimental/sssp.hpp",
+      "src/experimental/paper_experimental/sssp.cpp",
+      "src/experimental/paper_experimental/thresholds.hpp",
+      "src/experimental/paper_experimental/thresholds.cpp"
+    ],
+    "tests": [
+      "tests/unit/paper_experimental/test_mode_b_thresholds.cpp",
+      "tests/differential/paper_experimental/test_thresholds_vs_bellman_ford.cpp"
+    ]
+  },
+  "phase": "REFACTOR",
+  "events": [
+    {
+      "phase": "RED",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 && ctest --preset debug -j4 -R \"thresholds|Q-03\"'",
+      "exit_code": 1,
+      "reason": "missing header experimental/paper_experimental/thresholds.hpp: least_applying_size, least_radial_local_size, least_unsupported_local_size, conservative_local_params, q03_threshold_settings and the mode_b.* branch counters of paper_sssp do not exist yet",
+      "timestamp": "2026-11-27T19:13:01+09:00",
+      "output_tail": "[5/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_search.cpp.o\n[6/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_select.cpp.o\n[7/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_sort.cpp.o\n[8/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_split_findmin.cpp.o\n[9/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_split_findmin_word_ops.cpp.o\n[10/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper/primitives/test_split_findmin_contract.cpp.o\n[11/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_experimental_name_routes.cpp.o\n[12/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_local_mode_b.cpp.o\n[13/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_experimental_params.cpp.o\n[14/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_mode_b_thresholds.cpp.o\nFAILED: [code=1] tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_mode_b_thresholds.cpp.o \n/usr/bin/c++ -DSSSP_DIAGNOSTICS=1 -I./tests -I./src -I./include -I./build/debug/_deps/catch2-src/src/catch2/.. -I./build/debug/_deps/catch2-build/generated-includes -g -std=c++20 -arch arm64 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion -fno-fast-math -MD -MT tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_mode_b_thresholds.cpp.o -MF tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_mode_b_thresholds.cpp.o.d -o tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_mode_b_thresholds.cpp.o -c ./tests/unit/paper_experimental/test_mode_b_thresholds.cpp\n./tests/unit/paper_experimental/test_mode_b_thresholds.cpp:26:10: fatal error: 'experimental/paper_experimental/thresholds.hpp' file not found\n   26 | #include \"experimental/paper_experimental/thresholds.hpp\"\n      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n[15/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/paper_experimental/test_sssp_mode_b.cpp.o\n[16/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/support/test_support.cpp.o\n[17/89] Building CXX object tests/CMakeFiles/sssp_unit_tests.dir/unit/practical/test_practical_local_sssp.cpp.o\nninja: build stopped: subcommand failed."
+    },
+    {
+      "phase": "GREEN",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_unit_tests sssp_differential_tests && ctest --preset debug -j4 --timeout 3600 -R \"Q-03|Mode B thresholds|Mode B paper_sssp\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-28T11:24:54+09:00",
+      "output_tail": "14/21 Test #1047: unit:Mode B paper_sssp: a threshold between sizes selects the branch per input .......................................   Passed    0.55 sec\n      Start 1038: unit:Mode B thresholds: least radial and least unsupported local size\n15/21 Test #1041: unit:Mode B paper_sssp rejects an unsupported local setting before the outer branch ..................................   Passed    0.12 sec\n      Start 1045: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - std::uint64_t\n16/21 Test #1038: unit:Mode B thresholds: least radial and least unsupported local size ................................................   Passed    0.12 sec\n      Start 1039: unit:Mode B thresholds: the Q-03 conservative local setting\n17/21 Test #1046: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - double .............................   Passed    0.22 sec\n      Start 1037: unit:Mode B thresholds: least size at which k > c * L_k^e holds\n18/21 Test #1045: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - std::uint64_t ......................   Passed    0.16 sec\n19/21 Test #1039: unit:Mode B thresholds: the Q-03 conservative local setting ..........................................................   Passed    0.10 sec\n20/21 Test #1037: unit:Mode B thresholds: least size at which k > c * L_k^e holds ......................................................   Passed    0.23 sec\n21/21 Test #1187: differential:Q-03 scaled setting: base case below the outer threshold, both constructions above it - double ..........   Passed   15.98 sec\n\n100% tests passed, 0 tests failed out of 21\n\nLabel Time Summary:\ndifferential    = 2911.38 sec*proc (6 tests)\nunit            =   8.44 sec*proc (15 tests)\n\nTotal Test time (real) = 2581.85 sec"
+    },
+    {
+      "phase": "REFACTOR",
+      "tests": [],
+      "command": "bash -c 'cmake --build --preset debug -j4 --target sssp_unit_tests sssp_differential_tests && ctest --preset debug -j4 --timeout 3600 -R \"Q-03|Mode B thresholds|Mode B paper_sssp\"'",
+      "exit_code": 0,
+      "timestamp": "2026-11-28T14:32:13+09:00",
+      "output_tail": "14/21 Test #1041: unit:Mode B paper_sssp rejects an unsupported local setting before the outer branch ..................................   Passed    0.13 sec\n      Start 1037: unit:Mode B thresholds: least size at which k > c * L_k^e holds\n15/21 Test #1046: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - double .............................   Passed    0.25 sec\n      Start 1045: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - std::uint64_t\n16/21 Test #1037: unit:Mode B thresholds: least size at which k > c * L_k^e holds ......................................................   Passed    0.29 sec\n      Start 1038: unit:Mode B thresholds: least radial and least unsupported local size\n17/21 Test #1045: unit:Mode B paper_sssp with the paper's parameters takes the recorded base case - std::uint64_t ......................   Passed    0.46 sec\n      Start 1039: unit:Mode B thresholds: the Q-03 conservative local setting\n18/21 Test #1038: unit:Mode B thresholds: least radial and least unsupported local size ................................................   Passed    0.42 sec\n19/21 Test #1039: unit:Mode B thresholds: the Q-03 conservative local setting ..........................................................   Passed    0.22 sec\n20/21 Test #1186: differential:Q-03 scaled setting: base case below the outer threshold, both constructions above it - std::uint64_t ...   Passed   21.04 sec\n21/21 Test #1187: differential:Q-03 scaled setting: base case below the outer threshold, both constructions above it - double ..........   Passed   20.88 sec\n\n100% tests passed, 0 tests failed out of 21\n\nLabel Time Summary:\ndifferential    = 3964.52 sec*proc (6 tests)\nunit            =  10.95 sec*proc (15 tests)\n\nTotal Test time (real) = 2856.67 sec"
+    }
+  ],
+  "commit": null
+}

@@ -1,10 +1,15 @@
 #include "experimental/paper_experimental/sssp.hpp"
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include "experimental/paper_experimental/thresholds.hpp"
+#include "paper/local/local_hierarchy.hpp"
 #include "paper/model/params.hpp"
 #include "paper/model/random.hpp"
 #include "paper/outer/base_case.hpp"
@@ -50,6 +55,51 @@ paper::outer::OuterConstructionParams outer_construction_params(const PaperParam
   return p;
 }
 
+namespace {
+
+/// Q-03: the outer branch runs Alg 4 on atoms of sizes no caller can predict, so a local setting
+/// that is unsupported at some size is a failure for every input, not only for the inputs that
+/// happen to produce such an atom.
+void require_supported_local_sizes(const PaperParams& params) {
+  if (const auto k = least_unsupported_local_size(params)) {
+    throw std::invalid_argument("paper_experimental: the local setting (threshold " +
+                                params.local().threshold.describe() +
+                                ", b = " + params.local().separator.describe() +
+                                ") selects the radial branch at k = " + std::to_string(*k) +
+                                ", where its assembly does not apply (Sec 5.4 l.1206 / Q-03); use "
+                                "conservative_local_params");
+  }
+}
+
+/// Branch counters of every Alg 4 call made by the outer construction: one per atom of Alg 7
+/// (owner_distances, which reports the branch per atom) and one per atom of Sec 8.2
+/// (substitute_atoms, Lemma 5.15, which runs Alg 4 on the atom's states with the same size
+/// test). Written like the parameter log, also with SSSP_DIAGNOSTICS = 0. The base cases must be
+/// exactly Alg 4's FallbackRecords; anything else is a violated invariant.
+template <class W>
+void record_local_branches(const paper::outer::OuterConstruction<W>& oc,
+                           const paper::LocalHierarchyParams& local, Diagnostics& diag) {
+  const auto& alg7 = oc.jr.radial_atom;
+  const auto& sec82 = oc.part.hierarchy.atoms;
+  const std::uint64_t calls = alg7.size() + sec82.size();
+  std::uint64_t radial = static_cast<std::uint64_t>(std::ranges::count(alg7, std::uint8_t{1}));
+  for (const auto& atom : sec82) {
+    if (paper::local_construction_applies(atom.states.size(), local)) ++radial;
+  }
+  const std::string reason = paper::local_base_case_reason(local);
+  const auto records = static_cast<std::uint64_t>(std::ranges::count_if(
+      diag.fallbacks, [&](const FallbackRecord& f) { return f.reason == reason; }));
+  if (records != calls - radial) {
+    throw std::logic_error("paper_experimental: " + std::to_string(calls - radial) +
+                           " Alg 4 base cases but " + std::to_string(records) + " FallbackRecords");
+  }
+  diag.counters["mode_b.local.calls"] = calls;
+  diag.counters["mode_b.local.radial"] = radial;
+  diag.counters["mode_b.local.base_case"] = calls - radial;
+}
+
+}  // namespace
+
 template <class W>
 SsspResult<W> paper_sssp(const CsrGraph<W>& g, Vertex s, const PaperParams& params,
                          std::uint64_t seed) {
@@ -65,11 +115,17 @@ SsspResult<W> paper_sssp(const CsrGraph<W>& g, Vertex s, const PaperParams& para
     SsspResult<W> base = paper::outer::outer_base_case(c.graph, c.source);
     paper::outer::absorb_diagnostics(diag, std::move(base.diag));
     contracted_dist = std::move(base.dist);
+    diag.counters["mode_b.branch.outer_base_case"] = 1;
   } else {
     // Alg 8 l.8-15: the shared outer construction. Exceptions propagate (failure rule).
     const paper::outer::OuterConstructionParams p = outer_construction_params(params, big_n);
+    require_supported_local_sizes(params);
     paper::model::WordRng rng(seed);
-    contracted_dist = paper::outer::outer_construction(c.graph, c.source, rng, p, &diag);
+    paper::outer::OuterConstruction<W> oc =
+        paper::outer::run_outer_construction(c.graph, c.source, rng, p, &diag);
+    diag.counters["mode_b.branch.outer_construction"] = 1;
+    record_local_branches(oc, p.local, diag);
+    contracted_dist = std::move(oc.dist);
   }
 
   // Alg 8 l.6 / l.16-17: Lemma 8.5. It rejects labels that no tight original arc attains.

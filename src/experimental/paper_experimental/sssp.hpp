@@ -31,6 +31,22 @@
 // else. The parameter log is written by PaperParams::record ("params.*" counters), also when
 // SSSP_DIAGNOSTICS = 0. Report the fallback share per reason
 // (paper::outer::fallback_shares, Q-69) next to every timing.
+//
+// Lowered local thresholds (P5-EXP-THRESHOLDS, Q-03): the outer branch runs Alg 4 on atoms of
+// sizes that depend on the input, so a local setting under which some size k selects the
+// radial branch while the Sec 5.4 l.1206 preconditions fail (least_unsupported_local_size,
+// thresholds.hpp) is rejected with std::invalid_argument before the construction starts, on
+// every input. conservative_local_params(b) and q03_threshold_settings() give settings that
+// pass this check.
+//
+// Branch record (written like the parameter log, also with SSSP_DIAGNOSTICS = 0):
+//   mode_b.branch.outer_base_case = 1      Alg 8 l.5 was taken
+//   mode_b.branch.outer_construction = 1   Alg 8 l.8-15 was taken; then also
+//   mode_b.local.calls / .radial / .base_case
+//       the Alg 4 calls on the atoms of Alg 7 (radial flag reported by owner_distances) and of
+//       Sec 8.2 (Lemma 5.15; the same size test on the atom's state count), and how many took
+//       each branch. base_case must equal the number of Alg 4 FallbackRecords; a mismatch
+//       throws std::logic_error.
 
 #include <cstdint>
 #include <string_view>
@@ -56,7 +72,8 @@ paper::outer::OuterConstructionParams outer_construction_params(const PaperParam
 /// l.9). result.diag holds the parameter log, the contraction and restoration counters, the
 /// counters of the branch taken and its FallbackRecords.
 /// Throws std::out_of_range if s is not a vertex, std::invalid_argument for an unsupported
-/// parameter set when the outer branch is taken, and whatever the construction throws; it never
+/// parameter set when the outer branch is taken (including a local setting that is unsupported
+/// at some size, see the file comment), and whatever the construction throws; it never
 /// returns a result obtained by another algorithm in place of the outer construction.
 template <class W>
 SsspResult<W> paper_sssp(const CsrGraph<W>& g, Vertex s, const PaperParams& params,
